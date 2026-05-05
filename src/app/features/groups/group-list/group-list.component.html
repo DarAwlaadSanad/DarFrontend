@@ -1,0 +1,114 @@
+<div class="space-y-8 animate-fade-in" dir="rtl">
+  <div class="flex items-center justify-between">
+    <div>
+      <h1 class="text-3xl font-bold text-white mb-2">حلقات التحفيظ</h1>
+      <p class="text-dark-400">إدارة حلقات التحفيظ ومتابعة أداء الطلاب</p>
+    </div>
+    <button (click)="openModal()" class="btn-primary py-2.5 px-6">
+       <svg class="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" /></svg>
+       إضافة حلقة جديدة
+    </button>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="showModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="closeModal()"></div>
+    <div class="relative glass-card w-full max-w-md p-8 animate-slide-up border-dark-700 shadow-2xl">
+      <h2 class="text-2xl font-bold text-white mb-6">إضافة حلقة جديدة</h2>
+      
+      <form (ngSubmit)="onSubmit()" #groupForm="ngForm" class="space-y-5">
+        <div>
+          <label class="label">اسم الحلقة</label>
+          <input 
+            type="text" 
+            name="name" 
+            [(ngModel)]="newGroup.name" 
+            required 
+            class="input-field" 
+            placeholder="مثال: حلقة النور"
+          >
+        </div>
+        
+        <div>
+          <label class="label">الوصف</label>
+          <textarea 
+            name="description" 
+            [(ngModel)]="newGroup.description" 
+            class="input-field min-h-[100px]" 
+            placeholder="وصف مختصر للحلقة..."
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="label">المعلم المسؤول</label>
+          <select 
+            name="teacherId" 
+            [(ngModel)]="newGroup.teacherId" 
+            required
+            class="input-field"
+          >
+            <option value="" disabled selected>اختر المعلم...</option>
+            <option *ngFor="let teacher of teachers()" [value]="teacher.id">
+              {{ teacher.fullName }} ({{ teacher.userName }})
+            </option>
+          </select>
+        </div>
+
+        <div class="flex gap-3 pt-4">
+          <button 
+            type="submit" 
+            [disabled]="!groupForm.valid || isSaving()" 
+            class="btn-primary flex-1 py-3"
+          >
+            <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>
+            <span>حفظ</span>
+          </button>
+          <button 
+            type="button" 
+            (click)="closeModal()" 
+            class="btn-secondary flex-1 py-3"
+          >
+            إلغاء
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- List Content -->
+  <div *ngIf="isLoading()" class="flex justify-center py-20">
+    <div class="w-10 h-10 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
+  </div>
+
+  <div *ngIf="!isLoading()" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div *ngFor="let group of groups()" class="glass-card p-6 border-dark-800 hover:border-primary-500/50 transition-all group flex flex-col justify-between">
+      <div>
+        <div class="flex items-center justify-between mb-4">
+          <div class="w-12 h-12 rounded-2xl bg-primary-600/10 flex items-center justify-center text-primary-400 group-hover:bg-primary-600 group-hover:text-white transition-all">
+            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+          </div>
+          <span class="text-xs font-bold text-dark-500 bg-dark-800 px-3 py-1 rounded-full">{{ group.studentCount }} طالب</span>
+        </div>
+        
+        <h3 class="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors">{{ group.name }}</h3>
+        <p class="text-dark-400 text-sm mb-4 line-clamp-2">{{ group.description || 'لا يوجد وصف مضاف لهذه الحلقة' }}</p>
+      </div>
+
+      <div class="pt-6 border-t border-dark-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full bg-dark-700 flex items-center justify-center text-[10px] text-dark-300">م</div>
+          <span class="text-xs text-dark-300">{{ group.teacherName || 'غير محدد' }}</span>
+        </div>
+        <a [routerLink]="['/dashboard/groups', group.id]" class="text-primary-400 text-sm font-bold hover:underline flex items-center">
+          عرض السجل
+          <svg class="w-4 h-4 mr-1 transform rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!isLoading() && groups().length === 0" class="glass-card p-20 text-center text-dark-500">
+    <svg class="w-16 h-16 mx-auto mb-4 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+    <p>لم يتم العثور على أي حلقات مضافة حتى الآن</p>
+  </div>
+</div>
