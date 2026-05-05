@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://darawlaadsanad.runasp.net/api'
+  apiUrl: 'https://darawlaadsanad.runasp.net/api'
 };
