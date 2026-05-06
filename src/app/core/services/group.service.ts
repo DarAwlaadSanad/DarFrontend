@@ -21,8 +21,8 @@ export class GroupService {
     return this.http.get<GroupDetailsDTO>(`${this.apiUrl}/${id}?month=${month}&year=${year}`);
   }
 
-  create(dto: GroupAddDTO): Observable<GroupCardDTO> {
-    return this.http.post<GroupCardDTO>(this.apiUrl, dto);
+  create(dto: GroupAddDTO): Observable<any> {
+    return this.http.post(this.apiUrl, dto);
   }
 
   update(id: number, dto: GroupAddDTO): Observable<void> {

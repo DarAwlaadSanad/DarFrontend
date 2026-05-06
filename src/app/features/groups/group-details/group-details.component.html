@@ -276,7 +276,7 @@
       <div class="sm:col-span-2">
         <label class="label text-sm">أرقام الهواتف</label>
         <div *ngFor="let phone of newStudent.phoneNumbers; let i = index; trackBy: trackByIndex" class="flex gap-2 mb-2">
-          <input type="text" name="phone-{{i}}" [(ngModel)]="newStudent.phoneNumbers[i]" class="input-field flex-1 text-sm" placeholder="رقم الهاتف...">
+          <input type="text" name="phone-{{i}}" [(ngModel)]="newStudent.phoneNumbers[i]" class="input-field flex-1 text-sm" placeholder="رقم الهاتف..." maxlength="11">
           <button type="button" (click)="removePhone(i)" class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg">✕</button>
         </div>
         <button type="button" (click)="addPhone()" class="text-primary-400 text-xs font-bold hover:underline">+ رقم آخر</button>

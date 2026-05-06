@@ -18,12 +18,15 @@ export class DashboardComponent {
     { label: 'الرئيسية',     icon: 'home',         route: '/dashboard/home' },
     { label: 'الحلقات',      icon: 'book',         route: '/dashboard/groups' },
     { label: 'الطلاب',       icon: 'users',        route: '/dashboard/students' },
-    { label: 'تسجيل الحضور', icon: 'check-square', route: '/dashboard/attendance' },
-    { label: 'تقارير الغياب',icon: 'file-text',    route: '/dashboard/reports' },
     { label: 'المستخدمين',   icon: 'shield-lock',  route: '/dashboard/users' },
   ];
 
   constructor(private authService: AuthService, private router: Router) {
+    // Redirect students to student portal
+    if (this.authService.isStudent()) {
+      this.router.navigate(['/student']);
+    }
+
     // Auto-close sidebar after navigation on mobile
     this.router.events.subscribe(e => {
       if (e instanceof NavigationEnd && this.isMobile()) {

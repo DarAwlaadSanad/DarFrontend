@@ -29,6 +29,12 @@ export interface StudentAddDTO {
   phoneNumbers: string[];
 }
 
+export interface StudentUpdateDTO {
+  fullName: string;
+  ssn?: string;
+  notes?: string;
+}
+
 export interface AttendanceRecord {
   id?: number;
   studentId: number;

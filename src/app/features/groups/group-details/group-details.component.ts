@@ -254,8 +254,17 @@ export class GroupDetailsComponent implements OnInit {
 
   submitStudent() {
     if (!this.newStudent.fullName) return;
+    
+    // Validate that at least one valid 11-digit phone is provided if they entered something
+    const validPhones = this.newStudent.phoneNumbers.filter(p => p.trim().length === 11);
+    if (this.newStudent.phoneNumbers.some(p => p.trim() !== '') && validPhones.length === 0) {
+      alert('يرجى إدخال رقم هاتف صحيح مكون من 11 رقم');
+      return;
+    }
+
+    const payload = { ...this.newStudent, phoneNumbers: validPhones };
     this.isSaving.set(true);
-    this.studentService.createStudent(this.newStudent).subscribe({
+    this.studentService.createStudent(payload).subscribe({
       next: () => { this.isSaving.set(false); this.closeAddStudentModal(); this.loadDetails(this.details()!.groupId); },
       error: () => { this.isSaving.set(false); alert('حدث خطأ أثناء إضافة الطالب'); }
     });

@@ -46,16 +46,6 @@ export const routes: Routes = [
           import('./features/students/student-detail/student-detail.component').then(m => m.StudentDetailComponent),
       },
       {
-        path: 'attendance',
-        loadComponent: () =>
-          import('./features/attendance/attendance-marking/attendance-marking.component').then(m => m.AttendanceMarkingComponent),
-      },
-      {
-        path: 'reports',
-        loadComponent: () =>
-          import('./features/reports/absence-schedule/absence-schedule.component').then(m => m.AbsenceScheduleComponent),
-      },
-      {
         path: 'users',
         loadComponent: () =>
           import('./features/users/user-list/user-list.component').then(m => m.UserListComponent),
@@ -66,6 +56,29 @@ export const routes: Routes = [
         pathMatch: 'full',
       },
     ],
+  },
+  {
+    path: 'student',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/student-portal/layout/student-layout.component').then(m => m.StudentLayoutComponent),
+    children: [
+      {
+        path: '',
+        loadComponent: () =>
+          import('./features/student-portal/dashboard/student-dashboard.component').then(m => m.StudentDashboardComponent),
+      },
+      {
+        path: 'groups/:id',
+        loadComponent: () =>
+          import('./features/student-portal/group-details/student-group-details.component').then(m => m.StudentGroupDetailsComponent),
+      },
+      {
+        path: 'change-password',
+        loadComponent: () =>
+          import('./features/student-portal/change-password/student-change-password.component').then(m => m.StudentChangePasswordComponent),
+      },
+    ]
   },
   {
     path: '',

@@ -12,6 +12,13 @@ export interface RegisterDTO {
 
 export interface AuthResponse {
   token: string;
-  userName: string;
+  userName?: string;
+  fullName?: string;
+  studentId?: number;
   roles: string[];
+}
+
+export interface StudentLoginDTO {
+  code: string;
+  password: string;
 }

@@ -17,6 +17,8 @@ export class AuthService {
   isAuthenticated = computed(() => !!this.authState()?.token);
   isLoggedIn = computed(() => !!this.authState()?.token); // Alias for backward compatibility
   userRoles = computed(() => this.authState()?.roles || []);
+  isStudent = computed(() => this.userRoles().includes('Student'));
+  studentId = computed(() => this.authState()?.studentId);
 
   constructor(private http: HttpClient) {}
 
@@ -38,6 +40,10 @@ export class AuthService {
   logout() {
     localStorage.removeItem('auth_data');
     this.authState.set(null);
+  }
+
+  externalLogin(response: AuthResponse) {
+    this.setAuth(response);
   }
 
   getToken(): string | null {

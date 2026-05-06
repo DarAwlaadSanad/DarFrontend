@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
-import { StudentDetailsDTO, StudentAddDTO } from '../../../core/models/student.models';
+import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO } from '../../../core/models/student.models';
 
 @Component({
   selector: 'app-student-detail',
@@ -23,7 +23,13 @@ export class StudentDetailComponent implements OnInit {
 
   // Edit Modal
   showEditModal = signal(false);
-  editData: StudentAddDTO = { fullName: '', phoneNumbers: [], groupIds: [] };
+  editData: StudentUpdateDTO = { fullName: '', ssn: '', notes: '' };
+
+  // Phone Management
+  isAddingPhone = signal(false);
+  newPhoneNumber = '';
+  editingPhoneId = signal<number | null>(null);
+  editingPhoneNumber = '';
 
   ngOnInit() {
     this.loadStudent();
@@ -39,6 +45,35 @@ export class StudentDetailComponent implements OnInit {
       },
       error: () => this.isLoading.set(false),
     });
+  }
+
+  get age(): number | null {
+    const ssn = this.student()?.ssn;
+    if (!ssn || ssn.length < 7) return null;
+
+    const centuryDigit = ssn[0];
+    const yearPart = ssn.substring(1, 3);
+    const monthPart = ssn.substring(3, 5);
+    const dayPart = ssn.substring(5, 7);
+
+    let year = parseInt(yearPart);
+    const month = parseInt(monthPart);
+    const day = parseInt(dayPart);
+
+    if (centuryDigit === '2') year += 1900;
+    else if (centuryDigit === '3') year += 2000;
+    else return null;
+
+    const birthDate = new Date(year, month - 1, day);
+    if (isNaN(birthDate.getTime())) return null;
+
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
   }
 
   // ── Delete Student ──────────────────────────────────────────────────────────
@@ -63,26 +98,75 @@ export class StudentDetailComponent implements OnInit {
       fullName: s.fullName,
       ssn: s.ssn || '',
       notes: s.notes || '',
-      phoneNumbers: s.phones?.map(p => p.number) || [],
-      groupIds: [] // Assuming group reassignment isn't done here
     };
-    if (this.editData.phoneNumbers.length === 0) {
-      this.editData.phoneNumbers.push('');
-    }
     this.showEditModal.set(true);
   }
 
-  addPhone() { this.editData.phoneNumbers.push(''); }
-  removePhone(i: number) { this.editData.phoneNumbers.splice(i, 1); }
-  trackByIndex(index: number): number { return index; }
+  // ── Phone Management ────────────────────────────────────────────────────────
+  onAddPhone() {
+    const s = this.student();
+    if (!s || this.newPhoneNumber.length !== 11) return;
+    this.isSaving.set(true);
+    this.studentService.addPhone(s.id, this.newPhoneNumber).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.isAddingPhone.set(false);
+        this.newPhoneNumber = '';
+        this.loadStudent();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء إضافة الرقم');
+      }
+    });
+  }
+
+  onUpdatePhone(phoneId: number) {
+    if (this.editingPhoneNumber.length !== 11) return;
+    this.isSaving.set(true);
+    this.studentService.updatePhone(phoneId, this.editingPhoneNumber).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.editingPhoneId.set(null);
+        this.loadStudent();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء تحديث الرقم');
+      }
+    });
+  }
+
+  onDeletePhone(phoneId: number) {
+    if (!confirm('هل تريد حذف هذا الرقم؟')) return;
+    this.isSaving.set(true);
+    this.studentService.deletePhone(phoneId).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.loadStudent();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء حذف الرقم');
+      }
+    });
+  }
+
+  startEditPhone(phone: { id: number, number: string }) {
+    this.editingPhoneId.set(phone.id);
+    this.editingPhoneNumber = phone.number;
+  }
+
+  cancelEditPhone() {
+    this.editingPhoneId.set(null);
+  }
 
   submitEdit() {
     const s = this.student();
     if (!s) return;
     this.isSaving.set(true);
     const payload = {
-      ...this.editData,
-      phoneNumbers: this.editData.phoneNumbers.filter(p => p.trim() !== '')
+      ...this.editData
     };
     this.studentService.updateStudent(s.id, payload).subscribe({
       next: () => {
