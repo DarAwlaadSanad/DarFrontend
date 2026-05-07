@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, finalize } from 'rxjs';
-import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO } from '../models/student.models';
+import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, StudentPagedResultDTO } from '../models/student.models';
 import { GroupCardDTO, GroupDetailsDTO } from '../models/group.models';
 import { AuthResponse, StudentLoginDTO } from '../models/auth.models';
 import { AuthService } from './auth.service';
@@ -12,13 +12,33 @@ export class StudentService {
   private readonly apiUrl = `${environment.apiUrl}/Student`;
   private authService = inject(AuthService);
   students = signal<StudentDetailsDTO[]>([]);
+  totalCount = signal(0);
   isLoading = signal(false);
 
   constructor(private http: HttpClient) { }
 
-  getStudents(): Observable<StudentDetailsDTO[]> {
-    return this.http.get<StudentDetailsDTO[]>(this.apiUrl).pipe(
-      tap(data => this.students.set(data))
+  getStudents(
+    page: number = 1,
+    pageSize: number = 20,
+    academicYearId?: number,
+    groupId?: number,
+    search?: string,
+    isActive?: boolean
+  ): Observable<StudentPagedResultDTO> {
+    let params = new HttpParams()
+      .set('page', page.toString())
+      .set('pageSize', pageSize.toString());
+
+    if (academicYearId) params = params.set('academicYearId', academicYearId.toString());
+    if (groupId) params = params.set('groupId', groupId.toString());
+    if (search) params = params.set('search', search);
+    if (isActive !== undefined && isActive !== null) params = params.set('isActive', isActive.toString());
+
+    return this.http.get<StudentPagedResultDTO>(this.apiUrl, { params }).pipe(
+      tap(res => {
+        this.students.set(res.items);
+        this.totalCount.set(res.totalCount);
+      })
     );
   }
 
@@ -95,6 +115,10 @@ export class StudentService {
       params: { studentId: studentId.toString(), groupId: groupId.toString() },
       responseType: 'text' as 'json'
     });
+  }
+
+  validateSSN(ssn: string): Observable<{ isValid: boolean }> {
+    return this.http.get<{ isValid: boolean }>(`${this.apiUrl}/validate/${ssn}`);
   }
 
   // ── Student Portal ──────────────────────────────────────────────────────────

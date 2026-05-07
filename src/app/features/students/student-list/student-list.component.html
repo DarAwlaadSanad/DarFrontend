@@ -19,17 +19,53 @@
     </button>
   </div>
 
-  <!-- Search -->
-  <div class="glass-card p-4 border-dark-800">
-    <div class="relative">
-      <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-dark-500">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-        </svg>
+  <!-- Filters & Search -->
+  <div class="glass-card p-6 border-dark-800 space-y-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Search -->
+      <div class="lg:col-span-1">
+        <label class="block text-[10px] font-bold text-dark-500 uppercase mb-1.5 mr-1">بحث</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-dark-500">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event); onSearch()"
+            placeholder="الاسم، الكود، الرقم القومي..." class="input-field pr-10 py-2 text-sm">
+        </div>
       </div>
-      <input type="text" [ngModel]="searchQuery()" (ngModelChange)="searchQuery.set($event)"
-        placeholder="بحث باسم الطالب، الحلقة، أو المستوى..." class="input-field pr-12 py-2">
+
+      <!-- Year Filter -->
+      <div>
+        <label class="block text-[10px] font-bold text-dark-500 uppercase mb-1.5 mr-1">السنة الدراسية</label>
+        <select [ngModel]="selectedYearFilter()" (ngModelChange)="selectedYearFilter.set($event); onFilterChange()" 
+          class="input-field py-2 text-sm">
+          <option [ngValue]="null">الكل</option>
+          <option *ngFor="let year of academicYears()" [ngValue]="year.id">{{ year.name }}</option>
+        </select>
+      </div>
+
+      <!-- Group Filter -->
+      <div>
+        <label class="block text-[10px] font-bold text-dark-500 uppercase mb-1.5 mr-1">الحلقة</label>
+        <select [ngModel]="selectedGroupFilter()" (ngModelChange)="selectedGroupFilter.set($event); onFilterChange()" 
+          class="input-field py-2 text-sm">
+          <option [ngValue]="null">الكل</option>
+          <option *ngFor="let g of groups()" [ngValue]="g.id">{{ g.name }}</option>
+        </select>
+      </div>
+
+      <!-- Status Filter -->
+      <div>
+        <label class="block text-[10px] font-bold text-dark-500 uppercase mb-1.5 mr-1">الحالة</label>
+        <select [ngModel]="statusFilter()" (ngModelChange)="statusFilter.set($event); onFilterChange()" 
+          class="input-field py-2 text-sm">
+          <option [ngValue]="null">الكل</option>
+          <option [ngValue]="true">نشط</option>
+          <option [ngValue]="false">متوقف</option>
+        </select>
+      </div>
     </div>
   </div>
 
@@ -60,9 +96,12 @@
       </div>
 
       <h3 class="text-white font-bold text-lg mb-1">{{ student.fullName }}</h3>
-      <div class="flex items-center gap-2 mb-4">
-        <span class="text-dark-400 text-sm">{{ student.academicYear.name || 'غير محدد' }}</span>
+      <div class="flex items-center gap-2 mb-4 flex-wrap">
+        <span class="text-dark-400 text-xs">{{ student.academicYear.name || 'غير محدد' }}</span>
         <span class="w-1 h-1 rounded-full bg-dark-700"></span>
+        <span class="px-2 py-0.5 rounded-full bg-dark-800 text-dark-300 text-[10px] font-mono border border-dark-700">
+          ID: {{ student.code }}
+        </span>
         <span [class]="student.isActive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'"
           class="text-[10px] font-bold px-2 py-0.5 rounded-full">
           {{ student.isActive ? 'نشط' : 'متوقف' }}
@@ -80,6 +119,32 @@
       </div>
     </div>
   </div>
+
+  <!-- Pagination -->
+  <div *ngIf="totalPages > 1" class="flex items-center justify-center gap-2 pt-6">
+    <button (click)="changePage(currentPage() - 1)" [disabled]="currentPage() === 1"
+      class="p-2 rounded-xl bg-dark-800 text-dark-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+      <svg class="w-5 h-5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+
+    <div class="flex items-center gap-1">
+      <button *ngFor="let p of pages" (click)="changePage(p)"
+        [class]="p === currentPage() ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20' : 'bg-dark-800 text-dark-400 hover:text-white'"
+        class="w-10 h-10 rounded-xl font-bold text-sm transition-all">
+        {{ p }}
+      </button>
+    </div>
+
+    <button (click)="changePage(currentPage() + 1)" [disabled]="currentPage() === totalPages"
+      class="p-2 rounded-xl bg-dark-800 text-dark-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  </div>
+
 
   <div *ngIf="filteredStudents().length === 0 && !isLoading()" class="glass-card p-12 text-center text-dark-500">
     لا توجد نتائج مطابقة للبحث

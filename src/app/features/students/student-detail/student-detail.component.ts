@@ -284,14 +284,36 @@ export class StudentDetailComponent implements OnInit {
     const s = this.student();
     if (!s) return;
     this.isSaving.set(true);
-    const payload = {
-      ...this.editData
-    };
-    this.studentService.updateStudent(s.id, payload).subscribe({
+
+    const ssnChanged = this.editData.ssn !== s.ssn;
+    
+    if (ssnChanged && this.editData.ssn) {
+      this.studentService.validateSSN(this.editData.ssn).subscribe({
+        next: (res) => {
+          if (res.isValid) {
+            this.ui.error('الرقم القومي مسجل مسبقاً لطالب آخر');
+            this.isSaving.set(false);
+          } else {
+            this.executeSubmitEdit(s.id);
+          }
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.ui.error('حدث خطأ أثناء التحقق من الرقم القومي');
+        }
+      });
+    } else {
+      this.executeSubmitEdit(s.id);
+    }
+  }
+
+  private executeSubmitEdit(studentId: number) {
+    this.studentService.updateStudent(studentId, this.editData).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.showEditModal.set(false);
         this.loadStudent();
+        this.ui.success('تم تحديث البيانات بنجاح');
       },
       error: () => {
         this.isSaving.set(false);

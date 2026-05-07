@@ -27,20 +27,24 @@ export class StudentListComponent implements OnInit {
   isSaving = signal(false);
   showAddModal = signal(false);
 
+  // Pagination & Filtering
+  currentPage = signal(1);
+  pageSize = signal(10);
+  selectedYearFilter = signal<number | null>(null);
+  selectedGroupFilter = signal<number | null>(null);
+  statusFilter = signal<boolean | null>(null);
+  
+  totalCount = this.studentService.totalCount;
+  students = this.studentService.students;
+
   academicYears = signal<AcademicYearViewDTO[]>([]);
   groups = signal<GroupCardDTO[]>([]);
 
   newStudent: StudentAddDTO = this.getInitialStudent();
 
-  studentCount = computed(() => this.studentService.students().length);
+  studentCount = computed(() => this.totalCount());
 
-  filteredStudents = computed(() => {
-    const query = this.searchQuery().toLowerCase();
-    return this.studentService.students().filter(s =>
-      s.fullName.toLowerCase().includes(query) ||
-      (s.academicYear?.name?.toLowerCase() || '').includes(query)
-    );
-  });
+  filteredStudents = computed(() => this.students());
 
   getInitialStudent(): StudentAddDTO {
     return {
@@ -61,9 +65,54 @@ export class StudentListComponent implements OnInit {
 
   loadStudents() {
     this.isLoading.set(true);
-    this.studentService.getStudents().subscribe(() => {
-      this.isLoading.set(false);
+    this.studentService.getStudents(
+      this.currentPage(),
+      this.pageSize(),
+      this.selectedYearFilter() || undefined,
+      this.selectedGroupFilter() || undefined,
+      this.searchQuery() || undefined,
+      this.statusFilter() === null ? undefined : this.statusFilter()!
+    ).subscribe({
+      next: () => this.isLoading.set(false),
+      error: () => this.isLoading.set(false)
     });
+  }
+
+  onSearch() {
+    this.currentPage.set(1);
+    this.loadStudents();
+  }
+
+  onFilterChange() {
+    this.currentPage.set(1);
+    this.loadStudents();
+  }
+
+  changePage(page: number) {
+    this.currentPage.set(page);
+    this.loadStudents();
+  }
+
+  get totalPages(): number {
+    return Math.ceil(this.totalCount() / this.pageSize());
+  }
+
+  get pages(): number[] {
+    const total = this.totalPages;
+    const current = this.currentPage();
+    const pages: number[] = [];
+    
+    let start = Math.max(1, current - 2);
+    let end = Math.min(total, start + 4);
+    
+    if (end - start < 4) {
+      start = Math.max(1, end - 4);
+    }
+    
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
   }
 
   loadAcademicYears() {
@@ -145,6 +194,27 @@ export class StudentListComponent implements OnInit {
       phoneNumbers: this.newStudent.phoneNumbers.filter(p => p.trim() !== '')
     };
 
+    if (this.newStudent.ssn) {
+      this.studentService.validateSSN(this.newStudent.ssn).subscribe({
+        next: (res) => {
+          if (res.isValid) {
+            this.ui.error('الرقم القومي مسجل مسبقاً لطالب آخر');
+            this.isSaving.set(false);
+          } else {
+            this.executeSubmit(payload);
+          }
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.ui.error('حدث خطأ أثناء التحقق من الرقم القومي');
+        }
+      });
+    } else {
+      this.executeSubmit(payload);
+    }
+  }
+
+  private executeSubmit(payload: StudentAddDTO) {
     this.studentService.createStudent(payload).subscribe({
       next: () => {
         this.ui.success('تم إضافة الطالب بنجاح');

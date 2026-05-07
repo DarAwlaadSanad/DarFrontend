@@ -426,11 +426,41 @@ export class GroupDetailsComponent implements OnInit {
       return;
     }
 
-    const payload = { ...this.newStudent, phoneNumbers: validPhones };
     this.isSaving.set(true);
+    const payload = { ...this.newStudent, phoneNumbers: validPhones };
+
+    if (this.newStudent.ssn) {
+      this.studentService.validateSSN(this.newStudent.ssn).subscribe({
+        next: (res) => {
+          if (res.isValid) {
+            this.ui.error('الرقم القومي مسجل مسبقاً لطالب آخر');
+            this.isSaving.set(false);
+          } else {
+            this.executeSubmitStudent(payload);
+          }
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.ui.error('حدث خطأ أثناء التحقق من الرقم القومي');
+        }
+      });
+    } else {
+      this.executeSubmitStudent(payload);
+    }
+  }
+
+  private executeSubmitStudent(payload: StudentAddDTO) {
     this.studentService.createStudent(payload).subscribe({
-      next: () => { this.isSaving.set(false); this.closeAddStudentModal(); this.loadDetails(this.details()!.groupId); },
-      error: () => { this.isSaving.set(false); this.ui.error('حدث خطأ أثناء إضافة الطالب'); }
+      next: () => { 
+        this.isSaving.set(false); 
+        this.closeAddStudentModal(); 
+        this.loadDetails(this.details()!.groupId); 
+        this.ui.success('تم إضافة الطالب بنجاح');
+      },
+      error: () => { 
+        this.isSaving.set(false); 
+        this.ui.error('حدث خطأ أثناء إضافة الطالب'); 
+      }
     });
   }
 

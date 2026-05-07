@@ -28,6 +28,7 @@ export interface StudentDetailsDTO {
   fullName: string;
   ssn?: string;
   isActive: boolean;
+  code: string;
   notes?: string;
   academicYear: AcademicYearViewDTO;
   memorizationRecords: MemorizationRecordDTO[];
@@ -57,6 +58,13 @@ export interface AttendanceRecord {
   studentId: number;
   date: string;
   status: 'Present' | 'Absent' | 'Late' | 'Excused';
+}
+
+export interface StudentPagedResultDTO {
+  items: StudentDetailsDTO[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
 }
 
 export interface AbsenceReport {

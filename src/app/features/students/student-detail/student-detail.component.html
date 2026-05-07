@@ -15,29 +15,36 @@
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
     </a>
-    <div>
-      <h1 class="text-xl lg:text-2xl font-bold text-white">{{ s.fullName }}</h1>
+    <!-- Header Actions -->
+    <div class="flex items-center gap-2 justify-between w-full">
+
+      <div>
+        <h1 class="text-xl lg:text-2xl font-bold text-white flex items-center gap-3">
+          {{ s.fullName }}
+          <span class="text-xs font-mono bg-dark-800 px-2 py-1 rounded-lg text-dark-500 border border-dark-700">#{{ s.code }}</span>
+        </h1>
+      </div>
+      <div class="flex items-center gap-2 no-print">
+        <button (click)="openEditModal()" class="btn-primary py-2 px-4 flex items-center gap-2 text-sm">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+          </svg>
+          <span class="hidden sm:inline">تعديل</span>
+        </button>
+        <button (click)="deleteStudent()"
+          class="btn-secondary text-red-400 hover:bg-red-500/10 py-2 px-4 flex items-center gap-2 text-sm">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span class="hidden sm:inline">حذف</span>
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Header Actions -->
-  <div class="flex items-center gap-2 no-print">
-    <button (click)="openEditModal()" class="btn-primary py-2 px-4 flex items-center gap-2 text-sm">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-      </svg>
-      <span class="hidden sm:inline">تعديل</span>
-    </button>
-    <button (click)="deleteStudent()"
-      class="btn-secondary text-red-400 hover:bg-red-500/10 py-2 px-4 flex items-center gap-2 text-sm">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-          d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-      </svg>
-      <span class="hidden sm:inline">حذف</span>
-    </button>
-  </div>
+
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -56,7 +63,10 @@
         </div>
 
         <div>
-          <h2 class="text-white font-bold text-lg">{{ s.fullName }}</h2>
+          <h2 class="text-white font-bold text-lg flex items-center justify-center gap-2">
+            {{ s.fullName }}
+            <span class="text-[10px] font-mono text-primary-400 opacity-70">({{ s.code }})</span>
+          </h2>
           <div class="flex flex-col items-center gap-1 mt-1">
             <p *ngIf="s.ssn" class="text-dark-400 text-xs font-mono">{{ s.ssn }}</p>
             <div class="flex items-center gap-2 mt-1">
@@ -194,42 +204,52 @@
             <span class="w-2 h-8 bg-primary-500 rounded-full"></span>
             الحلقات المسجل بها
           </h2>
-          <button (click)="showAssignGroupModal.set(true)" 
+          <button (click)="showAssignGroupModal.set(true)"
             class="btn-primary py-2 px-4 text-xs flex items-center gap-2">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4" /></svg>
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M12 4v16m8-8H4" />
+            </svg>
             تسجيل في حلقة
           </button>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div *ngFor="let group of studentGroups()" 
+          <div *ngFor="let group of studentGroups()"
             class="glass-card group hover:border-primary-500/50 transition-all duration-500 overflow-hidden relative">
-            <div class="absolute top-0 right-0 left-0 h-1 bg-gradient-to-l from-primary-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            
+            <div
+              class="absolute top-0 right-0 left-0 h-1 bg-gradient-to-l from-primary-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+            </div>
+
             <div class="p-6">
               <div class="flex items-start justify-between mb-6">
-                <div class="w-14 h-14 rounded-2xl bg-dark-800 flex items-center justify-center text-primary-400 group-hover:scale-110 transition-transform duration-500 shadow-inner">
+                <div
+                  class="w-14 h-14 rounded-2xl bg-dark-800 flex items-center justify-center text-primary-400 group-hover:scale-110 transition-transform duration-500 shadow-inner">
                   <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
                 </div>
                 <div class="flex items-center gap-2">
                   <div class="bg-dark-800/50 px-3 py-1 rounded-full border border-dark-700">
                     <span class="text-[10px] text-dark-500 uppercase tracking-wider font-bold">نشطة</span>
                   </div>
-                  <button (click)="onUnassignGroup(group.id)" 
+                  <button (click)="onUnassignGroup(group.id)"
                     class="p-1.5 text-dark-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                     title="حذف من المجموعة">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
               </div>
-              
-              <h3 class="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors">{{ group.name }}</h3>
+
+              <h3 class="text-xl font-bold text-white mb-2 group-hover:text-primary-400 transition-colors">{{ group.name
+                }}</h3>
               <div class="flex items-center gap-2 text-dark-400 text-sm mb-6">
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
                 <span>{{ group.teacherName || 'بانتظار المعلم' }}</span>
               </div>
 
@@ -238,7 +258,7 @@
                   <span class="text-sm font-bold text-white">{{ group.studentCount }}</span>
                   <span class="text-[10px] text-dark-500">طالب</span>
                 </div>
-                <a [routerLink]="['/dashboard/groups', group.id]" 
+                <a [routerLink]="['/dashboard/groups', group.id]"
                   class="btn-primary py-2 px-6 text-xs font-bold rounded-xl shadow-lg shadow-primary-500/20 group-hover:shadow-primary-500/40 transition-all">
                   عرض الحلقة
                 </a>
@@ -247,7 +267,7 @@
           </div>
         </div>
 
-        <div *ngIf="studentGroups().length === 0" 
+        <div *ngIf="studentGroups().length === 0"
           class="glass-card p-10 text-center text-dark-500 border-dashed border-2">
           <p class="text-sm">الطالب غير مسجل في أي حلقة حالياً</p>
         </div>
@@ -452,10 +472,12 @@
 
 <!-- Assign Group Modal -->
 <div *ngIf="showAssignGroupModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-  <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in" (click)="showAssignGroupModal.set(false)"></div>
-  <div class="relative bg-dark-900 w-full max-w-md rounded-2xl border border-dark-700 p-6 shadow-2xl animate-slide-up" dir="rtl">
+  <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in"
+    (click)="showAssignGroupModal.set(false)"></div>
+  <div class="relative bg-dark-900 w-full max-w-md rounded-2xl border border-dark-700 p-6 shadow-2xl animate-slide-up"
+    dir="rtl">
     <h2 class="text-xl font-bold text-white mb-6">تسجيل الطالب في حلقة</h2>
-    
+
     <div class="space-y-4">
       <div>
         <label class="block text-sm font-medium text-dark-300 mb-2">اختر الحلقة</label>
@@ -466,12 +488,14 @@
       </div>
 
       <div class="flex gap-3 pt-4">
-        <button (click)="onAssignGroup()" [disabled]="!selectedGroupId() || isSaving()" 
+        <button (click)="onAssignGroup()" [disabled]="!selectedGroupId() || isSaving()"
           class="btn-primary flex-1 py-3 text-sm font-bold">
           <span *ngIf="!isSaving()">تسجيل الطالب</span>
-          <div *ngIf="isSaving()" class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
+          <div *ngIf="isSaving()"
+            class="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin mx-auto"></div>
         </button>
-        <button (click)="showAssignGroupModal.set(false)" class="btn-secondary flex-1 py-3 text-sm font-bold">إلغاء</button>
+        <button (click)="showAssignGroupModal.set(false)"
+          class="btn-secondary flex-1 py-3 text-sm font-bold">إلغاء</button>
       </div>
     </div>
   </div>
