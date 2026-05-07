@@ -31,6 +31,7 @@ export class StudentService {
     formData.append('FullName', dto.fullName);
     if (dto.ssn) formData.append('SSN', dto.ssn);
     if (dto.notes) formData.append('Notes', dto.notes);
+    formData.append('AcademicYearId', dto.academicYearId.toString());
 
     dto.groupIds.forEach(id => formData.append('GroupIds', id.toString()));
     dto.phoneNumbers.forEach(phone => formData.append('PhoneNumbers', phone));

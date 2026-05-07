@@ -3,7 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
-import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO } from '../../../core/models/student.models';
+import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordDTO } from '../../../core/models/student.models';
+import { MemorizationService, MemorizationRecordCreateDTO } from '../../../core/services/memorization.service';
 
 @Component({
   selector: 'app-student-detail',
@@ -13,8 +14,25 @@ import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO } from '../../../cor
 })
 export class StudentDetailComponent implements OnInit {
   private studentService = inject(StudentService);
+  private memorizationService = inject(MemorizationService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+
+  surahs = this.memorizationService.surahs;
+  isAddingMemorization = signal(false);
+  newMemRecord: MemorizationRecordCreateDTO = this.getInitialMemRecord();
+
+  getInitialMemRecord(): MemorizationRecordCreateDTO {
+    return {
+      studentId: 0,
+      fromSurahId: 1,
+      fromAyah: 1,
+      toSurahId: 1,
+      toAyah: 1,
+      date: new Date().toISOString().split('T')[0],
+      notes: ''
+    };
+  }
 
   student = signal<StudentDetailsDTO | null>(null);
   isLoading = signal(true);
@@ -41,10 +59,40 @@ export class StudentDetailComponent implements OnInit {
     this.studentService.getStudent(id).subscribe({
       next: (data) => {
         this.student.set(data);
+        this.newMemRecord.studentId = data.id;
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
     });
+  }
+
+  onAddMemorization() {
+    this.isSaving.set(true);
+    this.memorizationService.add(this.newMemRecord).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.isAddingMemorization.set(false);
+        this.newMemRecord = this.getInitialMemRecord();
+        this.newMemRecord.studentId = this.student()?.id || 0;
+        this.loadStudent();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء إضافة السجل');
+      }
+    });
+  }
+
+  onDeleteMemorization(id: number) {
+    if (!confirm('هل تريد حذف هذا السجل؟')) return;
+    this.memorizationService.delete(id).subscribe({
+      next: () => this.loadStudent(),
+      error: () => alert('حدث خطأ أثناء الحذف')
+    });
+  }
+
+  getSurahName(id: number): string {
+    return this.memorizationService.getSurahName(id);
   }
 
   get age(): number | null {
@@ -213,5 +261,15 @@ export class StudentDetailComponent implements OnInit {
         alert('حدث خطأ أثناء حذف الصورة');
       }
     });
+  }
+
+  getSchoolTypeLabel(type: number | undefined): string {
+    if (type === undefined || type === null) return 'غير محدد';
+    switch (+type) {
+      case 0: return 'عام';
+      case 1: return 'أزهري';
+      case 2: return 'أخرى';
+      default: return 'غير محدد';
+    }
   }
 }

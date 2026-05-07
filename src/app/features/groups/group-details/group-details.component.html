@@ -27,6 +27,8 @@
   <div class="flex border-b border-dark-800 no-print overflow-x-auto">
     <button (click)="activeTab.set('records')"   [class]="activeTab()==='records'   ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">سجل المتابعة</button>
     <button (click)="activeTab.set('schedules')" [class]="activeTab()==='schedules' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">مواعيد الحلقة</button>
+    <button (click)="activeTab.set('fee-plans')" [class]="activeTab()==='fee-plans' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">خطط الدفع</button>
+    <button (click)="activeTab.set('student-fees')" [class]="activeTab()==='student-fees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">تحصيل الرسوم</button>
   </div>
 
   <!-- ── Records Tab ────────────────────────────────────────────────────────── -->
@@ -135,6 +137,127 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Fee Plans Tab ───────────────────────────────────────────────────────── -->
+  <div *ngIf="activeTab() === 'fee-plans'" class="space-y-4">
+    <div class="flex justify-between items-center">
+      <h3 class="text-base lg:text-lg font-bold text-white">خطط الدفع</h3>
+      <button (click)="openAddFeePlanModal()" class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"/></svg>
+        <span class="hidden sm:inline">إضافة خطة</span>
+        <span class="sm:hidden">خطة</span>
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div *ngFor="let plan of feePlans()" class="glass-card p-5 border-dark-800 relative overflow-hidden">
+        <div *ngIf="plan.isActive"  class="absolute top-0 left-0 bg-green-500 text-white text-[9px] px-2.5 py-1 font-bold rounded-br-lg">نشطة حالياً</div>
+        <div *ngIf="!plan.isActive" class="absolute top-0 left-0 bg-dark-700 text-dark-400 text-[9px] px-2.5 py-1 font-bold rounded-br-lg">منتهية</div>
+        
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-400 flex-shrink-0">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+          <div>
+            <h4 class="text-white font-bold text-lg">{{ plan.amount }} جنيه</h4>
+            <p class="text-dark-400 text-xs">قيمة الاشتراك</p>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t border-dark-800 flex flex-col gap-1 text-[11px]">
+          <div class="flex justify-between items-center">
+            <span class="text-dark-500">تاريخ التفعيل:</span>
+            <span class="text-white">{{ plan.effectiveFrom }}</span>
+          </div>
+          <div class="flex justify-between items-center" *ngIf="plan.effectiveTo">
+            <span class="text-dark-500">تاريخ الانتهاء:</span>
+            <span class="text-red-400">{{ plan.effectiveTo }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="plan.isActive" class="mt-4 pt-4 border-t border-dark-800">
+          <button (click)="deactivateFeePlan(plan.id)" class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-2 rounded-lg transition-all flex items-center justify-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            إلغاء تفعيل الخطة
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Student Fees Tab ──────────────────────────────────────────────────────── -->
+  <div *ngIf="activeTab() === 'student-fees'" class="space-y-4">
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div>
+        <h3 class="text-base lg:text-lg font-bold text-white">تحصيل الرسوم - {{ months[currentMonth()-1].label }} {{ currentYear() }}</h3>
+        <p class="text-dark-500 text-[10px]">عرض حالة الدفع للطلاب في الشهر المحدد</p>
+      </div>
+      <div class="flex items-center gap-2 w-full sm:w-auto">
+        <button (click)="generateFees()" [disabled]="isSaving()" class="btn-primary py-2 px-4 flex items-center gap-2 text-sm flex-1 sm:flex-initial">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+          توليد رسوم الشهر
+        </button>
+        <div class="flex gap-1 no-print">
+          <select [(ngModel)]="currentMonth" (change)="onMonthYearChange()" class="input-field py-2 px-2 text-xs w-24">
+            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+          </select>
+          <select [(ngModel)]="currentYear" (change)="onMonthYearChange()" class="input-field py-2 px-2 text-xs w-20">
+            <option [value]="2025">2025</option>
+            <option [value]="2026">2026</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass-card border-dark-800 overflow-hidden shadow-xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right border-collapse min-w-[600px]">
+          <thead>
+            <tr class="bg-dark-800/80 border-b border-dark-700">
+              <th class="px-4 lg:px-6 py-4 font-bold text-white text-sm">الطالب</th>
+              <th class="px-4 py-4 text-center font-bold text-white text-sm">المبلغ المطلوب</th>
+              <th class="px-4 py-4 text-center font-bold text-white text-sm">المبلغ المدفوع</th>
+              <th class="px-4 py-4 text-center font-bold text-white text-sm">تاريخ الدفع</th>
+              <th class="px-4 py-4 text-center font-bold text-white text-sm">الحالة</th>
+              <th class="px-4 py-4 text-center font-bold text-white text-sm no-print">إجراء</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-dark-800">
+            <tr *ngFor="let fee of studentFees()" class="hover:bg-dark-800/40 transition-colors">
+              <td class="px-4 lg:px-6 py-4">
+                <span class="text-white font-medium text-sm">{{ fee.studentName }}</span>
+              </td>
+              <td class="px-4 py-4 text-center text-dark-300 font-bold">{{ fee.requiredAmount }} جنيه</td>
+              <td class="px-4 py-4 text-center">
+                <span [class]="fee.amountPaid >= fee.requiredAmount ? 'text-green-400' : (fee.amountPaid > 0 ? 'text-yellow-400' : 'text-red-400')" class="font-bold">
+                  {{ fee.amountPaid }} جنيه
+                </span>
+              </td>
+              <td class="px-4 py-4 text-center text-dark-400 text-xs">
+                {{ fee.paymentDate || '---' }}
+              </td>
+              <td class="px-4 py-4 text-center">
+                <span *ngIf="fee.amountPaid >= fee.requiredAmount" class="px-2 py-1 rounded-md bg-green-500/10 text-green-400 text-[10px] font-bold border border-green-500/20">تم السداد</span>
+                <span *ngIf="fee.amountPaid > 0 && fee.amountPaid < fee.requiredAmount" class="px-2 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-[10px] font-bold border border-yellow-500/20">سداد جزئي</span>
+                <span *ngIf="fee.amountPaid === 0" class="px-2 py-1 rounded-md bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">لم يسدد</span>
+              </td>
+              <td class="px-4 py-4 text-center no-print">
+                <button (click)="openPaymentModal(fee)" class="text-primary-400 hover:text-white hover:bg-primary-500/20 px-3 py-1.5 rounded-lg text-xs transition-all font-bold">
+                  تحديث الدفع
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="studentFees().length === 0">
+              <td colspan="6" class="px-6 py-12 text-center text-dark-500">
+                <p class="mb-3">لم يتم توليد رسوم لهذا الشهر بعد</p>
+                <button (click)="generateFees()" class="text-primary-400 hover:underline text-sm font-bold">توليد الرسوم الآن</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- ── Session Editor Modal (Full-screen on mobile) ──────────────────────────── -->
@@ -240,6 +363,71 @@
   </div>
 </div>
 
+<!-- ── Record Payment Modal ─────────────────────────────────────────────────── -->
+<div *ngIf="showPaymentModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+  <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showPaymentModal.set(false)"></div>
+  <div class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up" dir="rtl">
+    <h2 class="text-xl font-bold text-white mb-2">تحديث حالة الدفع</h2>
+    <p class="text-dark-400 text-xs mb-6">تعديل المبلغ المدفوع للطالب: <span class="text-primary-400 font-bold">{{ editingFee()?.studentName }}</span></p>
+    
+    <form (ngSubmit)="submitPayment()" class="space-y-4">
+      <div>
+        <label class="label text-sm">المبلغ المدفوع (جنيه)</label>
+        <div class="relative">
+          <input type="number" name="paidAmount" [(ngModel)]="paymentDto.amountPaid" required class="input-field pl-12">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-xs">جنيه</span>
+        </div>
+        <p class="text-[10px] text-dark-500 mt-1">المبلغ المطلوب: {{ editingFee()?.requiredAmount }} جنيه</p>
+      </div>
+      <div>
+        <label class="label text-sm">تاريخ الدفع</label>
+        <input type="date" name="paymentDate" [(ngModel)]="paymentDto.paymentDate" class="input-field">
+      </div>
+      <div class="flex gap-3 pt-4">
+        <button type="submit" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm">
+          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          تحديث
+        </button>
+        <button type="button" (click)="showPaymentModal.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ── Add Fee Plan Modal ──────────────────────────────────────────────────────── -->
+<div *ngIf="showAddFeePlanModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+  <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showAddFeePlanModal.set(false)"></div>
+  <div class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up" dir="rtl">
+    <h2 class="text-xl font-bold text-white mb-5">إضافة خطة دفع جديدة</h2>
+    <form (ngSubmit)="submitFeePlan()" class="space-y-4">
+      <div>
+        <label class="label text-sm">المبلغ (جنيه)</label>
+        <div class="relative">
+          <input type="number" name="amount" [(ngModel)]="newFeePlan.amount" required class="input-field pl-12" placeholder="0.00">
+          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-xs">جنيه</span>
+        </div>
+      </div>
+      <div>
+        <label class="label text-sm">تاريخ التفعيل</label>
+        <input type="date" name="effective" [(ngModel)]="newFeePlan.effectiveFrom" required class="input-field">
+      </div>
+      <div class="p-3 bg-primary-500/5 rounded-xl border border-primary-500/10">
+        <p class="text-[10px] text-primary-400 leading-relaxed">
+          <svg class="w-3 h-3 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          سيتم إلغاء تفعيل الخطة الحالية تلقائياً عند تفعيل الخطة الجديدة.
+        </p>
+      </div>
+      <div class="flex gap-3 pt-2">
+        <button type="submit" [disabled]="isSaving() || !newFeePlan.amount" class="btn-primary flex-1 py-3 text-sm">
+          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          حفظ الخطة
+        </button>
+        <button type="button" (click)="showAddFeePlanModal.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <!-- ── Add Schedule Modal ─────────────────────────────────────────────────────── -->
 <div *ngIf="showAddScheduleModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showAddScheduleModal.set(false)"></div>
@@ -271,6 +459,11 @@
     <h2 class="text-xl font-bold text-white mb-5">إضافة طالب جديد</h2>
     <form (ngSubmit)="submitStudent()" #studentForm="ngForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div class="sm:col-span-2"><label class="label text-sm">الاسم الكامل</label><input type="text" name="fullName" [(ngModel)]="newStudent.fullName" required class="input-field" placeholder="اسم الطالب..."></div>
+      <div><label class="label text-sm">السنة الدراسية</label>
+        <select name="academicYearId" [(ngModel)]="newStudent.academicYearId" required class="input-field">
+          <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }}</option>
+        </select>
+      </div>
       <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn" class="input-field" placeholder="اختياري"></div>
       <div><label class="label text-sm">صورة</label><input type="file" (change)="onFileChange($event)" multiple class="file:bg-dark-800 file:text-dark-300 file:border-none file:px-3 file:py-1.5 file:rounded-lg file:ml-3 text-dark-400 text-xs w-full"></div>
       <div class="sm:col-span-2">

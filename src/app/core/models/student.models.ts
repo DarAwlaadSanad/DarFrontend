@@ -8,22 +8,37 @@ export interface PhoneViewDTO {
   number: string;
 }
 
+export interface MemorizationRecordDTO {
+  id: number;
+  studentId: number;
+  studentName: string;
+  fromSurahId: number;
+  fromAyah: number;
+  toSurahId: number;
+  toAyah: number;
+  date: string;
+  notes?: string;
+}
+
+import { AcademicYearViewDTO } from './academic-year.models';
+
 export interface StudentDetailsDTO {
   id: number;
   fullName: string;
   ssn?: string;
+  isActive: boolean;
   notes?: string;
-  images: ImageViewDTO[];
+  academicYear: AcademicYearViewDTO;
+  memorizationRecords: MemorizationRecordDTO[];
   phones: PhoneViewDTO[];
-  level?: string;
-  group?: string;
-  joiningDate?: string;
+  images: ImageViewDTO[];
 }
 
 export interface StudentAddDTO {
   fullName: string;
   ssn?: string;
   notes?: string;
+  academicYearId: number;
   groupIds: number[];
   imageFiles?: File[];
   phoneNumbers: string[];

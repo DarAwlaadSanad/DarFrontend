@@ -17,12 +17,6 @@
     </a>
     <div>
       <h1 class="text-xl lg:text-2xl font-bold text-white">{{ s.fullName }}</h1>
-      <div class="flex items-center gap-2 mt-0.5">
-        <p *ngIf="s.ssn" class="text-dark-400 text-sm font-mono">{{ s.ssn }}</p>
-        <span *ngIf="age !== null" class="text-primary-400 text-xs font-bold bg-primary-500/10 px-2 py-0.5 rounded-full">
-          {{ age }} سنة
-        </span>
-      </div>
     </div>
   </div>
 
@@ -52,7 +46,6 @@
 
       <!-- Avatar + Name -->
       <div class="glass-card p-6 border-dark-800 flex flex-col items-center text-center gap-4">
-        <!-- Avatar: first image or initials -->
         <div class="relative">
           <img *ngIf="s.images && s.images.length > 0" [src]="s.images[0].url" [alt]="s.fullName"
             class="w-24 h-24 rounded-2xl object-cover border-2 border-dark-700 shadow-xl">
@@ -66,9 +59,40 @@
           <h2 class="text-white font-bold text-lg">{{ s.fullName }}</h2>
           <div class="flex flex-col items-center gap-1 mt-1">
             <p *ngIf="s.ssn" class="text-dark-400 text-xs font-mono">{{ s.ssn }}</p>
-            <span *ngIf="age !== null" class="text-primary-400 text-[10px] font-bold bg-primary-500/10 px-2 py-0.5 rounded-full">
-              {{ age }} سنة
+            <div class="flex items-center gap-2 mt-1">
+              <span *ngIf="age !== null"
+                class="text-primary-400 text-[10px] font-bold bg-primary-500/10 px-2 py-0.5 rounded-full">
+                {{ age }} سنة
+              </span>
+              <span [class]="s.isActive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'"
+                class="text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {{ s.isActive ? 'نشط' : 'متوقف' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Academic Info -->
+        <div class="w-full pt-4 border-t border-dark-800 space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-dark-500 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
+              السنة الدراسية
             </span>
+            <span class="text-white font-bold">{{ s.academicYear?.name || 'غير محدد' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-dark-500 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              نوع التعليم
+            </span>
+            <span class="text-primary-400 font-bold">{{ getSchoolTypeLabel(s.academicYear?.typeSchool) }}</span>
           </div>
         </div>
       </div>
@@ -83,7 +107,8 @@
             </svg>
             أرقام التواصل
           </h3>
-          <button (click)="isAddingPhone.set(!isAddingPhone())" class="text-primary-400 hover:text-primary-300 transition-colors">
+          <button (click)="isAddingPhone.set(!isAddingPhone())"
+            class="text-primary-400 hover:text-primary-300 transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
@@ -93,33 +118,44 @@
         <!-- Add Phone Form -->
         <div *ngIf="isAddingPhone()" class="mb-4 animate-slide-down">
           <div class="flex gap-2">
-            <input type="text" [(ngModel)]="newPhoneNumber" placeholder="رقم الهاتف الجديد..." 
+            <input type="text" [(ngModel)]="newPhoneNumber" placeholder="رقم الهاتف الجديد..."
               class="input-field py-1.5 text-xs flex-1" maxlength="11">
-            <button (click)="onAddPhone()" [disabled]="newPhoneNumber.length !== 11 || isSaving()" class="btn-primary p-1.5 px-3 text-xs">حفظ</button>
+            <button (click)="onAddPhone()" [disabled]="newPhoneNumber.length !== 11 || isSaving()"
+              class="btn-primary p-1.5 px-3 text-xs">حفظ</button>
           </div>
         </div>
 
         <div class="space-y-2">
           <div *ngFor="let phone of s.phones" class="group relative">
-            <div *ngIf="editingPhoneId() !== phone.id" class="flex items-center gap-3 p-2.5 rounded-xl bg-dark-800/50 hover:bg-dark-700 transition-colors group">
+            <div *ngIf="editingPhoneId() !== phone.id"
+              class="flex items-center gap-3 p-2.5 rounded-xl bg-dark-800/50 hover:bg-dark-700 transition-colors group">
               <span class="w-6 h-6 rounded-lg bg-primary-500/10 text-primary-400 flex items-center justify-center flex-shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
               </span>
-              <a [href]="'tel:' + phone.number" class="text-white font-mono text-sm hover:text-primary-400 transition-colors flex-1">{{ phone.number }}</a>
-              
+              <a [href]="'tel:' + phone.number"
+                class="text-white font-mono text-sm hover:text-primary-400 transition-colors flex-1">{{ phone.number }}</a>
+
               <!-- Actions -->
               <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button (click)="startEditPhone(phone)" class="p-1 text-dark-400 hover:text-primary-400"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                <button (click)="onDeletePhone(phone.id)" class="p-1 text-dark-400 hover:text-red-400"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                <button (click)="startEditPhone(phone)" class="p-1 text-dark-400 hover:text-primary-400"><svg
+                    class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg></button>
+                <button (click)="onDeletePhone(phone.id)" class="p-1 text-dark-400 hover:text-red-400"><svg
+                    class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg></button>
               </div>
             </div>
 
             <!-- Edit Phone Form -->
             <div *ngIf="editingPhoneId() === phone.id" class="flex gap-2 p-2 rounded-xl bg-dark-700/50 animate-fade-in">
               <input type="text" [(ngModel)]="editingPhoneNumber" class="input-field py-1 text-xs flex-1" maxlength="11">
-              <button (click)="onUpdatePhone(phone.id)" [disabled]="editingPhoneNumber.length !== 11 || isSaving()" class="btn-primary p-1 px-2 text-[10px]">حفظ</button>
+              <button (click)="onUpdatePhone(phone.id)" [disabled]="editingPhoneNumber.length !== 11 || isSaving()"
+                class="btn-primary p-1 px-2 text-[10px]">حفظ</button>
               <button (click)="cancelEditPhone()" class="btn-secondary p-1 px-2 text-[10px]">إلغاء</button>
             </div>
           </div>
@@ -132,8 +168,7 @@
       <div class="glass-card p-5 border-dark-800" *ngIf="s.notes">
         <h3 class="text-sm font-bold text-dark-300 mb-3 flex items-center gap-2">
           <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
           </svg>
           ملاحظات
         </h3>
@@ -141,118 +176,168 @@
       </div>
     </div>
 
-    <!-- Right: Image gallery -->
-    <div class="lg:col-span-2">
-      <div class="glass-card p-5 border-dark-800 h-full relative">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-sm font-bold text-dark-300 flex items-center gap-2">
-            <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            الصور ({{ s.images.length || 0 }})
-          </h3>
-          <div class="relative overflow-hidden inline-block cursor-pointer">
-            <button class="btn-primary py-1.5 px-3 text-xs flex items-center gap-1">
-              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-              </svg>
-              رفع صورة
-            </button>
-            <input type="file" multiple (change)="onUploadImage($event)"
-              class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-          </div>
-        </div>
-
-        <!-- Has images -->
-        <div *ngIf="s.images && s.images.length > 0"
-          class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          <div *ngFor="let img of s.images" (click)="selectedImage.set(img.url)"
-            class="aspect-square rounded-xl overflow-hidden cursor-pointer group relative bg-dark-800">
-            <img [src]="img.url" [alt]="s.fullName"
-              class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105">
-            <div
-              class="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
-              <svg class="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7" />
+    <!-- Right Column: Memorization + Gallery -->
+    <div class="lg:col-span-2 space-y-6">
+      
+      <!-- Memorization Log (Premium UI) -->
+      <div class="glass-card overflow-hidden border-dark-800">
+        <!-- Header -->
+        <div class="p-6 border-b border-dark-800 bg-dark-900/50 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <!-- Delete image button -->
-            <button (click)="deleteImage(img.id, $event)"
-              class="absolute top-2 left-2 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all shadow-lg">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+            <div>
+              <h3 class="text-white font-bold">سجل الحفظ والمراجعة</h3>
+              <p class="text-dark-500 text-[10px] uppercase tracking-wider">تتبع تقدم الطالب في القرآن الكريم</p>
+            </div>
+          </div>
+          <button (click)="isAddingMemorization.set(!isAddingMemorization())" 
+            class="group p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300">
+            <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Add Form (Premium) -->
+        <div *ngIf="isAddingMemorization()" class="p-6 bg-dark-900/30 border-b border-dark-800 animate-slide-down">
+          <form (ngSubmit)="onAddMemorization()" #memForm="ngForm" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div class="p-4 rounded-2xl bg-dark-800/50 border border-dark-700">
+                <p class="text-[10px] font-bold text-primary-500 uppercase mb-3">نقطة البداية (من)</p>
+                <div class="flex gap-3">
+                  <div class="flex-1">
+                    <label class="block text-[10px] text-dark-500 mb-1">السورة</label>
+                    <select name="fromSurah" [(ngModel)]="newMemRecord.fromSurahId" class="input-field py-2 text-xs">
+                      <option *ngFor="let s of surahs" [value]="s.id">{{ s.name }}</option>
+                    </select>
+                  </div>
+                  <div class="w-20">
+                    <label class="block text-[10px] text-dark-500 mb-1">الآية</label>
+                    <input type="number" name="fromAyah" [(ngModel)]="newMemRecord.fromAyah" class="input-field py-2 text-xs text-center">
+                  </div>
+                </div>
+              </div>
+              <div class="p-4 rounded-2xl bg-dark-800/50 border border-dark-700">
+                <p class="text-[10px] font-bold text-green-500 uppercase mb-3">نقطة النهاية (إلى)</p>
+                <div class="flex gap-3">
+                  <div class="flex-1">
+                    <label class="block text-[10px] text-dark-500 mb-1">السورة</label>
+                    <select name="toSurah" [(ngModel)]="newMemRecord.toSurahId" class="input-field py-2 text-xs">
+                      <option *ngFor="let s of surahs" [value]="s.id">{{ s.name }}</option>
+                    </select>
+                  </div>
+                  <div class="w-20">
+                    <label class="block text-[10px] text-dark-500 mb-1">الآية</label>
+                    <input type="number" name="toAyah" [(ngModel)]="newMemRecord.toAyah" class="input-field py-2 text-xs text-center">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-[10px] text-dark-500 mb-1 mr-1">تاريخ الحلقة</label>
+                <input type="date" name="date" [(ngModel)]="newMemRecord.date" class="input-field py-2 text-xs">
+              </div>
+              <div>
+                <label class="block text-[10px] text-dark-500 mb-1 mr-1">ملاحظات المعلم</label>
+                <input type="text" name="notes" [(ngModel)]="newMemRecord.notes" class="input-field py-2 text-xs" placeholder="اكتب ملاحظة مختصرة...">
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-2">
+              <button type="button" (click)="isAddingMemorization.set(false)" class="px-6 py-2 rounded-xl text-xs font-bold text-dark-400 hover:text-white transition-colors">إلغاء</button>
+              <button type="submit" [disabled]="isSaving()" class="btn-primary px-8 py-2 text-xs">حفظ السجل</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Timeline View -->
+        <div class="p-6">
+          <div class="relative">
+            <div *ngIf="s.memorizationRecords && s.memorizationRecords.length > 0" class="absolute right-[21px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-500/50 via-dark-700 to-transparent"></div>
+            <div class="space-y-8">
+              <div *ngFor="let record of s.memorizationRecords || []" class="relative pr-12 group">
+                <div class="absolute right-0 top-0 w-11 h-11 rounded-2xl bg-dark-800 border-4 border-dark-900 flex flex-col items-center justify-center shadow-xl z-10">
+                  <span class="text-[10px] font-black text-white leading-none">{{ record.date | date:'dd' }}</span>
+                  <span class="text-[8px] font-bold text-primary-400 uppercase leading-none mt-0.5">{{ record.date | date:'MMM' }}</span>
+                </div>
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-dark-800/30 border border-dark-700/50 hover:border-dark-600 transition-all duration-300">
+                  <div class="flex-1">
+                    <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
+                       <div class="flex items-center gap-2">
+                          <span class="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
+                          <span class="text-sm font-bold text-white">من {{ getSurahName(record.fromSurahId) }}</span>
+                          <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px]">آية {{ record.fromAyah }}</span>
+                       </div>
+                       <svg class="w-4 h-4 text-dark-600 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 19l-7-7 7-7" /></svg>
+                       <div class="flex items-center gap-2">
+                          <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                          <span class="text-sm font-bold text-white">إلى {{ getSurahName(record.toSurahId) }}</span>
+                          <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px]">آية {{ record.toAyah }}</span>
+                       </div>
+                    </div>
+                    <div *ngIf="record.notes" class="mt-2 flex items-center gap-2">
+                       <p class="text-[11px] text-dark-400 italic">{{ record.notes }}</p>
+                    </div>
+                  </div>
+                  <button (click)="onDeleteMemorization(record.id)" class="p-2 rounded-lg text-dark-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="!s.memorizationRecords || s.memorizationRecords.length === 0" class="py-20 text-center">
+              <p class="text-dark-500 italic">لم يتم تسجيل أي حلقات حفظ لهذا الطالب بعد</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Gallery -->
+      <div class="glass-card p-5 border-dark-800">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold text-dark-300 flex items-center gap-2">الصور ({{ s.images.length || 0 }})</h3>
+          <div class="relative overflow-hidden inline-block cursor-pointer">
+            <button class="btn-primary py-1.5 px-3 text-xs flex items-center gap-1">رفع صورة</button>
+            <input type="file" multiple (change)="onUploadImage($event)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+          </div>
+        </div>
+        <div *ngIf="s.images && s.images.length > 0" class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div *ngFor="let img of s.images" (click)="selectedImage.set(img.url)" class="aspect-square rounded-xl overflow-hidden cursor-pointer group relative bg-dark-800">
+            <img [src]="img.url" class="w-full h-full object-cover">
+            <button (click)="deleteImage(img.id, $event)" class="absolute top-2 left-2 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
           </div>
         </div>
-
-        <!-- No images -->
-        <div *ngIf="!s.images || s.images.length === 0"
-          class="flex flex-col items-center justify-center py-16 text-center">
-          <div class="w-16 h-16 rounded-2xl bg-dark-800 flex items-center justify-center mb-4">
-            <svg class="w-8 h-8 text-dark-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <p class="text-dark-500 text-sm">لا يوجد صور مرفوعة</p>
-        </div>
+        <div *ngIf="!s.images || s.images.length === 0" class="py-16 text-center text-dark-500 text-sm">لا يوجد صور مرفوعة</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ── Image Lightbox ──────────────────────────────────────────────────────── -->
-<div *ngIf="selectedImage()"
-  class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
-  (click)="selectedImage.set(null)">
-  <img [src]="selectedImage()!" class="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
-    (click)="$event.stopPropagation()">
-  <button (click)="selectedImage.set(null)"
-    class="absolute top-4 left-4 p-2 rounded-full bg-dark-800/80 text-white hover:bg-dark-700 transition-colors">
-    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-    </svg>
-  </button>
+<!-- Image Lightbox -->
+<div *ngIf="selectedImage()" class="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" (click)="selectedImage.set(null)">
+  <img [src]="selectedImage()!" class="max-w-full max-h-full rounded-2xl shadow-2xl object-contain">
 </div>
 
-<!-- ── Edit Student Modal ────────────────────────────────────────────────────── -->
-<div *ngIf="showEditModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+<!-- Edit Modal -->
+<div *ngIf="showEditModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showEditModal.set(false)"></div>
-  <div
-    class="relative bg-dark-900 w-full sm:max-w-2xl sm:rounded-2xl border-t sm:border border-dark-700 p-6 overflow-y-auto max-h-[92vh]"
-    dir="rtl">
+  <div class="relative bg-dark-900 w-full max-w-2xl rounded-2xl border border-dark-700 p-6 overflow-y-auto max-h-[92vh]" dir="rtl">
     <h2 class="text-xl font-bold text-white mb-5">تعديل بيانات الطالب</h2>
-    <form (ngSubmit)="submitEdit()" #editForm="ngForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="sm:col-span-2">
-        <label class="label text-sm">الاسم الكامل</label>
-        <input type="text" name="fullName" [(ngModel)]="editData.fullName" required class="input-field"
-          placeholder="اسم الطالب...">
-      </div>
-      <div class="sm:col-span-2">
-        <label class="label text-sm">الرقم القومي</label>
-        <input type="text" name="ssn" [(ngModel)]="editData.ssn" class="input-field" placeholder="اختياري">
-      </div>
-
-      <div class="sm:col-span-2">
-        <label class="label text-sm">ملاحظات</label>
-        <textarea name="notes" [(ngModel)]="editData.notes" class="input-field min-h-[80px] text-sm"
-          placeholder="ملاحظات..."></textarea>
-      </div>
-      <div class="sm:col-span-2 flex gap-3 pt-4">
-        <button type="submit" [disabled]="!editForm.valid || isSaving()" class="btn-primary flex-1 py-3 text-sm">
-          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          حفظ التعديلات
-        </button>
-        <button type="button" (click)="showEditModal.set(false)"
-          class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+    <form (ngSubmit)="submitEdit()" #editForm="ngForm" class="grid grid-cols-1 gap-4">
+      <input type="text" name="fullName" [(ngModel)]="editData.fullName" required class="input-field" placeholder="الاسم الكامل">
+      <input type="text" name="ssn" [(ngModel)]="editData.ssn" class="input-field" placeholder="الرقم القومي">
+      <textarea name="notes" [(ngModel)]="editData.notes" class="input-field min-h-[80px]" placeholder="ملاحظات"></textarea>
+      <div class="flex gap-3 pt-4">
+        <button type="submit" class="btn-primary flex-1 py-3">حفظ التعديلات</button>
+        <button type="button" (click)="showEditModal.set(false)" class="btn-secondary flex-1 py-3">إلغاء</button>
       </div>
     </form>
   </div>

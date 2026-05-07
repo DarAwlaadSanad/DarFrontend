@@ -11,6 +11,12 @@ import { EvaluationService } from '../../../core/services/evaluation.service';
 import { GroupDetailsDTO, AttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
 import { StudentAddDTO } from '../../../core/models/student.models';
 import { GroupScheduleViewDTO, CreateGroupScheduleDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
+import { FeePlanService } from '../../../core/services/fee-plan.service';
+import { FeePlanViewDTO, FeePlanAddDTO } from '../../../core/models/fee-plan.models';
+import { AcademicYearService } from '../../../core/services/academic-year.service';
+import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
+import { StudentFeeService } from '../../../core/services/student-fee.service';
+import { StudentFeeViewDTO, UpdateStudentFeePaymentDTO } from '../../../core/models/student-fee.models';
 
 /** Per-student row inside the session editor */
 interface SessionEditorRow {
@@ -34,10 +40,13 @@ export class GroupDetailsComponent implements OnInit {
   private scheduleService = inject(ScheduleService);
   private attendanceSvc = inject(AttendanceBatchService);
   private evaluationSvc = inject(EvaluationService);
+  private feePlanService = inject(FeePlanService);
+  private academicYearService = inject(AcademicYearService);
+  private studentFeeService = inject(StudentFeeService);
   private route = inject(ActivatedRoute);
 
   details = signal<GroupDetailsDTO | null>(null);
-  activeTab = signal<'records' | 'schedules'>('records');
+  activeTab = signal<'records' | 'schedules' | 'fee-plans' | 'student-fees'>('records');
   isLoading = signal(false);
   isSaving = signal(false);
 
@@ -88,8 +97,9 @@ export class GroupDetailsComponent implements OnInit {
 
   // ── Add Student ─────────────────────────────────────────────────────────────
   showAddStudentModal = signal(false);
+  academicYears = signal<AcademicYearViewDTO[]>([]);
   newStudent: StudentAddDTO = {
-    fullName: '', ssn: '', notes: '', groupIds: [], phoneNumbers: [''], imageFiles: []
+    fullName: '', ssn: '', notes: '', academicYearId: 0, groupIds: [], phoneNumbers: [''], imageFiles: []
   };
 
   months = [
@@ -105,14 +115,25 @@ export class GroupDetailsComponent implements OnInit {
       if (id) {
         this.loadDetails(id);
         this.loadSchedules(id);
+        this.loadFeePlans(id);
+        this.loadAcademicYears();
+        this.loadStudentFees(id);
       }
     });
+  }
+
+  loadAcademicYears() {
+    this.academicYearService.getAll().subscribe(data => this.academicYears.set(data));
   }
 
   loadDetails(id: number) {
     this.isLoading.set(true);
     this.groupService.getDetails(id, this.currentMonth(), this.currentYear()).subscribe({
-      next: (data) => { this.details.set(data); this.isLoading.set(false); },
+      next: (data) => { 
+        this.details.set(data); 
+        this.loadStudentFees(id); // Reload fees when month/year changes
+        this.isLoading.set(false); 
+      },
       error: () => this.isLoading.set(false)
     });
   }
@@ -239,9 +260,123 @@ export class GroupDetailsComponent implements OnInit {
     return this.days.find(d => d.value === +day)?.label || '';
   }
 
+  // ── Fee Plans ───────────────────────────────────────────────────────────────
+  feePlans = signal<FeePlanViewDTO[]>([]);
+  showAddFeePlanModal = signal(false);
+  newFeePlan: FeePlanAddDTO = {
+    groupId: 0,
+    amount: 0,
+    effectiveFrom: new Date().toISOString().split('T')[0]
+  };
+
+  loadFeePlans(groupId: number) {
+    this.feePlanService.getAll(groupId).subscribe({
+      next: (data) => this.feePlans.set(data),
+      error: () => this.feePlans.set([])
+    });
+  }
+
+  openAddFeePlanModal() {
+    this.newFeePlan = {
+      groupId: this.details()!.groupId,
+      amount: 0,
+      effectiveFrom: new Date().toISOString().split('T')[0]
+    };
+    this.showAddFeePlanModal.set(true);
+  }
+
+  submitFeePlan() {
+    if (this.newFeePlan.amount <= 0) {
+      alert('يرجى إدخال مبلغ صحيح');
+      return;
+    }
+    this.isSaving.set(true);
+    this.feePlanService.add(this.newFeePlan).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.showAddFeePlanModal.set(false);
+        this.loadFeePlans(this.details()!.groupId);
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء إضافة خطة الدفع');
+      }
+    });
+  }
+
+  deactivateFeePlan(id: number) {
+    if (!confirm('هل تريد إلغاء تفعيل هذه الخطة؟')) return;
+    this.feePlanService.deactivate(id).subscribe({
+      next: () => this.loadFeePlans(this.details()!.groupId),
+      error: () => alert('حدث خطأ أثناء الإلغاء')
+    });
+  }
+
+  // ── Student Fees ────────────────────────────────────────────────────────────
+  studentFees = signal<StudentFeeViewDTO[]>([]);
+  showPaymentModal = signal(false);
+  editingFee = signal<StudentFeeViewDTO | null>(null);
+  paymentDto: UpdateStudentFeePaymentDTO = { amountPaid: 0, paymentDate: '' };
+
+  loadStudentFees(groupId: number) {
+    this.studentFeeService.getAll(groupId, this.currentMonth(), this.currentYear()).subscribe({
+      next: (data) => this.studentFees.set(data),
+      error: () => this.studentFees.set([])
+    });
+  }
+
+  generateFees() {
+    const activePlan = this.feePlans().find(p => p.isActive);
+    if (!activePlan) {
+      alert('لا توجد خطة دفع نشطة لهذه الحلقة. يرجى إضافة خطة أولاً.');
+      return;
+    }
+
+    if (!confirm(`هل تريد توليد رسوم شهر ${this.currentMonth()}/${this.currentYear()} لجميع الطلاب بناءً على الخطة النشطة (${activePlan.amount} جنيه)؟`)) return;
+
+    this.isSaving.set(true);
+    this.studentFeeService.generate(activePlan.id, this.currentMonth(), this.currentYear()).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.loadStudentFees(this.details()!.groupId);
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء توليد الرسوم');
+      }
+    });
+  }
+
+  openPaymentModal(fee: StudentFeeViewDTO) {
+    this.editingFee.set(fee);
+    this.paymentDto = {
+      amountPaid: fee.amountPaid || fee.requiredAmount,
+      paymentDate: fee.paymentDate || new Date().toISOString().split('T')[0]
+    };
+    this.showPaymentModal.set(true);
+  }
+
+  submitPayment() {
+    const fee = this.editingFee();
+    if (!fee) return;
+
+    this.isSaving.set(true);
+    this.studentFeeService.updatePayment(fee.id, this.paymentDto).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.showPaymentModal.set(false);
+        this.loadStudentFees(this.details()!.groupId);
+      },
+      error: () => {
+        this.isSaving.set(false);
+        alert('حدث خطأ أثناء تحديث الدفع');
+      }
+    });
+  }
+
   // ── Add Student ─────────────────────────────────────────────────────────────
   openAddStudentModal() {
-    this.newStudent = { fullName: '', ssn: '', notes: '', groupIds: [this.details()!.groupId], phoneNumbers: [''], imageFiles: [] };
+    this.newStudent = { fullName: '', ssn: '', notes: '', academicYearId: this.academicYears()[0]?.id || 0, groupIds: [this.details()!.groupId], phoneNumbers: [''], imageFiles: [] };
     this.showAddStudentModal.set(true);
   }
   closeAddStudentModal() { this.showAddStudentModal.set(false); }

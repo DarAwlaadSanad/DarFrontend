@@ -17,14 +17,13 @@ export class StudentListComponent implements OnInit {
 
   filteredStudents = computed(() => {
     const query = this.searchQuery().toLowerCase();
-    return this.studentService.students().filter(s => 
-      s.fullName.toLowerCase().includes(query) || 
-      s.group?.toLowerCase().includes(query) ||
-      s.level?.toLowerCase().includes(query)
+    return this.studentService.students().filter(s =>
+      s.fullName.toLowerCase().includes(query) ||
+      (s.academicYear?.name?.toLowerCase() || '').includes(query)
     );
   });
 
-  constructor(public studentService: StudentService) {}
+  constructor(public studentService: StudentService) { }
 
   ngOnInit() {
     this.loadStudents();

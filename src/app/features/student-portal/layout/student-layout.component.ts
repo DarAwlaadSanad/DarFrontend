@@ -41,6 +41,7 @@ import { AuthService } from '../../../core/services/auth.service';
           >
             <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
               <svg *ngIf="item.icon === 'home'"   class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+              <svg *ngIf="item.icon === 'user'"   class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7 7z" /></svg>
               <svg *ngIf="item.icon === 'shield'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
             </div>
             <span *ngIf="isSidebarOpen()" class="mr-4 font-medium text-sm">{{ item.label }}</span>
@@ -80,10 +81,12 @@ import { AuthService } from '../../../core/services/auth.service';
               </button>
               <div *ngIf="isProfileOpen()" class="absolute left-0 mt-2 w-44 bg-dark-800 border border-dark-700 rounded-xl shadow-2xl py-2 animate-fade-in z-50">
                 <div class="px-4 py-2 border-b border-dark-700 mb-2">
-                  <p class="text-xs text-dark-400">اسم المستخدم</p>
-                  <p class="text-sm font-medium text-white truncate">{{ authService.currentUser()?.userName }}</p>
+                  <p class="text-xs text-dark-500 uppercase font-bold tracking-widest mb-1">بيانات الطالب</p>
+                  <p class="text-sm font-bold text-white truncate">{{ authService.currentUser()?.fullName }}</p>
                 </div>
-                <button (click)="logout()" class="block w-full text-right px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors">تسجيل الخروج</button>
+                <a routerLink="/student/profile" (click)="isProfileOpen.set(false)" class="block px-4 py-2 text-sm text-dark-200 hover:bg-dark-700 transition-colors">الملف الشخصي</a>
+                <a routerLink="/student/change-password" (click)="isProfileOpen.set(false)" class="block px-4 py-2 text-sm text-dark-200 hover:bg-dark-700 transition-colors">تغيير كلمة المرور</a>
+                <button (click)="logout()" class="block w-full text-right px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors border-t border-dark-700 mt-2">تسجيل الخروج</button>
               </div>
             </div>
           </div>
@@ -107,6 +110,7 @@ export class StudentLayoutComponent {
 
   navItems = [
     { label: 'حلقاتي', icon: 'home', route: '/student', exact: true },
+    { label: 'ملفي الشخصي', icon: 'user', route: '/student/profile', exact: false },
     { label: 'تغيير السر', icon: 'shield', route: '/student/change-password', exact: false },
   ];
 

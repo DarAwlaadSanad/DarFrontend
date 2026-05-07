@@ -51,6 +51,11 @@ export const routes: Routes = [
           import('./features/users/user-list/user-list.component').then(m => m.UserListComponent),
       },
       {
+        path: 'academic-years',
+        loadComponent: () =>
+          import('./features/academic-years/academic-year-list.component').then(m => m.AcademicYearListComponent),
+      },
+      {
         path: '',
         redirectTo: 'home',
         pathMatch: 'full',
@@ -72,6 +77,11 @@ export const routes: Routes = [
         path: 'groups/:id',
         loadComponent: () =>
           import('./features/student-portal/group-details/student-group-details.component').then(m => m.StudentGroupDetailsComponent),
+      },
+      {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/student-portal/profile/student-profile.component').then(m => m.StudentProfileComponent),
       },
       {
         path: 'change-password',
