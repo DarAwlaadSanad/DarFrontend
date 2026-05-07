@@ -15,11 +15,11 @@ export class DashboardComponent {
   isMobile = signal(window.innerWidth < 1024);
 
   navItems = [
-    { label: 'الرئيسية',     icon: 'home',         route: '/dashboard/home' },
-    { label: 'الحلقات',      icon: 'book',         route: '/dashboard/groups' },
-    { label: 'الطلاب',       icon: 'users',        route: '/dashboard/students' },
-    { label: 'السنوات الدراسية', icon: 'calendar',     route: '/dashboard/academic-years' },
-    { label: 'المستخدمين',   icon: 'shield-lock',  route: '/dashboard/users' },
+    { label: 'الطلاب', icon: 'users', route: '/dashboard/students' },
+    { label: 'الحلقات', icon: 'book', route: '/dashboard/groups' },
+    { label: 'السنوات الدراسية', icon: 'calendar', route: '/dashboard/academic-years' },
+    { label: 'المصروفات', icon: 'cash', route: '/dashboard/fees' },
+    { label: 'المستخدمين', icon: 'shield-lock', route: '/dashboard/users' },
   ];
 
   constructor(private authService: AuthService, private router: Router) {

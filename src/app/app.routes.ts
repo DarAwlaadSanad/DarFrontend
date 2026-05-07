@@ -21,11 +21,6 @@ export const routes: Routes = [
       import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     children: [
       {
-        path: 'home',
-        loadComponent: () =>
-          import('./features/dashboard/home/home.component').then(m => m.HomeComponent),
-      },
-      {
         path: 'groups',
         loadComponent: () =>
           import('./features/groups/group-list/group-list.component').then(m => m.GroupListComponent),
@@ -56,8 +51,13 @@ export const routes: Routes = [
           import('./features/academic-years/academic-year-list.component').then(m => m.AcademicYearListComponent),
       },
       {
+        path: 'fees',
+        loadComponent: () =>
+          import('./features/student-fees/student-fee-list.component').then(m => m.StudentFeeListComponent),
+      },
+      {
         path: '',
-        redirectTo: 'home',
+        redirectTo: 'students',
         pathMatch: 'full',
       },
     ],

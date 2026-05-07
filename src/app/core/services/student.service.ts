@@ -79,6 +79,17 @@ export class StudentService {
     });
   }
 
+  assignGroup(studentId: number, groupId: number): Observable<string> {
+    return this.http.post<string>(`${this.apiUrl}/assainGroup`, null, {
+      params: { studentId: studentId.toString(), groupId: groupId.toString() },
+      responseType: 'text' as 'json'
+    });
+  }
+
+  getStudentGroups(studentId: number): Observable<GroupCardDTO[]> {
+    return this.http.get<GroupCardDTO[]>(`${this.apiUrl}/${studentId}/groups`);
+  }
+
   // ── Student Portal ──────────────────────────────────────────────────────────
   studentLogin(dto: StudentLoginDTO): Observable<AuthResponse> {
     this.isLoading.set(true);

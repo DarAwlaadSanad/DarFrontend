@@ -21,6 +21,7 @@ export interface MemorizationRecordDTO {
 }
 
 import { AcademicYearViewDTO } from './academic-year.models';
+import { GroupCardDTO } from './group.models';
 
 export interface StudentDetailsDTO {
   id: number;
@@ -30,6 +31,7 @@ export interface StudentDetailsDTO {
   notes?: string;
   academicYear: AcademicYearViewDTO;
   memorizationRecords: MemorizationRecordDTO[];
+  groups: GroupCardDTO[];
   phones: PhoneViewDTO[];
   images: ImageViewDTO[];
 }

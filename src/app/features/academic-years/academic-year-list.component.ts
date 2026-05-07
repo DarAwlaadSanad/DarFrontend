@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AcademicYearService } from '../../core/services/academic-year.service';
 import { AcademicYearViewDTO, AcademicYearAddDTO, TypeSchool } from '../../core/models/academic-year.models';
+import { UiService } from '../../core/services/ui.service';
 
 @Component({
   selector: 'app-academic-year-list',
@@ -84,6 +85,7 @@ import { AcademicYearViewDTO, AcademicYearAddDTO, TypeSchool } from '../../core/
 })
 export class AcademicYearListComponent implements OnInit {
   private service = inject(AcademicYearService);
+  private ui = inject(UiService);
   
   academicYears = signal<AcademicYearViewDTO[]>([]);
   isLoading = signal(false);
@@ -119,20 +121,24 @@ export class AcademicYearListComponent implements OnInit {
         this.isSaving.set(false);
         this.showAddModal.set(false);
         this.newYear = { name: '', typeSchool: TypeSchool.Public };
+        this.ui.success('تم إضافة السنة الدراسية بنجاح');
         this.loadData();
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء الإضافة');
+        this.ui.error('حدث خطأ أثناء الإضافة');
       }
     });
   }
 
-  deleteYear(id: number) {
-    if (!confirm('هل أنت متأكد من حذف هذه السنة الدراسية؟ قد يؤثر ذلك على الطلاب المرتبطين بها.')) return;
+  async deleteYear(id: number) {
+    if (!await this.ui.confirm('هل أنت متأكد من حذف هذه السنة الدراسية؟ قد يؤثر ذلك على الطلاب المرتبطين بها.')) return;
     this.service.delete(id).subscribe({
-      next: () => this.loadData(),
-      error: () => alert('حدث خطأ أثناء الحذف')
+      next: () => {
+        this.ui.success('تم حذف السنة الدراسية بنجاح');
+        this.loadData();
+      },
+      error: () => this.ui.error('حدث خطأ أثناء الحذف')
     });
   }
 

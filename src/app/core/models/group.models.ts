@@ -22,6 +22,7 @@ export interface StudentInGroupDTO {
   studentName: string;
   records: { [key: number]: SessionRecordDTO };
   totalPresent: number;
+  totalEvaluation: number;
 }
 
 export interface GroupDetailsDTO {

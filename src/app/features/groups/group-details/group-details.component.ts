@@ -17,6 +17,7 @@ import { AcademicYearService } from '../../../core/services/academic-year.servic
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { StudentFeeService } from '../../../core/services/student-fee.service';
 import { StudentFeeViewDTO, UpdateStudentFeePaymentDTO } from '../../../core/models/student-fee.models';
+import { UiService } from '../../../core/services/ui.service';
 
 /** Per-student row inside the session editor */
 interface SessionEditorRow {
@@ -43,6 +44,7 @@ export class GroupDetailsComponent implements OnInit {
   private feePlanService = inject(FeePlanService);
   private academicYearService = inject(AcademicYearService);
   private studentFeeService = inject(StudentFeeService);
+  private ui = inject(UiService);
   private route = inject(ActivatedRoute);
 
   details = signal<GroupDetailsDTO | null>(null);
@@ -98,6 +100,7 @@ export class GroupDetailsComponent implements OnInit {
   // ── Add Student ─────────────────────────────────────────────────────────────
   showAddStudentModal = signal(false);
   academicYears = signal<AcademicYearViewDTO[]>([]);
+  imagePreviews = signal<string[]>([]);
   newStudent: StudentAddDTO = {
     fullName: '', ssn: '', notes: '', academicYearId: 0, groupIds: [], phoneNumbers: [''], imageFiles: []
   };
@@ -212,7 +215,7 @@ export class GroupDetailsComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء الحفظ');
+        this.ui.error('حدث خطأ أثناء الحفظ');
       }
     });
   }
@@ -244,15 +247,18 @@ export class GroupDetailsComponent implements OnInit {
         this.loadSchedules(this.details()!.groupId);
         this.loadDetails(this.details()!.groupId);
       },
-      error: () => { this.isSaving.set(false); alert('حدث خطأ أثناء إضافة الموعد'); }
+      error: () => { this.isSaving.set(false); this.ui.error('حدث خطأ أثناء إضافة الموعد'); }
     });
   }
 
-  removeSchedule(id: number) {
-    if (!confirm('هل تريد إلغاء تفعيل هذا الموعد؟')) return;
+  async removeSchedule(id: number) {
+    if (!await this.ui.confirm('هل تريد إلغاء تفعيل هذا الموعد؟')) return;
     this.scheduleService.removeSchedule(id).subscribe({
-      next: () => this.loadSchedules(this.details()!.groupId),
-      error: () => alert('حدث خطأ أثناء الحذف')
+      next: () => {
+        this.ui.success('تم إلغاء تفعيل الموعد');
+        this.loadSchedules(this.details()!.groupId);
+      },
+      error: () => this.ui.error('حدث خطأ أثناء الحذف')
     });
   }
 
@@ -287,7 +293,7 @@ export class GroupDetailsComponent implements OnInit {
 
   submitFeePlan() {
     if (this.newFeePlan.amount <= 0) {
-      alert('يرجى إدخال مبلغ صحيح');
+      this.ui.error('يرجى إدخال مبلغ صحيح');
       return;
     }
     this.isSaving.set(true);
@@ -299,16 +305,19 @@ export class GroupDetailsComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء إضافة خطة الدفع');
+        this.ui.error('حدث خطأ أثناء إضافة خطة الدفع');
       }
     });
   }
 
-  deactivateFeePlan(id: number) {
-    if (!confirm('هل تريد إلغاء تفعيل هذه الخطة؟')) return;
+  async deactivateFeePlan(id: number) {
+    if (!await this.ui.confirm('هل تريد إلغاء تفعيل هذه الخطة؟')) return;
     this.feePlanService.deactivate(id).subscribe({
-      next: () => this.loadFeePlans(this.details()!.groupId),
-      error: () => alert('حدث خطأ أثناء الإلغاء')
+      next: () => {
+        this.ui.success('تم إلغاء تفعيل الخطة');
+        this.loadFeePlans(this.details()!.groupId);
+      },
+      error: () => this.ui.error('حدث خطأ أثناء الإلغاء')
     });
   }
 
@@ -325,24 +334,25 @@ export class GroupDetailsComponent implements OnInit {
     });
   }
 
-  generateFees() {
+  async generateFees() {
     const activePlan = this.feePlans().find(p => p.isActive);
     if (!activePlan) {
-      alert('لا توجد خطة دفع نشطة لهذه الحلقة. يرجى إضافة خطة أولاً.');
+      this.ui.error('لا توجد خطة دفع نشطة لهذه الحلقة. يرجى إضافة خطة أولاً.');
       return;
     }
 
-    if (!confirm(`هل تريد توليد رسوم شهر ${this.currentMonth()}/${this.currentYear()} لجميع الطلاب بناءً على الخطة النشطة (${activePlan.amount} جنيه)؟`)) return;
+    if (!await this.ui.confirm(`هل تريد توليد رسوم شهر ${this.currentMonth()}/${this.currentYear()} لجميع الطلاب بناءً على الخطة النشطة (${activePlan.amount} جنيه)؟`)) return;
 
     this.isSaving.set(true);
-    this.studentFeeService.generate(activePlan.id, this.currentMonth(), this.currentYear()).subscribe({
+    this.studentFeeService.generate(activePlan.id, this.details()!.groupId, this.currentMonth(), this.currentYear()).subscribe({
       next: () => {
+        this.ui.success('تم توليد الرسوم بنجاح');
         this.isSaving.set(false);
         this.loadStudentFees(this.details()!.groupId);
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء توليد الرسوم');
+        this.ui.error('حدث خطأ أثناء توليد الرسوم');
       }
     });
   }
@@ -369,7 +379,7 @@ export class GroupDetailsComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء تحديث الدفع');
+        this.ui.error('حدث خطأ أثناء تحديث الدفع');
       }
     });
   }
@@ -377,12 +387,31 @@ export class GroupDetailsComponent implements OnInit {
   // ── Add Student ─────────────────────────────────────────────────────────────
   openAddStudentModal() {
     this.newStudent = { fullName: '', ssn: '', notes: '', academicYearId: this.academicYears()[0]?.id || 0, groupIds: [this.details()!.groupId], phoneNumbers: [''], imageFiles: [] };
+    this.imagePreviews.set([]);
     this.showAddStudentModal.set(true);
   }
   closeAddStudentModal() { this.showAddStudentModal.set(false); }
   addPhone() { this.newStudent.phoneNumbers.push(''); }
   removePhone(i: number) { this.newStudent.phoneNumbers.splice(i, 1); }
-  onFileChange(e: any) { if (e.target.files.length) this.newStudent.imageFiles = Array.from(e.target.files); }
+  
+  onFileChange(e: any) {
+    if (e.target.files.length) {
+      const files = Array.from(e.target.files) as File[];
+      this.newStudent.imageFiles = files;
+      
+      const previews: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        const reader = new FileReader();
+        reader.onload = (re: any) => {
+          previews.push(re.target.result);
+          if (previews.length === files.length) {
+            this.imagePreviews.set(previews);
+          }
+        };
+        reader.readAsDataURL(files[i]);
+      }
+    }
+  }
 
   // Prevents *ngFor from destroying and recreating inputs on each keystroke
   trackByIndex(index: number): number { return index; }
@@ -393,7 +422,7 @@ export class GroupDetailsComponent implements OnInit {
     // Validate that at least one valid 11-digit phone is provided if they entered something
     const validPhones = this.newStudent.phoneNumbers.filter(p => p.trim().length === 11);
     if (this.newStudent.phoneNumbers.some(p => p.trim() !== '') && validPhones.length === 0) {
-      alert('يرجى إدخال رقم هاتف صحيح مكون من 11 رقم');
+      this.ui.error('يرجى إدخال رقم هاتف صحيح مكون من 11 رقم');
       return;
     }
 
@@ -401,7 +430,7 @@ export class GroupDetailsComponent implements OnInit {
     this.isSaving.set(true);
     this.studentService.createStudent(payload).subscribe({
       next: () => { this.isSaving.set(false); this.closeAddStudentModal(); this.loadDetails(this.details()!.groupId); },
-      error: () => { this.isSaving.set(false); alert('حدث خطأ أثناء إضافة الطالب'); }
+      error: () => { this.isSaving.set(false); this.ui.error('حدث خطأ أثناء إضافة الطالب'); }
     });
   }
 

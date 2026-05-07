@@ -11,8 +11,9 @@ export class StudentFeeService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/StudentFee`;
 
-  generate(feePlanId: number, month: number, year: number): Observable<void> {
+  generate(feePlanId: number, groupId: number, month: number, year: number): Observable<void> {
     const params = new HttpParams()
+      .set('groupId', groupId.toString())
       .set('month', month.toString())
       .set('year', year.toString());
     return this.http.post<void>(`${this.apiUrl}/generate/${feePlanId}`, {}, { params });
@@ -28,5 +29,16 @@ export class StudentFeeService {
       .set('month', month.toString())
       .set('year', year.toString());
     return this.http.get<StudentFeeViewDTO[]>(this.apiUrl, { params });
+  }
+
+  getByStudentId(studentId: number): Observable<StudentFeeViewDTO[]> {
+    return this.http.get<StudentFeeViewDTO[]>(`${this.apiUrl}/student/${studentId}`);
+  }
+
+  getAllWithoutFilter(month: number, year: number): Observable<StudentFeeViewDTO[]> {
+    const params = new HttpParams()
+      .set('month', month.toString())
+      .set('year', year.toString());
+    return this.http.get<StudentFeeViewDTO[]>(`${this.apiUrl}/all`, { params });
   }
 }

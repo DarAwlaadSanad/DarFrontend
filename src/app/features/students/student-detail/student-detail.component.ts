@@ -5,6 +5,9 @@ import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
 import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordDTO } from '../../../core/models/student.models';
 import { MemorizationService, MemorizationRecordCreateDTO } from '../../../core/services/memorization.service';
+import { GroupService } from '../../../core/services/group.service';
+import { GroupCardDTO } from '../../../core/models/group.models';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-student-detail',
@@ -15,8 +18,10 @@ import { MemorizationService, MemorizationRecordCreateDTO } from '../../../core/
 export class StudentDetailComponent implements OnInit {
   private studentService = inject(StudentService);
   private memorizationService = inject(MemorizationService);
+  private groupService = inject(GroupService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  private ui = inject(UiService);
 
   surahs = this.memorizationService.surahs;
   isAddingMemorization = signal(false);
@@ -49,8 +54,15 @@ export class StudentDetailComponent implements OnInit {
   editingPhoneId = signal<number | null>(null);
   editingPhoneNumber = '';
 
+  // Group Management
+  studentGroups = signal<GroupCardDTO[]>([]);
+  allGroups = signal<GroupCardDTO[]>([]);
+  showAssignGroupModal = signal(false);
+  selectedGroupId = signal<number | null>(null);
+
   ngOnInit() {
     this.loadStudent();
+    this.loadAllGroups();
   }
 
   loadStudent() {
@@ -60,9 +72,43 @@ export class StudentDetailComponent implements OnInit {
       next: (data) => {
         this.student.set(data);
         this.newMemRecord.studentId = data.id;
+        this.loadStudentGroups(data.id);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
+    });
+  }
+
+  loadStudentGroups(id: number) {
+    this.studentService.getStudentGroups(id).subscribe({
+      next: (data) => this.studentGroups.set(data)
+    });
+  }
+
+  loadAllGroups() {
+    this.groupService.getAll().subscribe({
+      next: (data) => this.allGroups.set(data)
+    });
+  }
+
+  onAssignGroup() {
+    const s = this.student();
+    const gId = this.selectedGroupId();
+    if (!s || !gId) return;
+
+    this.isSaving.set(true);
+    this.studentService.assignGroup(s.id, gId).subscribe({
+      next: (msg) => {
+        this.ui.success(msg);
+        this.isSaving.set(false);
+        this.showAssignGroupModal.set(false);
+        this.selectedGroupId.set(null);
+        this.loadStudentGroups(s.id);
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        this.ui.error(err.error || 'حدث خطأ أثناء التسجيل');
+      }
     });
   }
 
@@ -78,16 +124,19 @@ export class StudentDetailComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء إضافة السجل');
+        this.ui.error('حدث خطأ أثناء إضافة السجل');
       }
     });
   }
 
-  onDeleteMemorization(id: number) {
-    if (!confirm('هل تريد حذف هذا السجل؟')) return;
+  async onDeleteMemorization(id: number) {
+    if (!await this.ui.confirm('هل تريد حذف هذا السجل؟')) return;
     this.memorizationService.delete(id).subscribe({
-      next: () => this.loadStudent(),
-      error: () => alert('حدث خطأ أثناء الحذف')
+      next: () => {
+        this.ui.success('تم حذف السجل بنجاح');
+        this.loadStudent();
+      },
+      error: () => this.ui.error('حدث خطأ أثناء الحذف')
     });
   }
 
@@ -125,15 +174,18 @@ export class StudentDetailComponent implements OnInit {
   }
 
   // ── Delete Student ──────────────────────────────────────────────────────────
-  deleteStudent() {
+  async deleteStudent() {
     const s = this.student();
-    if (!s || !confirm('هل أنت متأكد من حذف هذا الطالب بالكامل؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    if (!s || !await this.ui.confirm('هل أنت متأكد من حذف هذا الطالب بالكامل؟ لا يمكن التراجع عن هذا الإجراء.')) return;
     this.isLoading.set(true);
     this.studentService.deleteStudent(s.id).subscribe({
-      next: () => this.router.navigate(['/dashboard/students']),
+      next: () => {
+        this.ui.success('تم حذف الطالب بنجاح');
+        this.router.navigate(['/dashboard/students']);
+      },
       error: () => {
         this.isLoading.set(false);
-        alert('حدث خطأ أثناء الحذف');
+        this.ui.error('حدث خطأ أثناء الحذف');
       }
     });
   }
@@ -164,7 +216,7 @@ export class StudentDetailComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء إضافة الرقم');
+        this.ui.error('حدث خطأ أثناء إضافة الرقم');
       }
     });
   }
@@ -180,22 +232,23 @@ export class StudentDetailComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء تحديث الرقم');
+        this.ui.error('حدث خطأ أثناء تحديث الرقم');
       }
     });
   }
 
-  onDeletePhone(phoneId: number) {
-    if (!confirm('هل تريد حذف هذا الرقم؟')) return;
+  async onDeletePhone(phoneId: number) {
+    if (!await this.ui.confirm('هل تريد حذف هذا الرقم؟')) return;
     this.isSaving.set(true);
     this.studentService.deletePhone(phoneId).subscribe({
       next: () => {
+        this.ui.success('تم حذف الرقم بنجاح');
         this.isSaving.set(false);
         this.loadStudent();
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء حذف الرقم');
+        this.ui.error('حدث خطأ أثناء حذف الرقم');
       }
     });
   }
@@ -224,7 +277,7 @@ export class StudentDetailComponent implements OnInit {
       },
       error: () => {
         this.isSaving.set(false);
-        alert('حدث خطأ أثناء التحديث');
+        this.ui.error('حدث خطأ أثناء التحديث');
       }
     });
   }
@@ -242,23 +295,24 @@ export class StudentDetailComponent implements OnInit {
       },
       error: () => {
         this.isLoading.set(false);
-        alert('حدث خطأ أثناء رفع الصور');
+        this.ui.error('حدث خطأ أثناء رفع الصور');
       }
     });
   }
 
-  deleteImage(imageId: number, event: Event) {
+  async deleteImage(imageId: number, event: Event) {
     event.stopPropagation(); // Prevent opening lightbox
-    if (!confirm('هل تريد حذف هذه الصورة؟')) return;
+    if (!await this.ui.confirm('هل تريد حذف هذه الصورة؟')) return;
     this.isLoading.set(true);
     this.studentService.removeImage(imageId).subscribe({
       next: () => {
+        this.ui.success('تم حذف الصورة بنجاح');
         if (this.selectedImage()) this.selectedImage.set(null);
         this.loadStudent();
       },
       error: () => {
         this.isLoading.set(false);
-        alert('حدث خطأ أثناء حذف الصورة');
+        this.ui.error('حدث خطأ أثناء حذف الصورة');
       }
     });
   }

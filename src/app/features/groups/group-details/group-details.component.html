@@ -58,7 +58,8 @@
                 <div class="text-xs font-bold text-white group-hover:text-primary-400 transition-colors">{{ session.date | date:'d/M' }}</div>
                 <div class="text-[9px] text-dark-600 group-hover:text-primary-500 mt-0.5 hidden lg:block">تعديل</div>
               </th>
-              <th class="w-16 lg:w-20 px-2 lg:px-4 py-3 text-center font-bold text-primary-400 bg-primary-500/5 text-xs">مجموع</th>
+              <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-primary-400 bg-primary-500/5 text-[10px]">حضور</th>
+              <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-gold-400 bg-gold-500/5 text-[10px]">تقييم</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-dark-800">
@@ -81,8 +82,11 @@
                   </div>
                 </div>
               </td>
-              <td class="px-2 py-3 text-center">
-                <span class="text-base font-bold text-primary-400">{{ student.totalPresent }}</span>
+              <td class="px-1 py-3 text-center border-l border-dark-700/30">
+                <span class="text-sm font-bold text-primary-400">{{ student.totalPresent }}</span>
+              </td>
+              <td class="px-1 py-3 text-center">
+                <span class="text-sm font-bold text-gold-400">{{ student.totalEvaluation }}</span>
               </td>
             </tr>
           </tbody>
@@ -464,8 +468,20 @@
           <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }}</option>
         </select>
       </div>
-      <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn" class="input-field" placeholder="اختياري"></div>
-      <div><label class="label text-sm">صورة</label><input type="file" (change)="onFileChange($event)" multiple class="file:bg-dark-800 file:text-dark-300 file:border-none file:px-3 file:py-1.5 file:rounded-lg file:ml-3 text-dark-400 text-xs w-full"></div>
+      <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn" class="input-field" placeholder="14 رقم..." pattern="[0-9]{14}" minlength="14" maxlength="14"></div>
+      <div class="sm:col-span-2">
+        <label class="label text-sm">صور الطالب</label>
+        <div class="flex flex-wrap gap-3">
+          <div *ngFor="let preview of imagePreviews()" class="w-16 h-16 rounded-xl border border-primary-500/30 overflow-hidden bg-dark-800 animate-fade-in">
+            <img [src]="preview" class="w-full h-full object-cover">
+          </div>
+          <label class="w-16 h-16 rounded-xl border-2 border-dashed border-dark-700 flex flex-col items-center justify-center text-dark-500 hover:border-primary-500/50 hover:text-primary-400 cursor-pointer transition-all bg-dark-800/50">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            <span class="text-[9px] font-bold">رفع</span>
+            <input type="file" (change)="onFileChange($event)" multiple accept="image/*" class="hidden">
+          </label>
+        </div>
+      </div>
       <div class="sm:col-span-2">
         <label class="label text-sm">أرقام الهواتف</label>
         <div *ngFor="let phone of newStudent.phoneNumbers; let i = index; trackBy: trackByIndex" class="flex gap-2 mb-2">

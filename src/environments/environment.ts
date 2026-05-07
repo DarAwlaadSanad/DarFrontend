@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  // apiUrl: 'https://localhost:7283/api'
-  apiUrl: 'http://darawlaadsanad.runasp.net/api'
+  apiUrl: 'https://localhost:7283/api'
+  // apiUrl: 'http://darawlaadsanad.runasp.net/api'
 };

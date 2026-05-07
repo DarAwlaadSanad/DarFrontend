@@ -5,8 +5,10 @@ import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../../core/services/student.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ScheduleService } from '../../../core/services/schedule.service';
+import { StudentFeeService } from '../../../core/services/student-fee.service';
 import { GroupDetailsDTO, StudentInGroupDTO } from '../../../core/models/group.models';
 import { GroupScheduleViewDTO } from '../../../core/models/schedule.models';
+import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
 
 @Component({
   selector: 'app-student-group-details',
@@ -49,6 +51,9 @@ import { GroupScheduleViewDTO } from '../../../core/models/schedule.models';
         <button (click)="activeTab.set('schedules')" 
                 [class]="activeTab()==='schedules' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
                 class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">مواعيد الحلقة</button>
+        <button (click)="activeTab.set('fees')" 
+                [class]="activeTab()==='fees' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
+                class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">رسوم الحلقة</button>
       </div>
 
       <div *ngIf="isLoading()" class="flex flex-col items-center justify-center h-64 space-y-4">
@@ -59,6 +64,27 @@ import { GroupScheduleViewDTO } from '../../../core/models/schedule.models';
       <div *ngIf="!isLoading()" class="animate-slide-up">
         <!-- Records Tab -->
         <div *ngIf="activeTab() === 'records'" class="space-y-6">
+          <div class="grid grid-cols-2 gap-4" *ngIf="myInfo() as me">
+            <div class="glass-card p-4 border-dark-800 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <div>
+                <p class="text-dark-500 text-[10px] font-bold uppercase">إجمالي الحضور</p>
+                <p class="text-xl font-black text-white">{{ me.totalPresent }} <span class="text-xs font-normal text-dark-500">أيام</span></p>
+              </div>
+            </div>
+            <div class="glass-card p-4 border-dark-800 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-400">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" /></svg>
+              </div>
+              <div>
+                <p class="text-dark-500 text-[10px] font-bold uppercase">إجمالي التقييم</p>
+                <p class="text-xl font-black text-white">{{ me.totalEvaluation }} <span class="text-xs font-normal text-dark-500">نقطة</span></p>
+              </div>
+            </div>
+          </div>
+
           <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
             <h3 class="text-lg font-bold text-white flex items-center gap-2">
               <span class="w-1.5 h-6 bg-primary-500 rounded-full"></span>
@@ -114,7 +140,7 @@ import { GroupScheduleViewDTO } from '../../../core/models/schedule.models';
                   </tr>
                   <tr *ngIf="sortedSessions().length === 0">
                     <td colspan="4" class="px-6 py-20 text-center text-dark-500">
-                       <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                       <svg class="w-12 h-12 mx-auto mb-3 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                        <p>لا توجد سجلات لهذا الشهر حتى الآن</p>
                     </td>
                   </tr>
@@ -130,6 +156,66 @@ import { GroupScheduleViewDTO } from '../../../core/models/schedule.models';
             <span class="flex items-center gap-2 text-xs text-red-400 font-bold"><span class="w-6 h-6 rounded-lg bg-red-500/20 flex items-center justify-center">✕</span> غائب</span>
             <span class="flex items-center gap-2 text-xs text-yellow-400 font-bold"><span class="w-6 h-6 rounded-lg bg-yellow-500/20 flex items-center justify-center">⏰</span> متأخر</span>
             <span class="flex items-center gap-2 text-xs text-blue-400 font-bold"><span class="w-6 h-6 rounded-lg bg-blue-500/20 flex items-center justify-center">✉</span> بعذر</span>
+          </div>
+        </div>
+
+        <!-- Fees Tab -->
+        <div *ngIf="activeTab() === 'fees'" class="space-y-6">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <span class="w-1.5 h-6 bg-primary-500 rounded-full"></span>
+              حالة الرسوم - {{ months[currentMonth()-1].label }} {{ currentYear() }}
+            </h3>
+            <div class="flex items-center gap-2 bg-dark-900 p-1 rounded-xl border border-dark-800">
+              <select [ngModel]="currentMonth()" (ngModelChange)="currentMonth.set($event); onDateChange()" class="bg-transparent text-[#f8fafc] font-bold text-sm py-1.5 px-3 border-none focus:ring-0 cursor-pointer">
+                <option *ngFor="let m of months" [value]="m.value" class="bg-dark-900 text-white">{{ m.label }}</option>
+              </select>
+              <div class="w-px h-4 bg-dark-700"></div>
+              <select [ngModel]="currentYear()" (ngModelChange)="currentYear.set($event); onDateChange()" class="bg-transparent text-[#f8fafc] font-bold text-sm py-1.5 px-3 border-none focus:ring-0 cursor-pointer">
+                <option *ngFor="let y of years" [value]="y" class="bg-dark-900 text-white">{{ y }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div *ngIf="myFee() as fee" class="glass-card p-8 border-dark-800 shadow-2xl relative overflow-hidden">
+            <div class="relative z-10 flex flex-col md:flex-row items-center gap-8">
+              <div class="w-20 h-20 rounded-3xl bg-gold-500/10 flex items-center justify-center text-gold-400 shadow-inner">
+                <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              </div>
+              <div class="flex-1 text-center md:text-right">
+                <p class="text-dark-500 text-xs font-bold uppercase tracking-widest mb-1">المبلغ المطلوب</p>
+                <p class="text-4xl font-black text-white">{{ fee.requiredAmount }} <span class="text-sm font-normal text-dark-400">جنيه</span></p>
+              </div>
+              <div class="h-16 w-px bg-dark-800 hidden md:block"></div>
+              <div class="flex-1 text-center md:text-right">
+                <p class="text-dark-500 text-xs font-bold uppercase tracking-widest mb-1">المبلغ المدفوع</p>
+                <p class="text-4xl font-black text-green-400">{{ fee.amountPaid }} <span class="text-sm font-normal text-dark-400">جنيه</span></p>
+              </div>
+              <div class="flex-shrink-0">
+                <span *ngIf="fee.amountPaid >= fee.requiredAmount" class="px-4 py-2 rounded-2xl bg-green-500 text-white font-bold text-sm shadow-lg shadow-green-500/20">مدفوع بالكامل</span>
+                <span *ngIf="fee.amountPaid > 0 && fee.amountPaid < fee.requiredAmount" class="px-4 py-2 rounded-2xl bg-yellow-500 text-white font-bold text-sm shadow-lg shadow-yellow-500/20">سداد جزئي</span>
+                <span *ngIf="fee.amountPaid === 0" class="px-4 py-2 rounded-2xl bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-500/20">لم يتم السداد</span>
+              </div>
+            </div>
+            <div class="mt-8 pt-8 border-t border-dark-800 flex flex-wrap justify-between items-center gap-4 text-sm">
+               <div class="flex items-center gap-2 text-dark-400">
+                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                 تاريخ الدفع: <span class="text-white font-bold">{{ fee.paymentDate || '---' }}</span>
+               </div>
+               <div class="flex items-center gap-2 text-dark-400">
+                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                 المبلغ المتبقي: <span class="text-red-400 font-black text-lg">{{ fee.requiredAmount - fee.amountPaid }} جنيه</span>
+               </div>
+            </div>
+            <!-- Background Decoration -->
+            <div class="absolute -bottom-10 -right-10 w-40 h-40 bg-gold-500/5 rounded-full blur-3xl"></div>
+          </div>
+
+          <div *ngIf="!myFee()" class="glass-card p-12 text-center border-dark-800">
+             <div class="w-16 h-16 mx-auto rounded-2xl bg-dark-800 flex items-center justify-center mb-4 text-dark-600">
+                <svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+             </div>
+             <p class="text-dark-400 italic">لم يتم توليد رسوم لهذا الشهر بعد</p>
           </div>
         </div>
 
@@ -167,13 +253,15 @@ export class StudentGroupDetailsComponent implements OnInit {
   private studentService = inject(StudentService);
   private authService = inject(AuthService);
   private scheduleService = inject(ScheduleService);
+  private studentFeeService = inject(StudentFeeService);
   private route = inject(ActivatedRoute);
 
   details = signal<GroupDetailsDTO | null>(null);
   myInfo = signal<StudentInGroupDTO | null>(null);
+  myFee = signal<StudentFeeViewDTO | null>(null);
   schedules = signal<GroupScheduleViewDTO[]>([]);
   isLoading = signal(false);
-  activeTab = signal<'records' | 'schedules'>('records');
+  activeTab = signal<'records' | 'schedules' | 'fees'>('records');
 
   currentMonth = signal(new Date().getMonth() + 1);
   currentYear = signal(new Date().getFullYear());
@@ -216,9 +304,21 @@ export class StudentGroupDetailsComponent implements OnInit {
         const myId = this.authService.studentId();
         const me = data.students.find(s => s.studentId === myId);
         this.myInfo.set(me || null);
+        this.loadMyFee(groupId);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)
+    });
+  }
+
+  loadMyFee(groupId: number) {
+    this.studentFeeService.getAll(groupId, this.currentMonth(), this.currentYear()).subscribe({
+      next: (data) => {
+        const myId = this.authService.studentId();
+        const myFee = data.find(f => f.studentId === myId);
+        this.myFee.set(myFee || null);
+      },
+      error: () => this.myFee.set(null)
     });
   }
 

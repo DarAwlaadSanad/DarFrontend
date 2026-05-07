@@ -30,7 +30,7 @@ import { StudentDetailsDTO } from '../../../core/models/student.models';
           <div class="text-center md:text-right flex-1">
             <h1 class="text-2xl lg:text-3xl font-black text-white mb-2">{{ s.fullName }}</h1>
             <div class="flex flex-wrap justify-center md:justify-start items-center gap-x-4 gap-y-2 text-dark-400">
-               <span class="flex items-center gap-2"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-4 0H5m14 0h-5" /></svg> {{ s.academicYear?.name || 'غير محدد' }}</span>
+               <span class="flex items-center gap-2"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-4 0H5m14 0h-5" /></svg> {{ s.academicYear.name || 'غير محدد' }}</span>
                <span class="w-1 h-1 rounded-full bg-dark-700 hidden sm:block"></span>
                <span class="flex items-center gap-2"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> الرقم القومي: {{ s.ssn || '---' }}</span>
             </div>
@@ -61,7 +61,7 @@ import { StudentDetailsDTO } from '../../../core/models/student.models';
                 </div>
                 <div>
                    <p class="text-xs text-dark-500 mb-1.5">السنة الدراسية</p>
-                   <p class="text-white font-bold">{{ s.academicYear?.name }} — {{ getSchoolTypeLabel(s.academicYear?.typeSchool) }}</p>
+                   <p class="text-white font-bold">{{ s.academicYear.name }} — {{ getSchoolTypeLabel(s.academicYear.typeSchool) }}</p>
                 </div>
                 <div>
                    <p class="text-xs text-dark-500 mb-1.5">الرقم القومي</p>
