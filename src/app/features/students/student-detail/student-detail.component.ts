@@ -112,6 +112,24 @@ export class StudentDetailComponent implements OnInit {
     });
   }
 
+  async onUnassignGroup(groupId: number) {
+    const s = this.student();
+    if (!s || !await this.ui.confirm('هل تريد حذف الطالب من هذه المجموعة؟')) return;
+
+    this.isSaving.set(true);
+    this.studentService.unassignGroup(s.id, groupId).subscribe({
+      next: (msg) => {
+        this.ui.success(msg);
+        this.isSaving.set(false);
+        this.loadStudentGroups(s.id);
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        this.ui.error(err.error || 'حدث خطأ أثناء الحذف');
+      }
+    });
+  }
+
   onAddMemorization() {
     this.isSaving.set(true);
     this.memorizationService.add(this.newMemRecord).subscribe({

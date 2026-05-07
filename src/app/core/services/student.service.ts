@@ -90,6 +90,13 @@ export class StudentService {
     return this.http.get<GroupCardDTO[]>(`${this.apiUrl}/${studentId}/groups`);
   }
 
+  unassignGroup(studentId: number, groupId: number): Observable<string> {
+    return this.http.post<string>(`${this.apiUrl}/unAssainGroup`, null, {
+      params: { studentId: studentId.toString(), groupId: groupId.toString() },
+      responseType: 'text' as 'json'
+    });
+  }
+
   // ── Student Portal ──────────────────────────────────────────────────────────
   studentLogin(dto: StudentLoginDTO): Observable<AuthResponse> {
     this.isLoading.set(true);
