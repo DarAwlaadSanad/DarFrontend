@@ -18,6 +18,8 @@ import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { StudentFeeService } from '../../../core/services/student-fee.service';
 import { StudentFeeViewDTO, UpdateStudentFeePaymentDTO } from '../../../core/models/student-fee.models';
 import { UiService } from '../../../core/services/ui.service';
+import { ExportService } from '../../../core/services/export.service';
+import { GroupExamsComponent } from '../../exams/group-exams.component';
 
 /** Per-student row inside the session editor */
 interface SessionEditorRow {
@@ -32,7 +34,7 @@ interface SessionEditorRow {
 @Component({
   selector: 'app-group-details',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, GroupExamsComponent],
   templateUrl: './group-details.component.html',
 })
 export class GroupDetailsComponent implements OnInit {
@@ -45,10 +47,11 @@ export class GroupDetailsComponent implements OnInit {
   private academicYearService = inject(AcademicYearService);
   private studentFeeService = inject(StudentFeeService);
   private ui = inject(UiService);
+  private exportService = inject(ExportService);
   private route = inject(ActivatedRoute);
 
   details = signal<GroupDetailsDTO | null>(null);
-  activeTab = signal<'records' | 'schedules' | 'fee-plans' | 'student-fees'>('records');
+  activeTab = signal<'records' | 'schedules' | 'fee-plans' | 'student-fees' | 'exams'>('records');
   isLoading = signal(false);
   isSaving = signal(false);
 
@@ -76,13 +79,13 @@ export class GroupDetailsComponent implements OnInit {
   };
 
   days = [
-    { value: DayOfWeekAr.Sunday,    label: 'الأحد' },
-    { value: DayOfWeekAr.Monday,    label: 'الاثنين' },
-    { value: DayOfWeekAr.Tuesday,   label: 'الثلاثاء' },
+    { value: DayOfWeekAr.Sunday, label: 'الأحد' },
+    { value: DayOfWeekAr.Monday, label: 'الاثنين' },
+    { value: DayOfWeekAr.Tuesday, label: 'الثلاثاء' },
     { value: DayOfWeekAr.Wednesday, label: 'الأربعاء' },
-    { value: DayOfWeekAr.Thursday,  label: 'الخميس' },
-    { value: DayOfWeekAr.Friday,    label: 'الجمعة' },
-    { value: DayOfWeekAr.Saturday,  label: 'السبت' },
+    { value: DayOfWeekAr.Thursday, label: 'الخميس' },
+    { value: DayOfWeekAr.Friday, label: 'الجمعة' },
+    { value: DayOfWeekAr.Saturday, label: 'السبت' },
   ];
 
   // ── Session Editor ──────────────────────────────────────────────────────────
@@ -91,9 +94,9 @@ export class GroupDetailsComponent implements OnInit {
   editorRows = signal<SessionEditorRow[]>([]);
 
   statusOptions = [
-    { value: AttendanceStatus.Present, label: 'حاضر',       cls: 'bg-green-600' },
-    { value: AttendanceStatus.Absent,  label: 'غائب',       cls: 'bg-red-600' },
-    { value: AttendanceStatus.Late,    label: 'متأخر',      cls: 'bg-yellow-500' },
+    { value: AttendanceStatus.Present, label: 'حاضر', cls: 'bg-green-600' },
+    { value: AttendanceStatus.Absent, label: 'غائب', cls: 'bg-red-600' },
+    { value: AttendanceStatus.Late, label: 'متأخر', cls: 'bg-yellow-500' },
     { value: AttendanceStatus.Excused, label: 'غياب بعذر', cls: 'bg-blue-600' },
   ];
 
@@ -132,12 +135,32 @@ export class GroupDetailsComponent implements OnInit {
   loadDetails(id: number) {
     this.isLoading.set(true);
     this.groupService.getDetails(id, this.currentMonth(), this.currentYear()).subscribe({
-      next: (data) => { 
-        this.details.set(data); 
+      next: (data) => {
+        this.details.set(data);
         this.loadStudentFees(id); // Reload fees when month/year changes
-        this.isLoading.set(false); 
+        this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)
+    });
+  }
+
+  exportStudents() {
+    this.ui.success('جاري تجهيز ملف الطلاب، يرجى الانتظار...');
+    this.exportService.exportStudents(this.details()!.groupId).subscribe({
+      next: (blob) => {
+        this.exportService.downloadBlob(blob, `Students_Group_${this.details()!.groupId}.xlsx`);
+      },
+      error: () => this.ui.error('حدث خطأ أثناء تصدير الملف')
+    });
+  }
+
+  exportAttendance() {
+    this.ui.success('جاري تجهيز ملف الغياب، يرجى الانتظار...');
+    this.exportService.exportGroupAttendance(this.details()!.groupId, this.currentMonth(), this.currentYear()).subscribe({
+      next: (blob) => {
+        this.exportService.downloadBlob(blob, `Attendance_Group_${this.details()!.groupId}_${this.currentMonth()}_${this.currentYear()}.xlsx`);
+      },
+      error: () => this.ui.error('حدث خطأ أثناء تصدير الملف')
     });
   }
 
@@ -157,12 +180,12 @@ export class GroupDetailsComponent implements OnInit {
     const rows: SessionEditorRow[] = students.map(s => {
       const rec = s.records[session.sessionId];
       return {
-        studentId:   s.studentId,
+        studentId: s.studentId,
         studentName: s.studentName,
-        status:      rec?.attendance ?? AttendanceStatus.Present,
-        notes:       '',
-        score:       rec?.score ?? null,
-        comment:     rec?.comment ?? '',
+        status: rec?.attendance ?? AttendanceStatus.Present,
+        notes: '',
+        score: rec?.score ?? null,
+        comment: rec?.comment ?? '',
       };
     });
     this.editorRows.set(rows);
@@ -211,6 +234,7 @@ export class GroupDetailsComponent implements OnInit {
       next: () => {
         this.isSaving.set(false);
         this.showSessionEditor.set(false);
+        this.groupService.clearDetailsCache();
         this.loadDetails(this.details()!.groupId);
       },
       error: () => {
@@ -238,7 +262,7 @@ export class GroupDetailsComponent implements OnInit {
       ...this.newSchedule,
       dayOfWeek: +this.newSchedule.dayOfWeek as DayOfWeekAr,
       startTime: this.newSchedule.startTime.length === 5 ? this.newSchedule.startTime + ':00' : this.newSchedule.startTime,
-      endTime:   this.newSchedule.endTime.length   === 5 ? this.newSchedule.endTime   + ':00' : this.newSchedule.endTime,
+      endTime: this.newSchedule.endTime.length === 5 ? this.newSchedule.endTime + ':00' : this.newSchedule.endTime,
     };
     this.scheduleService.addSchedule(payload).subscribe({
       next: () => {
@@ -393,12 +417,12 @@ export class GroupDetailsComponent implements OnInit {
   closeAddStudentModal() { this.showAddStudentModal.set(false); }
   addPhone() { this.newStudent.phoneNumbers.push(''); }
   removePhone(i: number) { this.newStudent.phoneNumbers.splice(i, 1); }
-  
+
   onFileChange(e: any) {
     if (e.target.files.length) {
       const files = Array.from(e.target.files) as File[];
       this.newStudent.imageFiles = files;
-      
+
       const previews: string[] = [];
       for (let i = 0; i < files.length; i++) {
         const reader = new FileReader();
@@ -418,7 +442,7 @@ export class GroupDetailsComponent implements OnInit {
 
   submitStudent() {
     if (!this.newStudent.fullName) return;
-    
+
     // Validate that at least one valid 11-digit phone is provided if they entered something
     const validPhones = this.newStudent.phoneNumbers.filter(p => p.trim().length === 11);
     if (this.newStudent.phoneNumbers.some(p => p.trim() !== '') && validPhones.length === 0) {
@@ -451,15 +475,16 @@ export class GroupDetailsComponent implements OnInit {
 
   private executeSubmitStudent(payload: StudentAddDTO) {
     this.studentService.createStudent(payload).subscribe({
-      next: () => { 
-        this.isSaving.set(false); 
-        this.closeAddStudentModal(); 
-        this.loadDetails(this.details()!.groupId); 
+      next: () => {
+        this.isSaving.set(false);
+        this.closeAddStudentModal();
+        this.groupService.clearDetailsCache();
+        this.loadDetails(this.details()!.groupId);
         this.ui.success('تم إضافة الطالب بنجاح');
       },
-      error: () => { 
-        this.isSaving.set(false); 
-        this.ui.error('حدث خطأ أثناء إضافة الطالب'); 
+      error: () => {
+        this.isSaving.set(false);
+        this.ui.error('حدث خطأ أثناء إضافة الطالب');
       }
     });
   }
@@ -468,8 +493,8 @@ export class GroupDetailsComponent implements OnInit {
   getStatusClass(status?: AttendanceStatus): string {
     switch (+status!) {
       case AttendanceStatus.Present: return 'text-green-400 bg-green-500/10';
-      case AttendanceStatus.Absent:  return 'text-red-400 bg-red-500/10';
-      case AttendanceStatus.Late:    return 'text-yellow-400 bg-yellow-500/10';
+      case AttendanceStatus.Absent: return 'text-red-400 bg-red-500/10';
+      case AttendanceStatus.Late: return 'text-yellow-400 bg-yellow-500/10';
       case AttendanceStatus.Excused: return 'text-blue-400 bg-blue-500/10';
       default: return 'text-dark-500 bg-dark-800';
     }
@@ -477,8 +502,8 @@ export class GroupDetailsComponent implements OnInit {
   getStatusIcon(status?: AttendanceStatus): string {
     switch (+status!) {
       case AttendanceStatus.Present: return '✓';
-      case AttendanceStatus.Absent:  return '✕';
-      case AttendanceStatus.Late:    return '⏰';
+      case AttendanceStatus.Absent: return '✕';
+      case AttendanceStatus.Late: return '⏰';
       case AttendanceStatus.Excused: return '✉';
       default: return '-';
     }

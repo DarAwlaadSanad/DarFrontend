@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { StudentFeeViewDTO, UpdateStudentFeePaymentDTO } from '../models/student-fee.models';
+import { StudentFeeViewDTO, UpdateStudentFeePaymentDTO, ExemptStudentFeeDTO } from '../models/student-fee.models';
 
 @Injectable({
   providedIn: 'root'
@@ -21,6 +21,10 @@ export class StudentFeeService {
 
   updatePayment(id: number, dto: UpdateStudentFeePaymentDTO): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}/payment`, dto);
+  }
+
+  exemptStudent(id: number, dto: ExemptStudentFeeDTO): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/exempt`, dto);
   }
 
   getAll(groupId: number, month: number, year: number): Observable<StudentFeeViewDTO[]> {

@@ -18,9 +18,31 @@ export class AuthService {
   isLoggedIn = computed(() => !!this.authState()?.token); // Alias for backward compatibility
   userRoles = computed(() => this.authState()?.roles || []);
   isStudent = computed(() => this.userRoles().includes('Student'));
+  isTeacher = computed(() => this.userRoles().includes('Teacher'));
   studentId = computed(() => this.authState()?.studentId);
 
+  userPermissions = computed(() => {
+    const token = this.authState()?.token;
+    if (!token) return [];
+    const decoded = this.decodeToken(token);
+    if (!decoded) return [];
+    
+    let permissions = decoded['Permission'] || [];
+    if (!Array.isArray(permissions)) {
+      permissions = [permissions];
+    }
+    return permissions;
+  });
+
   constructor(private http: HttpClient) {}
+
+  private decodeToken(token: string): any {
+    try {
+      return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+      return null;
+    }
+  }
 
   login(dto: LoginDTO): Observable<AuthResponse> {
     this.isLoading.set(true);
@@ -69,5 +91,10 @@ export class AuthService {
 
   hasRole(role: string): boolean {
     return this.userRoles().includes(role);
+  }
+
+  hasPermission(permission: string): boolean {
+    // Admin always has all permissions or we just check the array
+    return this.userPermissions().includes(permission) || this.hasRole('Admin');
   }
 }

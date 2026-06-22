@@ -20,6 +20,7 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
     children: [
+
       {
         path: 'groups',
         loadComponent: () =>
@@ -29,6 +30,16 @@ export const routes: Routes = [
         path: 'groups/:id',
         loadComponent: () =>
           import('./features/groups/group-details/group-details.component').then(m => m.GroupDetailsComponent),
+      },
+      {
+        path: 'groups/:id/exams',
+        loadComponent: () =>
+          import('./features/exams/group-exams.component').then(m => m.GroupExamsComponent),
+      },
+      {
+        path: 'groups/:id/exams/:examId',
+        loadComponent: () =>
+          import('./features/exams/exam-results.component').then(m => m.ExamResultsComponent),
       },
       {
         path: 'students',
@@ -55,9 +66,67 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/student-fees/student-fee-list.component').then(m => m.StudentFeeListComponent),
       },
+      { path: 'roles', loadComponent: () => import('./features/roles/role-list/role-list.component').then(m => m.RoleListComponent) },
+      { path: 'roles/create', loadComponent: () => import('./features/roles/role-form/role-form.component').then(m => m.RoleFormComponent) },
+      { path: 'roles/edit/:id', loadComponent: () => import('./features/roles/role-form/role-form.component').then(m => m.RoleFormComponent) },
+      {
+        path: 'attendance',
+        loadComponent: () =>
+          import('./features/teacher-attendance/teacher-attendance.component').then(m => m.TeacherAttendanceComponent),
+      },
+      {
+        path: 'absences',
+        loadComponent: () =>
+          import('./features/teacher-attendance/admin-absences/admin-absences.component').then(m => m.AdminAbsencesComponent),
+      },
+      {
+        path: 'competitions',
+        loadComponent: () =>
+          import('./features/competitions/competition-list/competition-list.component').then(m => m.CompetitionListComponent),
+      },
+      {
+        path: 'competitions/:id',
+        loadComponent: () =>
+          import('./features/competitions/competition-details/competition-details.component').then(m => m.CompetitionDetailsComponent),
+      },
+      {
+        path: 'finance/settings',
+        loadComponent: () =>
+          import('./features/finance/settings/settings').then(m => m.SettingsComponent),
+      },
+      {
+        path: 'finance/center-expenses',
+        loadComponent: () =>
+          import('./features/finance/center-expenses/center-expenses').then(m => m.CenterExpensesComponent),
+      },
+      {
+        path: 'finance/center-incomes',
+        loadComponent: () =>
+          import('./features/finance/center-incomes/center-incomes').then(m => m.CenterIncomesComponent),
+      },
+      {
+        path: 'finance/monthly-report',
+        loadComponent: () =>
+          import('./features/finance/monthly-report/monthly-report').then(m => m.MonthlyReportComponent),
+      },
+      {
+        path: 'finance/contracts',
+        loadComponent: () =>
+          import('./features/finance/contracts/contracts').then(m => m.ContractsComponent),
+      },
+      {
+        path: 'finance/payroll',
+        loadComponent: () =>
+          import('./features/finance/payroll/payroll').then(m => m.PayrollComponent),
+      },
+      {
+        path: 'home',
+        loadComponent: () =>
+          import('./features/dashboard/dashboard-home/dashboard-home.component').then(m => m.DashboardHomeComponent),
+      },
       {
         path: '',
-        redirectTo: 'students',
+        redirectTo: 'home',
         pathMatch: 'full',
       },
     ],

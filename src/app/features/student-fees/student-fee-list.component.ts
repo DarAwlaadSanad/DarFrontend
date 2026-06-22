@@ -60,6 +60,7 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
                 <th class="p-4 text-xs font-bold text-dark-400 uppercase tracking-wider">المتبقي</th>
                 <th class="p-4 text-xs font-bold text-dark-400 uppercase tracking-wider">تاريخ الدفع</th>
                 <th class="p-4 text-xs font-bold text-dark-400 uppercase tracking-wider text-center">الحالة</th>
+                <th class="p-4 text-xs font-bold text-dark-400 uppercase tracking-wider text-center">إجراءات</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-dark-800/50">
@@ -75,11 +76,19 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
                    {{ fee.paymentDate ? (fee.paymentDate | date:'yyyy/MM/dd') : '---' }}
                 </td>
                 <td class="p-4">
-                  <div class="flex justify-center">
+                  <div class="flex flex-col items-center gap-1">
                     <span [class]="getStatusClass(fee)" class="px-3 py-1 rounded-full text-[10px] font-bold">
                       {{ getStatusLabel(fee) }}
                     </span>
+                    <span *ngIf="fee.isExempted" class="text-[9px] text-blue-300">{{ fee.exemptionReason }}</span>
                   </div>
+                </td>
+                <td class="p-4 text-center">
+                  <button *ngIf="!fee.isExempted && (fee.requiredAmount - fee.amountPaid) > 0" 
+                          (click)="openExemptModal(fee)" 
+                          class="px-3 py-1 bg-dark-800 text-blue-400 hover:bg-dark-700 rounded-lg text-xs font-bold transition-colors">
+                    إعفاء
+                  </button>
                 </td>
               </tr>
               
@@ -99,6 +108,24 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
       <div *ngIf="isLoading()" class="flex justify-center py-12">
         <div class="w-10 h-10 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
       </div>
+
+      <!-- Exemption Modal -->
+      <div *ngIf="selectedFeeForExempt()" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div class="bg-dark-900 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-dark-800">
+          <h3 class="text-xl font-bold text-white mb-4">إعفاء من المصروفات</h3>
+          <p class="text-dark-400 text-sm mb-4">أنت تقوم بإعفاء الطالب <strong>{{ selectedFeeForExempt()?.studentName }}</strong> من مصروفات شهر {{ currentMonth() }}.</p>
+          
+          <div class="mb-6">
+            <label class="block text-xs font-bold text-dark-400 mb-2">سبب الإعفاء</label>
+            <input type="text" [(ngModel)]="exemptionReason" placeholder="مثال: أيتام، ظروف خاصة..." class="input-field w-full">
+          </div>
+
+          <div class="flex gap-3 justify-end">
+            <button (click)="selectedFeeForExempt.set(null)" class="px-4 py-2 bg-dark-800 text-white rounded-xl hover:bg-dark-700 font-bold transition-colors">إلغاء</button>
+            <button (click)="submitExempt()" [disabled]="!exemptionReason()" class="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 font-bold disabled:opacity-50 transition-colors">تأكيد الإعفاء</button>
+          </div>
+        </div>
+      </div>
     </div>
   `,
 })
@@ -111,6 +138,9 @@ export class StudentFeeListComponent implements OnInit {
 
   currentMonth = signal(new Date().getMonth() + 1);
   currentYear = signal(new Date().getFullYear());
+
+  selectedFeeForExempt = signal<StudentFeeViewDTO | null>(null);
+  exemptionReason = signal('');
 
   months = [
     { value: 1, label: 'يناير' }, { value: 2, label: 'فبراير' }, { value: 3, label: 'مارس' },
@@ -131,7 +161,10 @@ export class StudentFeeListComponent implements OnInit {
   });
 
   totalRemaining = computed(() => {
-    return this.fees().reduce((acc, curr) => acc + (curr.requiredAmount - curr.amountPaid), 0);
+    return this.fees().reduce((acc, curr) => {
+      if (curr.isExempted) return acc;
+      return acc + (curr.requiredAmount - curr.amountPaid);
+    }, 0);
   });
 
   ngOnInit() {
@@ -150,6 +183,7 @@ export class StudentFeeListComponent implements OnInit {
   }
 
   getStatusLabel(fee: StudentFeeViewDTO): string {
+    if (fee.isExempted) return 'معفى';
     const diff = fee.requiredAmount - fee.amountPaid;
     if (diff <= 0) return 'مدفوع';
     if (fee.amountPaid > 0) return 'سداد جزئي';
@@ -157,9 +191,27 @@ export class StudentFeeListComponent implements OnInit {
   }
 
   getStatusClass(fee: StudentFeeViewDTO): string {
+    if (fee.isExempted) return 'bg-blue-500/10 text-blue-400';
     const diff = fee.requiredAmount - fee.amountPaid;
     if (diff <= 0) return 'bg-green-500/10 text-green-400';
     if (fee.amountPaid > 0) return 'bg-yellow-500/10 text-yellow-400';
     return 'bg-red-500/10 text-red-400';
+  }
+
+  openExemptModal(fee: StudentFeeViewDTO) {
+    this.selectedFeeForExempt.set(fee);
+    this.exemptionReason.set('');
+  }
+
+  submitExempt() {
+    const fee = this.selectedFeeForExempt();
+    if (!fee || !this.exemptionReason()) return;
+
+    this.feeService.exemptStudent(fee.id, { reason: this.exemptionReason() }).subscribe({
+      next: () => {
+        this.selectedFeeForExempt.set(null);
+        this.loadFees(); // Reload to reflect changes
+      }
+    });
   }
 }

@@ -1,0 +1,167 @@
+<div class="space-y-7 animate-fade-in" dir="rtl">
+
+  <!-- Page Header -->
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
+          <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">كشف رواتب الموظفين</h1>
+      </div>
+      <p class="text-dark-400 text-sm mr-10">حساب الرواتب الشهرية بشكل تلقائي مع الخصومات والمكافآت</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="flex items-center gap-1 rounded-xl overflow-hidden"
+           style="background: rgba(30,41,59,0.7); border: 1px solid rgba(51,65,85,0.6);">
+        <select [(ngModel)]="selectedMonth" (ngModelChange)="loadPayroll()"
+                class="bg-transparent text-dark-200 text-sm font-medium px-3 py-2.5 focus:outline-none cursor-pointer">
+          <option *ngFor="let m of months" [value]="m">شهر {{ m }}</option>
+        </select>
+        <div style="width:1px; height:24px; background: rgba(51,65,85,0.6);"></div>
+        <select [(ngModel)]="selectedYear" (ngModelChange)="loadPayroll()"
+                class="bg-transparent text-dark-200 text-sm font-medium px-3 py-2.5 focus:outline-none cursor-pointer">
+          <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="card overflow-hidden">
+    <div class="px-5 py-4 flex items-center justify-between" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
+      <div class="flex items-center gap-2">
+        <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+        <h3 class="font-bold text-white text-sm">رواتب شهر {{ selectedMonth }} / {{ selectedYear }}</h3>
+      </div>
+      <span *ngIf="!isLoading && reports.length > 0"
+            class="text-blue-400 font-bold text-sm">
+        إجمالي: {{ getTotalPayroll() | number }} ج.م
+      </span>
+    </div>
+
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="py-16 flex flex-col items-center gap-3">
+      <div class="w-8 h-8 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin"></div>
+      <span class="text-dark-400 text-sm">جاري احتساب الرواتب...</span>
+    </div>
+
+    <div *ngIf="!isLoading" class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr style="background: rgba(30,41,59,0.5);">
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">الموظف</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">الأساسي</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">المجموعات</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-red-400">خصومات</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-primary-400">إضافات</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">يدوي</th>
+            <th class="px-4 py-3.5 text-right text-xs font-semibold text-blue-400">الصافي</th>
+            <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">إجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let rep of reports"
+              class="border-t transition-colors hover:bg-dark-800/30"
+              style="border-color: rgba(51,65,85,0.3);">
+            <td class="px-4 py-3.5">
+              <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-dark-700 to-dark-600 flex items-center justify-center font-bold text-xs text-dark-300 flex-shrink-0">
+                  {{ rep.userName?.charAt(0) }}
+                </div>
+                <div>
+                  <div class="font-semibold text-dark-100 text-sm">{{ rep.userName }}</div>
+                  <div class="text-xs text-dark-500">{{ getSalaryTypeName(rep.salaryType) }}</div>
+                </div>
+              </div>
+            </td>
+            <td class="px-4 py-3.5 text-dark-200 font-medium">{{ rep.baseSalary | number }}</td>
+            <td class="px-4 py-3.5">
+              <span *ngIf="rep.numberOfGroups > 0" class="badge-blue">{{ rep.numberOfGroups }}</span>
+              <span *ngIf="rep.numberOfGroups === 0" class="text-dark-500">—</span>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="text-red-400 font-medium">{{ rep.automaticDeductions | number }}</span>
+              <div class="text-xs text-dark-600 mt-0.5" *ngIf="rep.absences > 0 || rep.delayIncidents > 0">
+                غ:{{rep.absences}} / ت:{{rep.delayIncidents}}
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="text-primary-400 font-medium">{{ rep.automaticAdditions | number }}</span>
+              <div class="text-xs text-dark-600 mt-0.5" *ngIf="rep.substitutions > 0">
+                حصص: {{rep.substitutions}}
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <div class="flex flex-col gap-0.5">
+                <span *ngIf="rep.manualAdditions > 0" class="text-primary-400 text-xs">+{{ rep.manualAdditions | number }}</span>
+                <span *ngIf="rep.manualDeductions > 0" class="text-red-400 text-xs">-{{ rep.manualDeductions | number }}</span>
+                <span *ngIf="rep.manualAdditions === 0 && rep.manualDeductions === 0" class="text-dark-500">—</span>
+              </div>
+            </td>
+            <td class="px-4 py-3.5">
+              <span class="text-lg font-black text-blue-400">{{ rep.netSalary | number }}</span>
+              <span class="text-xs text-dark-500 mr-1">ج.م</span>
+            </td>
+            <td class="px-4 py-3.5 text-center">
+              <button (click)="openTransactionModal(rep.userId)"
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold text-dark-300 hover:text-white hover:bg-dark-700 border border-dark-700 transition-all">
+                + معاملة
+              </button>
+            </td>
+          </tr>
+          <tr *ngIf="reports.length === 0">
+            <td colspan="8" class="px-4 py-14 text-center">
+              <div class="w-12 h-12 rounded-2xl bg-dark-800 flex items-center justify-center mx-auto mb-3">
+                <svg class="w-6 h-6 text-dark-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+              <p class="text-dark-400 text-sm">لا توجد بيانات رواتب لهذا الشهر</p>
+              <p class="text-dark-600 text-xs mt-1">تأكد من تحديد عقود للموظفين في صفحة العقود</p>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Transaction Modal -->
+  <div *ngIf="showTransactionModal" class="modal-overlay" (click.self)="closeTransactionModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="modal-title">إضافة معاملة يدوية</h2>
+        <button (click)="closeTransactionModal()"
+                class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 flex items-center justify-center text-dark-400 hover:text-white transition-all">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="label">النوع</label>
+          <select [(ngModel)]="transactionForm.type" class="input-field">
+            <option *ngFor="let t of transactionTypes" [value]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">المبلغ <span class="text-red-400">*</span></label>
+          <input type="number" [(ngModel)]="transactionForm.amount" class="input-field" placeholder="0"/>
+        </div>
+        <div>
+          <label class="label">السبب (اختياري)</label>
+          <input type="text" [(ngModel)]="transactionForm.reason" class="input-field" placeholder="سبب المعاملة..."/>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="saveTransaction()" class="btn-primary flex-1 py-3">حفظ المعاملة</button>
+        <button (click)="closeTransactionModal()" class="btn-secondary px-6">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
+</div>

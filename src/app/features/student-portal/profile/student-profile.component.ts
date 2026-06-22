@@ -4,6 +4,8 @@ import { StudentService } from '../../../core/services/student.service';
 import { MemorizationService } from '../../../core/services/memorization.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { StudentDetailsDTO } from '../../../core/models/student.models';
+import { ExamService } from '../../../core/services/exam.service';
+import { ExamResultDTO } from '../../../core/models/exam.models';
 
 @Component({
   selector: 'app-student-profile',
@@ -160,6 +162,62 @@ import { StudentDetailsDTO } from '../../../core/models/student.models';
               </div>
             </div>
           </div>
+
+          <!-- Exam Results -->
+          <div class="glass-card overflow-hidden border-dark-800 mt-6">
+            <div class="p-6 border-b border-dark-800 bg-dark-900/50 flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
+                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="text-white font-bold">الاختبارات والتقييمات</h3>
+                  <p class="text-dark-500 text-[10px] uppercase tracking-wider">نتائج الاختبارات الدورية</p>
+                </div>
+              </div>
+            </div>
+            <div class="p-0 overflow-x-auto">
+              <table class="w-full text-right border-collapse">
+                <thead class="bg-dark-800/50">
+                  <tr>
+                    <th class="px-6 py-3 text-xs font-bold text-dark-400">الاختبار</th>
+                    <th class="px-6 py-3 text-xs font-bold text-dark-400">التاريخ</th>
+                    <th class="px-6 py-3 text-xs font-bold text-dark-400 text-center">الدرجة</th>
+                    <th class="px-6 py-3 text-xs font-bold text-dark-400">ملاحظات</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-dark-800/50">
+                  <tr *ngFor="let result of examResults()" class="hover:bg-dark-800/30 transition-colors">
+                    <td class="px-6 py-4">
+                      <div class="text-sm font-bold text-white">{{ result.examTitle }}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-xs text-dark-400">{{ result.examDate | date:'yyyy/MM/dd' }}</div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                      <span class="inline-flex items-center justify-center px-3 py-1 rounded-lg text-sm font-bold"
+                            [class.bg-green-500]="(result.score || 0) / (result.maxScore || 1) >= 0.85"
+                            [class.text-white]="(result.score || 0) / (result.maxScore || 1) >= 0.85"
+                            [class.bg-yellow-500]="(result.score || 0) / (result.maxScore || 1) >= 0.5 && (result.score || 0) / (result.maxScore || 1) < 0.85"
+                            [class.text-white]="(result.score || 0) / (result.maxScore || 1) >= 0.5 && (result.score || 0) / (result.maxScore || 1) < 0.85"
+                            [class.bg-red-500]="(result.score || 0) / (result.maxScore || 1) < 0.5"
+                            [class.text-white]="(result.score || 0) / (result.maxScore || 1) < 0.5">
+                        {{ result.score || 0 }} / {{ result.maxScore }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4">
+                      <div class="text-xs text-dark-400">{{ result.notes || '---' }}</div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="examResults().length === 0">
+                    <td colspan="4" class="px-6 py-8 text-center text-dark-500 text-sm">لا توجد نتائج اختبارات مسجلة</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
         </div>
 
         <!-- Sidebar / Tips -->
@@ -198,8 +256,10 @@ export class StudentProfileComponent implements OnInit {
   private studentService = inject(StudentService);
   private memorizationService = inject(MemorizationService);
   private authService = inject(AuthService);
+  private examService = inject(ExamService);
 
   student = signal<StudentDetailsDTO | null>(null);
+  examResults = signal<ExamResultDTO[]>([]);
   isLoading = signal(false);
 
   ngOnInit() {
@@ -214,6 +274,9 @@ export class StudentProfileComponent implements OnInit {
     this.studentService.getStudent(id).subscribe({
       next: (data) => {
         this.student.set(data);
+        this.examService.getStudentResults(id).subscribe({
+          next: (exams) => this.examResults.set(exams)
+        });
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)

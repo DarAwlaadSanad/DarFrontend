@@ -7,6 +7,8 @@ import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordD
 import { MemorizationService, MemorizationRecordCreateDTO } from '../../../core/services/memorization.service';
 import { GroupService } from '../../../core/services/group.service';
 import { GroupCardDTO } from '../../../core/models/group.models';
+import { ExamService } from '../../../core/services/exam.service';
+import { ExamResultDTO } from '../../../core/models/exam.models';
 import { UiService } from '../../../core/services/ui.service';
 
 @Component({
@@ -19,6 +21,7 @@ export class StudentDetailComponent implements OnInit {
   private studentService = inject(StudentService);
   private memorizationService = inject(MemorizationService);
   private groupService = inject(GroupService);
+  private examService = inject(ExamService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private ui = inject(UiService);
@@ -60,6 +63,9 @@ export class StudentDetailComponent implements OnInit {
   showAssignGroupModal = signal(false);
   selectedGroupId = signal<number | null>(null);
 
+  // Exams
+  examResults = signal<ExamResultDTO[]>([]);
+
   ngOnInit() {
     this.loadStudent();
     this.loadAllGroups();
@@ -73,6 +79,7 @@ export class StudentDetailComponent implements OnInit {
         this.student.set(data);
         this.newMemRecord.studentId = data.id;
         this.loadStudentGroups(data.id);
+        this.loadExamResults(data.id);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
@@ -82,6 +89,12 @@ export class StudentDetailComponent implements OnInit {
   loadStudentGroups(id: number) {
     this.studentService.getStudentGroups(id).subscribe({
       next: (data) => this.studentGroups.set(data)
+    });
+  }
+
+  loadExamResults(id: number) {
+    this.examService.getStudentResults(id).subscribe({
+      next: (data) => this.examResults.set(data)
     });
   }
 

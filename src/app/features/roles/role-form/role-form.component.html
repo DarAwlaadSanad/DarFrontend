@@ -1,0 +1,84 @@
+<div class="space-y-7 animate-fade-in" dir="rtl">
+
+  <!-- Header with back button -->
+  <div class="flex items-center gap-3">
+    <button routerLink="/dashboard/roles"
+            class="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-dark-400 hover:text-white hover:border-dark-600 transition-all">
+      <svg class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+    </button>
+    <div>
+      <h1 class="text-2xl lg:text-3xl font-bold text-white">
+        {{ isEditMode ? 'تعديل الدور' : 'إضافة دور جديد' }}
+      </h1>
+      <p class="text-dark-400 text-sm">حدد مسمى الدور والصلاحيات الممنوحة له</p>
+    </div>
+  </div>
+
+  <form [formGroup]="roleForm" (ngSubmit)="onSubmit()" class="space-y-6">
+
+    <!-- Role name -->
+    <div class="card p-5">
+      <label class="label">مسمى الدور <span class="text-red-400">*</span></label>
+      <input type="text" formControlName="name"
+             [readonly]="isEditMode && roleForm.value.name === 'Admin'"
+             class="input-field max-w-md"
+             placeholder="مثال: مشرف مالي، مراقب حضور..."/>
+      <p *ngIf="isEditMode && roleForm.value.name === 'Admin'"
+         class="text-xs text-yellow-400 mt-2 flex items-center gap-1">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        لا يمكن تغيير اسم دور المسؤول الأساسي
+      </p>
+    </div>
+
+    <!-- Permissions -->
+    <div class="card p-5">
+      <h3 class="font-bold text-white text-sm mb-5 flex items-center gap-2">
+        <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        الصلاحيات
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div *ngFor="let group of groupedPermissions | keyvalue"
+             class="p-4 rounded-xl" style="background: rgba(30,41,59,0.5); border: 1px solid rgba(51,65,85,0.5);">
+          <h4 class="font-semibold text-primary-400 text-sm mb-3 pb-2"
+              style="border-bottom: 1px solid rgba(51,65,85,0.5);">
+            {{ getGroupLabel(group.key) }}
+          </h4>
+          <div class="space-y-2.5">
+            <label *ngFor="let perm of group.value"
+                   class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-dark-800/50 transition-colors">
+              <input type="checkbox"
+                     [checked]="hasPermission(perm)"
+                     (change)="togglePermission(perm, $event)"
+                     class="w-4 h-4 rounded text-primary-500 border-dark-600 bg-dark-800 focus:ring-primary-500">
+              <span class="text-sm text-dark-200">
+                {{ getPermissionLabel(perm) }}
+                <span class="text-xs text-dark-500 block font-mono" dir="ltr">{{ perm }}</span>
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3">
+      <button type="submit" [disabled]="roleForm.invalid || isSaving" class="btn-primary px-8 py-3">
+        <span *ngIf="isSaving" class="w-4 h-4 rounded-full border-2 border-white/20 border-t-white animate-spin"></span>
+        <svg *ngIf="!isSaving" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        {{ isSaving ? 'جاري الحفظ...' : 'حفظ الدور' }}
+      </button>
+      <button type="button" routerLink="/dashboard/roles" class="btn-secondary px-6 py-3">إلغاء</button>
+    </div>
+
+  </form>
+
+</div>

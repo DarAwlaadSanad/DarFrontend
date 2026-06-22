@@ -1,34 +1,64 @@
 <div class="space-y-4 lg:space-y-6" dir="rtl" *ngIf="details() as data">
 
-  <!-- ── Header ────────────────────────────────────────────────────────────── -->
+  <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
     <div class="flex items-center gap-3">
-      <a routerLink="/dashboard/groups" class="p-1.5 rounded-lg bg-dark-800 text-dark-400 hover:text-white transition-colors flex-shrink-0">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+      <a routerLink="/dashboard/groups"
+        class="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-dark-400 hover:text-white hover:border-dark-600 transition-all flex-shrink-0">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
       </a>
       <div>
-        <h1 class="text-lg lg:text-2xl font-bold text-white leading-tight">{{ data.groupName }}</h1>
-        <p class="text-dark-400 text-xs lg:text-sm">{{ data.teacherName }} · {{ data.students.length }} طلاب</p>
+        <div class="flex items-center gap-2">
+          <h1 class="text-lg lg:text-2xl font-bold text-white leading-tight">{{ data.groupName }}</h1>
+          <span class="badge-green hidden sm:inline-flex">{{ data.students.length }} طالب</span>
+        </div>
+        <p class="text-dark-400 text-xs lg:text-sm">{{ data.teacherName }}</p>
       </div>
     </div>
-    <div class="flex items-center gap-2">
-      <button (click)="openAddStudentModal()" class="btn-primary py-2 px-3 lg:px-4 flex items-center gap-1.5 text-sm">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"/></svg>
-        <span class="hidden sm:inline">إضافة طالب</span>
-        <span class="sm:hidden">طالب</span>
+    <div class="flex items-center gap-2 flex-wrap">
+      <button (click)="exportStudents()" class="btn-secondary text-sm py-2 gap-1.5">
+        <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        <span class="hidden sm:inline">إكسيل الطلاب</span>
       </button>
-      <button onclick="window.print()" class="btn-secondary p-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+      <button (click)="openAddStudentModal()" class="btn-primary py-2 text-sm gap-1.5">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path d="M12 4v16m8-8H4" />
+        </svg>
+        <span class="hidden sm:inline">إضافة طالب</span>
+        <span class="sm:hidden">طالب+</span>
+      </button>
+      <button onclick="window.print()"
+        class="w-9 h-9 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-dark-400 hover:text-white transition-all">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+        </svg>
       </button>
     </div>
   </div>
 
-  <!-- ── Tabs ───────────────────────────────────────────────────────────────── -->
-  <div class="flex border-b border-dark-800 no-print overflow-x-auto">
-    <button (click)="activeTab.set('records')"   [class]="activeTab()==='records'   ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">سجل المتابعة</button>
-    <button (click)="activeTab.set('schedules')" [class]="activeTab()==='schedules' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">مواعيد الحلقة</button>
-    <button (click)="activeTab.set('fee-plans')" [class]="activeTab()==='fee-plans' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">خطط الدفع</button>
-    <button (click)="activeTab.set('student-fees')" [class]="activeTab()==='student-fees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500'" class="px-4 lg:px-6 py-3 border-b-2 font-bold transition-all text-sm whitespace-nowrap">تحصيل الرسوم</button>
+  <!-- Tabs -->
+  <div class="flex no-print overflow-x-auto" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
+    <button (click)="activeTab.set('records')"
+      [class]="activeTab()==='records' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
+      class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">سجل المتابعة</button>
+    <button (click)="activeTab.set('schedules')"
+      [class]="activeTab()==='schedules' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
+      class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">مواعيد الحلقة</button>
+    <button (click)="activeTab.set('fee-plans')"
+      [class]="activeTab()==='fee-plans' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
+      class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">خطط الدفع</button>
+    <button (click)="activeTab.set('student-fees')"
+      [class]="activeTab()==='student-fees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
+      class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">تحصيل الرسوم</button>
+    <button (click)="activeTab.set('exams')"
+      [class]="activeTab()==='exams' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
+      class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">الاختبارات</button>
   </div>
 
   <!-- ── Records Tab ────────────────────────────────────────────────────────── -->
@@ -42,6 +72,14 @@
         <option [value]="2025">2025</option>
         <option [value]="2026">2026</option>
       </select>
+      <button (click)="exportAttendance()"
+        class="px-3 py-2 rounded-xl font-bold bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-white transition-all flex items-center gap-1.5 text-sm">
+        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+        </svg>
+        <span>إكسيل الغياب</span>
+      </button>
     </div>
 
     <!-- Pivot Table (horizontal scroll on mobile) -->
@@ -50,34 +88,45 @@
         <table class="w-full text-right border-collapse min-w-[600px]">
           <thead>
             <tr class="bg-dark-800/80 border-b border-dark-700">
-              <th class="w-36 lg:w-56 px-3 lg:px-6 py-3 font-bold text-white sticky right-0 bg-dark-900/95 backdrop-blur z-10 border-l border-dark-700 text-sm">الطالب</th>
-              <th *ngFor="let session of sortedSessions()"
-                  (click)="openSessionEditor(session)"
-                  class="px-2 lg:px-3 py-3 text-center border-l border-dark-700/50 cursor-pointer hover:bg-primary-600/10 group transition-colors min-w-[56px]">
-                <div class="text-[10px] text-dark-400 mb-0.5 group-hover:text-primary-400 transition-colors">{{ session.date | date:'EEE' }}</div>
-                <div class="text-xs font-bold text-white group-hover:text-primary-400 transition-colors">{{ session.date | date:'d/M' }}</div>
+              <th
+                class="w-36 lg:w-56 px-3 lg:px-6 py-3 font-bold text-white sticky right-0 bg-dark-900/95 backdrop-blur z-10 border-l border-dark-700 text-sm">
+                الطالب</th>
+              <th *ngFor="let session of sortedSessions()" (click)="openSessionEditor(session)"
+                class="px-2 lg:px-3 py-3 text-center border-l border-dark-700/50 cursor-pointer hover:bg-primary-600/10 group transition-colors min-w-[56px]">
+                <div class="text-[10px] text-dark-400 mb-0.5 group-hover:text-primary-400 transition-colors">{{
+                  session.date | date:'EEE' }}</div>
+                <div class="text-xs font-bold text-white group-hover:text-primary-400 transition-colors">{{ session.date
+                  | date:'d/M' }}</div>
                 <div class="text-[9px] text-dark-600 group-hover:text-primary-500 mt-0.5 hidden lg:block">تعديل</div>
               </th>
-              <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-primary-400 bg-primary-500/5 text-[10px]">حضور</th>
-              <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-gold-400 bg-gold-500/5 text-[10px]">تقييم</th>
+              <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-primary-400 bg-primary-500/5 text-[10px]">
+                حضور</th>
+              <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-gold-400 bg-gold-500/5 text-[10px]">تقييم
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-dark-800">
             <tr *ngFor="let student of data.students" class="hover:bg-dark-800/40 transition-colors group">
-              <td class="px-3 lg:px-6 py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
+              <td
+                class="px-3 lg:px-6 py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
                 <div class="flex items-center gap-2">
-                  <div class="w-7 h-7 rounded-full bg-dark-700 flex items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0">{{ student.studentName.charAt(0) }}</div>
-                  <a [routerLink]="['/dashboard/students', student.studentId]" class="text-white font-medium text-xs lg:text-sm truncate max-w-[80px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block">
+                  <div
+                    class="w-7 h-7 rounded-full bg-dark-700 flex items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0">
+                    {{ student.studentName.charAt(0) }}</div>
+                  <a [routerLink]="['/dashboard/students', student.studentId]"
+                    class="text-white font-medium text-xs lg:text-sm truncate max-w-[80px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block">
                     {{ student.studentName }}
                   </a>
                 </div>
               </td>
               <td *ngFor="let session of sortedSessions()" class="p-1 border-l border-dark-700/30">
                 <div class="flex flex-col items-center justify-center gap-0.5 min-h-[48px]">
-                  <div [class]="getStatusClass(student.records[session.sessionId]?.attendance)" class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs">
+                  <div [class]="getStatusClass(student.records[session.sessionId]?.attendance)"
+                    class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs">
                     {{ getStatusIcon(student.records[session.sessionId]?.attendance) }}
                   </div>
-                  <div *ngIf="student.records[session.sessionId]?.score != null" class="text-[9px] font-bold text-gold-400 px-0.5 rounded">
+                  <div *ngIf="student.records[session.sessionId]?.score != null"
+                    class="text-[9px] font-bold text-gold-400 px-0.5 rounded">
                     {{ student.records[session.sessionId]?.score }}
                   </div>
                 </div>
@@ -96,10 +145,15 @@
 
     <!-- Legend -->
     <div class="flex flex-wrap gap-3 px-2 text-[10px] text-dark-500 no-print">
-      <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-green-500/20 text-green-400 flex items-center justify-center">✓</span> حاضر</span>
-      <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-red-500/20 text-red-400 flex items-center justify-center">✕</span> غائب</span>
-      <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-yellow-500/20 text-yellow-400 flex items-center justify-center">⏰</span> متأخر</span>
-      <span class="flex items-center gap-1"><span class="w-4 h-4 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">✉</span> بعذر</span>
+      <span class="flex items-center gap-1"><span
+          class="w-4 h-4 rounded bg-green-500/20 text-green-400 flex items-center justify-center">✓</span> حاضر</span>
+      <span class="flex items-center gap-1"><span
+          class="w-4 h-4 rounded bg-red-500/20 text-red-400 flex items-center justify-center">✕</span> غائب</span>
+      <span class="flex items-center gap-1"><span
+          class="w-4 h-4 rounded bg-yellow-500/20 text-yellow-400 flex items-center justify-center">⏰</span>
+        متأخر</span>
+      <span class="flex items-center gap-1"><span
+          class="w-4 h-4 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">✉</span> بعذر</span>
       <span class="text-dark-600 hidden sm:inline">• اضغط على التاريخ لتسجيل الحضور</span>
     </div>
   </div>
@@ -109,7 +163,9 @@
     <div class="flex justify-between items-center">
       <h3 class="text-base lg:text-lg font-bold text-white">مواعيد الحلقة</h3>
       <button (click)="openAddScheduleModal()" class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"/></svg>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path d="M12 4v16m8-8H4" />
+        </svg>
         <span class="hidden sm:inline">إضافة موعد</span>
         <span class="sm:hidden">موعد</span>
       </button>
@@ -117,11 +173,17 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <div *ngFor="let sch of schedules()" class="glass-card p-5 border-dark-800 relative overflow-hidden">
-        <div *ngIf="sch.isActive"  class="absolute top-0 left-0 bg-green-500 text-white text-[9px] px-2.5 py-1 font-bold rounded-br-lg">نشط</div>
-        <div *ngIf="!sch.isActive" class="absolute top-0 left-0 bg-dark-700 text-dark-400 text-[9px] px-2.5 py-1 font-bold rounded-br-lg">منتهي</div>
+        <div *ngIf="sch.isActive"
+          class="absolute top-0 left-0 bg-green-500 text-white text-[9px] px-2.5 py-1 font-bold rounded-br-lg">نشط</div>
+        <div *ngIf="!sch.isActive"
+          class="absolute top-0 left-0 bg-dark-700 text-dark-400 text-[9px] px-2.5 py-1 font-bold rounded-br-lg">منتهي
+        </div>
         <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 flex-shrink-0">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <div
+            class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 flex-shrink-0">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
           <div>
             <h4 class="text-white font-bold">{{ getDayLabel(sch.dayOfWeek) }}</h4>
@@ -133,8 +195,12 @@
           <span *ngIf="sch.effectiveTo" class="text-red-400/70">انتهى: {{ sch.effectiveTo }}</span>
         </div>
         <div *ngIf="sch.isActive" class="mt-3 pt-3 border-t border-dark-800">
-          <button (click)="removeSchedule(sch.id)" class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
-            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <button (click)="removeSchedule(sch.id)"
+            class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             إلغاء تفعيل
           </button>
         </div>
@@ -147,7 +213,9 @@
     <div class="flex justify-between items-center">
       <h3 class="text-base lg:text-lg font-bold text-white">خطط الدفع</h3>
       <button (click)="openAddFeePlanModal()" class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 4v16m8-8H4"/></svg>
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path d="M12 4v16m8-8H4" />
+        </svg>
         <span class="hidden sm:inline">إضافة خطة</span>
         <span class="sm:hidden">خطة</span>
       </button>
@@ -155,12 +223,19 @@
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <div *ngFor="let plan of feePlans()" class="glass-card p-5 border-dark-800 relative overflow-hidden">
-        <div *ngIf="plan.isActive"  class="absolute top-0 left-0 bg-green-500 text-white text-[9px] px-2.5 py-1 font-bold rounded-br-lg">نشطة حالياً</div>
-        <div *ngIf="!plan.isActive" class="absolute top-0 left-0 bg-dark-700 text-dark-400 text-[9px] px-2.5 py-1 font-bold rounded-br-lg">منتهية</div>
-        
+        <div *ngIf="plan.isActive"
+          class="absolute top-0 left-0 bg-green-500 text-white text-[9px] px-2.5 py-1 font-bold rounded-br-lg">نشطة
+          حالياً</div>
+        <div *ngIf="!plan.isActive"
+          class="absolute top-0 left-0 bg-dark-700 text-dark-400 text-[9px] px-2.5 py-1 font-bold rounded-br-lg">منتهية
+        </div>
+
         <div class="flex items-center gap-3 mb-3">
           <div class="w-10 h-10 rounded-xl bg-gold-500/10 flex items-center justify-center text-gold-400 flex-shrink-0">
-            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
           </div>
           <div>
             <h4 class="text-white font-bold text-lg">{{ plan.amount }} جنيه</h4>
@@ -180,8 +255,12 @@
         </div>
 
         <div *ngIf="plan.isActive" class="mt-4 pt-4 border-t border-dark-800">
-          <button (click)="deactivateFeePlan(plan.id)" class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-2 rounded-lg transition-all flex items-center justify-center gap-1">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <button (click)="deactivateFeePlan(plan.id)"
+            class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-2 rounded-lg transition-all flex items-center justify-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
             إلغاء تفعيل الخطة
           </button>
         </div>
@@ -193,12 +272,16 @@
   <div *ngIf="activeTab() === 'student-fees'" class="space-y-4">
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
       <div>
-        <h3 class="text-base lg:text-lg font-bold text-white">تحصيل الرسوم - {{ months[currentMonth()-1].label }} {{ currentYear() }}</h3>
+        <h3 class="text-base lg:text-lg font-bold text-white">تحصيل الرسوم - {{ months[currentMonth()-1].label }} {{
+          currentYear() }}</h3>
         <p class="text-dark-500 text-[10px]">عرض حالة الدفع للطلاب في الشهر المحدد</p>
       </div>
       <div class="flex items-center gap-2 w-full sm:w-auto">
-        <button (click)="generateFees()" [disabled]="isSaving()" class="btn-primary py-2 px-4 flex items-center gap-2 text-sm flex-1 sm:flex-initial">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+        <button (click)="generateFees()" [disabled]="isSaving()"
+          class="btn-primary py-2 px-4 flex items-center gap-2 text-sm flex-1 sm:flex-initial">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+          </svg>
           توليد رسوم الشهر
         </button>
         <div class="flex gap-1 no-print">
@@ -233,7 +316,9 @@
               </td>
               <td class="px-4 py-4 text-center text-dark-300 font-bold">{{ fee.requiredAmount }} جنيه</td>
               <td class="px-4 py-4 text-center">
-                <span [class]="fee.amountPaid >= fee.requiredAmount ? 'text-green-400' : (fee.amountPaid > 0 ? 'text-yellow-400' : 'text-red-400')" class="font-bold">
+                <span
+                  [class]="fee.amountPaid >= fee.requiredAmount ? 'text-green-400' : (fee.amountPaid > 0 ? 'text-yellow-400' : 'text-red-400')"
+                  class="font-bold">
                   {{ fee.amountPaid }} جنيه
                 </span>
               </td>
@@ -241,12 +326,19 @@
                 {{ fee.paymentDate || '---' }}
               </td>
               <td class="px-4 py-4 text-center">
-                <span *ngIf="fee.amountPaid >= fee.requiredAmount" class="px-2 py-1 rounded-md bg-green-500/10 text-green-400 text-[10px] font-bold border border-green-500/20">تم السداد</span>
-                <span *ngIf="fee.amountPaid > 0 && fee.amountPaid < fee.requiredAmount" class="px-2 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-[10px] font-bold border border-yellow-500/20">سداد جزئي</span>
-                <span *ngIf="fee.amountPaid === 0" class="px-2 py-1 rounded-md bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">لم يسدد</span>
+                <span *ngIf="fee.amountPaid >= fee.requiredAmount"
+                  class="px-2 py-1 rounded-md bg-green-500/10 text-green-400 text-[10px] font-bold border border-green-500/20">تم
+                  السداد</span>
+                <span *ngIf="fee.amountPaid > 0 && fee.amountPaid < fee.requiredAmount"
+                  class="px-2 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-[10px] font-bold border border-yellow-500/20">سداد
+                  جزئي</span>
+                <span *ngIf="fee.amountPaid === 0"
+                  class="px-2 py-1 rounded-md bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">لم
+                  يسدد</span>
               </td>
               <td class="px-4 py-4 text-center no-print">
-                <button (click)="openPaymentModal(fee)" class="text-primary-400 hover:text-white hover:bg-primary-500/20 px-3 py-1.5 rounded-lg text-xs transition-all font-bold">
+                <button (click)="openPaymentModal(fee)"
+                  class="text-primary-400 hover:text-white hover:bg-primary-500/20 px-3 py-1.5 rounded-lg text-xs transition-all font-bold">
                   تحديث الدفع
                 </button>
               </td>
@@ -254,7 +346,8 @@
             <tr *ngIf="studentFees().length === 0">
               <td colspan="6" class="px-6 py-12 text-center text-dark-500">
                 <p class="mb-3">لم يتم توليد رسوم لهذا الشهر بعد</p>
-                <button (click)="generateFees()" class="text-primary-400 hover:underline text-sm font-bold">توليد الرسوم الآن</button>
+                <button (click)="generateFees()" class="text-primary-400 hover:underline text-sm font-bold">توليد الرسوم
+                  الآن</button>
               </td>
             </tr>
           </tbody>
@@ -262,12 +355,19 @@
       </div>
     </div>
   </div>
+
+  <!-- ── Exams Tab ────────────────────────────────────────────────────────────── -->
+  <div *ngIf="activeTab() === 'exams'" class="space-y-4">
+    <app-group-exams [inputGroupId]="data.groupId"></app-group-exams>
+  </div>
 </div>
 
 <!-- ── Session Editor Modal (Full-screen on mobile) ──────────────────────────── -->
 <div *ngIf="showSessionEditor()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showSessionEditor.set(false)"></div>
-  <div class="relative bg-dark-900 w-full sm:max-w-3xl border-t sm:border sm:rounded-2xl border-dark-700 shadow-2xl flex flex-col h-[95vh] sm:h-[90vh]" dir="rtl">
+  <div
+    class="relative bg-dark-900 w-full sm:max-w-3xl border-t sm:border sm:rounded-2xl border-dark-700 shadow-2xl flex flex-col h-[95vh] sm:h-[90vh]"
+    dir="rtl">
 
     <!-- Header -->
     <div class="flex items-center justify-between px-4 lg:px-6 py-4 border-b border-dark-800 flex-shrink-0">
@@ -275,17 +375,20 @@
         <h2 class="text-base lg:text-xl font-bold text-white">تسجيل الحضور والتقييم</h2>
         <p class="text-dark-400 text-xs mt-0.5">{{ editingSession()?.date | date:'fullDate' }}</p>
       </div>
-      <button (click)="showSessionEditor.set(false)" class="p-2 text-dark-500 hover:text-white rounded-lg hover:bg-dark-800 transition-colors">
-        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      <button (click)="showSessionEditor.set(false)"
+        class="p-2 text-dark-500 hover:text-white rounded-lg hover:bg-dark-800 transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
       </button>
     </div>
 
     <!-- Quick mark-all -->
-    <div class="flex items-center gap-2 px-4 lg:px-6 py-2.5 bg-dark-800/30 border-b border-dark-800 flex-shrink-0 flex-wrap">
+    <div
+      class="flex items-center gap-2 px-4 lg:px-6 py-2.5 bg-dark-800/30 border-b border-dark-800 flex-shrink-0 flex-wrap">
       <span class="text-dark-400 text-xs ml-1">الكل:</span>
-      <button *ngFor="let opt of statusOptions" (click)="markAll(opt.value)"
-              [class]="opt.cls"
-              class="text-white text-[10px] font-bold px-2.5 py-1 rounded-full hover:opacity-80 transition-opacity">
+      <button *ngFor="let opt of statusOptions" (click)="markAll(opt.value)" [class]="opt.cls"
+        class="text-white text-[10px] font-bold px-2.5 py-1 rounded-full hover:opacity-80 transition-opacity">
         {{ opt.label }}
       </button>
     </div>
@@ -301,10 +404,9 @@
           </div>
           <!-- Status buttons -->
           <div class="flex gap-1.5 flex-wrap">
-            <button *ngFor="let opt of statusOptions"
-                    (click)="setRowStatus(row, opt.value)"
-                    [class]="row.status === opt.value ? opt.cls + ' text-white' : 'bg-dark-800 text-dark-500'"
-                    class="text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-all flex-1">
+            <button *ngFor="let opt of statusOptions" (click)="setRowStatus(row, opt.value)"
+              [class]="row.status === opt.value ? opt.cls + ' text-white' : 'bg-dark-800 text-dark-500'"
+              class="text-[10px] font-bold px-2.5 py-1.5 rounded-lg transition-all flex-1">
               {{ opt.label }}
             </button>
           </div>
@@ -312,11 +414,13 @@
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="text-[10px] text-dark-500 mb-1 block">الدرجة</label>
-              <input type="number" [(ngModel)]="row.score" min="0" max="100" class="input-field py-1.5 px-2 text-sm text-center w-full" placeholder="--">
+              <input type="number" [(ngModel)]="row.score" min="0" max="100"
+                class="input-field py-1.5 px-2 text-sm text-center w-full" placeholder="--">
             </div>
             <div>
               <label class="text-[10px] text-dark-500 mb-1 block">ملاحظة</label>
-              <textarea rows="2" [(ngModel)]="row.comment" class="input-field py-1.5 px-2 text-sm w-full resize-none min-h-[60px]" placeholder="..."></textarea>
+              <textarea rows="2" [(ngModel)]="row.comment"
+                class="input-field py-1.5 px-2 text-sm w-full resize-none min-h-[60px]" placeholder="..."></textarea>
             </div>
           </div>
         </div>
@@ -337,19 +441,21 @@
             <td class="px-4 lg:px-6 py-3"><span class="text-white font-medium text-sm">{{ row.studentName }}</span></td>
             <td class="px-3 py-3">
               <div class="flex justify-center gap-1">
-                <button *ngFor="let opt of statusOptions"
-                        (click)="setRowStatus(row, opt.value)"
-                        [class]="row.status === opt.value ? opt.cls + ' text-white shadow-md' : 'bg-dark-800 text-dark-500 hover:bg-dark-700'"
-                        class="text-[10px] font-bold px-2 py-1.5 rounded-lg transition-all">
+                <button *ngFor="let opt of statusOptions" (click)="setRowStatus(row, opt.value)"
+                  [class]="row.status === opt.value ? opt.cls + ' text-white shadow-md' : 'bg-dark-800 text-dark-500 hover:bg-dark-700'"
+                  class="text-[10px] font-bold px-2 py-1.5 rounded-lg transition-all">
                   {{ opt.label }}
                 </button>
               </div>
             </td>
             <td class="px-3 py-3">
-              <input type="number" [(ngModel)]="row.score" min="0" max="100" class="input-field py-1.5 px-2 text-center text-sm w-full" placeholder="--">
+              <input type="number" [(ngModel)]="row.score" min="0" max="100"
+                class="input-field py-1.5 px-2 text-center text-sm w-full" placeholder="--">
             </td>
             <td class="px-3 py-3 align-top">
-              <textarea rows="2" [(ngModel)]="row.comment" class="input-field py-1.5 px-2 text-sm w-full resize-none min-h-[60px]" placeholder="ملاحظة..."></textarea>
+              <textarea rows="2" [(ngModel)]="row.comment"
+                class="input-field py-1.5 px-2 text-sm w-full resize-none min-h-[60px]"
+                placeholder="ملاحظة..."></textarea>
             </td>
           </tr>
         </tbody>
@@ -359,7 +465,10 @@
     <!-- Footer -->
     <div class="p-4 lg:p-6 border-t border-dark-800 flex gap-3 flex-shrink-0">
       <button (click)="saveSession()" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm">
-        <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+        <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
         حفظ الحضور والتقييم
       </button>
       <button (click)="showSessionEditor.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
@@ -367,13 +476,17 @@
   </div>
 </div>
 
+
 <!-- ── Record Payment Modal ─────────────────────────────────────────────────── -->
 <div *ngIf="showPaymentModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showPaymentModal.set(false)"></div>
-  <div class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up" dir="rtl">
+  <div
+    class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up"
+    dir="rtl">
     <h2 class="text-xl font-bold text-white mb-2">تحديث حالة الدفع</h2>
-    <p class="text-dark-400 text-xs mb-6">تعديل المبلغ المدفوع للطالب: <span class="text-primary-400 font-bold">{{ editingFee()?.studentName }}</span></p>
-    
+    <p class="text-dark-400 text-xs mb-6">تعديل المبلغ المدفوع للطالب: <span class="text-primary-400 font-bold">{{
+        editingFee()?.studentName }}</span></p>
+
     <form (ngSubmit)="submitPayment()" class="space-y-4">
       <div>
         <label class="label text-sm">المبلغ المدفوع (جنيه)</label>
@@ -389,10 +502,14 @@
       </div>
       <div class="flex gap-3 pt-4">
         <button type="submit" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm">
-          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
           تحديث
         </button>
-        <button type="button" (click)="showPaymentModal.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+        <button type="button" (click)="showPaymentModal.set(false)"
+          class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
     </form>
   </div>
@@ -401,13 +518,16 @@
 <!-- ── Add Fee Plan Modal ──────────────────────────────────────────────────────── -->
 <div *ngIf="showAddFeePlanModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showAddFeePlanModal.set(false)"></div>
-  <div class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up" dir="rtl">
+  <div
+    class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up"
+    dir="rtl">
     <h2 class="text-xl font-bold text-white mb-5">إضافة خطة دفع جديدة</h2>
     <form (ngSubmit)="submitFeePlan()" class="space-y-4">
       <div>
         <label class="label text-sm">المبلغ (جنيه)</label>
         <div class="relative">
-          <input type="number" name="amount" [(ngModel)]="newFeePlan.amount" required class="input-field pl-12" placeholder="0.00">
+          <input type="number" name="amount" [(ngModel)]="newFeePlan.amount" required class="input-field pl-12"
+            placeholder="0.00">
           <span class="absolute left-4 top-1/2 -translate-y-1/2 text-dark-500 text-xs">جنيه</span>
         </div>
       </div>
@@ -417,16 +537,23 @@
       </div>
       <div class="p-3 bg-primary-500/5 rounded-xl border border-primary-500/10">
         <p class="text-[10px] text-primary-400 leading-relaxed">
-          <svg class="w-3 h-3 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <svg class="w-3 h-3 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
           سيتم إلغاء تفعيل الخطة الحالية تلقائياً عند تفعيل الخطة الجديدة.
         </p>
       </div>
       <div class="flex gap-3 pt-2">
         <button type="submit" [disabled]="isSaving() || !newFeePlan.amount" class="btn-primary flex-1 py-3 text-sm">
-          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
           حفظ الخطة
         </button>
-        <button type="button" (click)="showAddFeePlanModal.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+        <button type="button" (click)="showAddFeePlanModal.set(false)"
+          class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
     </form>
   </div>
@@ -435,7 +562,9 @@
 <!-- ── Add Schedule Modal ─────────────────────────────────────────────────────── -->
 <div *ngIf="showAddScheduleModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="showAddScheduleModal.set(false)"></div>
-  <div class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up" dir="rtl">
+  <div
+    class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up"
+    dir="rtl">
     <h2 class="text-xl font-bold text-white mb-5">إضافة موعد جديد</h2>
     <form (ngSubmit)="submitSchedule()" class="space-y-4">
       <div><label class="label text-sm">اليوم</label>
@@ -444,13 +573,17 @@
         </select>
       </div>
       <div class="grid grid-cols-2 gap-3">
-        <div><label class="label text-sm">وقت البدء</label><input type="time" name="start" [(ngModel)]="newSchedule.startTime" class="input-field"></div>
-        <div><label class="label text-sm">وقت الانتهاء</label><input type="time" name="end" [(ngModel)]="newSchedule.endTime" class="input-field"></div>
+        <div><label class="label text-sm">وقت البدء</label><input type="time" name="start"
+            [(ngModel)]="newSchedule.startTime" class="input-field"></div>
+        <div><label class="label text-sm">وقت الانتهاء</label><input type="time" name="end"
+            [(ngModel)]="newSchedule.endTime" class="input-field"></div>
       </div>
-      <div><label class="label text-sm">تاريخ التفعيل</label><input type="date" name="effective" [(ngModel)]="newSchedule.effectiveFrom" class="input-field"></div>
+      <div><label class="label text-sm">تاريخ التفعيل</label><input type="date" name="effective"
+          [(ngModel)]="newSchedule.effectiveFrom" class="input-field"></div>
       <div class="flex gap-3 pt-2">
         <button type="submit" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm">حفظ</button>
-        <button type="button" (click)="showAddScheduleModal.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+        <button type="button" (click)="showAddScheduleModal.set(false)"
+          class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
     </form>
   </div>
@@ -459,24 +592,32 @@
 <!-- ── Add Student Modal ──────────────────────────────────────────────────────── -->
 <div *ngIf="showAddStudentModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
   <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="closeAddStudentModal()"></div>
-  <div class="relative bg-dark-900 w-full sm:max-w-2xl sm:rounded-2xl border-t sm:border border-dark-700 p-6 overflow-y-auto max-h-[92vh]" dir="rtl">
+  <div
+    class="relative bg-dark-900 w-full sm:max-w-2xl sm:rounded-2xl border-t sm:border border-dark-700 p-6 overflow-y-auto max-h-[92vh]"
+    dir="rtl">
     <h2 class="text-xl font-bold text-white mb-5">إضافة طالب جديد</h2>
     <form (ngSubmit)="submitStudent()" #studentForm="ngForm" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div class="sm:col-span-2"><label class="label text-sm">الاسم الكامل</label><input type="text" name="fullName" [(ngModel)]="newStudent.fullName" required class="input-field" placeholder="اسم الطالب..."></div>
+      <div class="sm:col-span-2"><label class="label text-sm">الاسم الكامل</label><input type="text" name="fullName"
+          [(ngModel)]="newStudent.fullName" required class="input-field" placeholder="اسم الطالب..."></div>
       <div><label class="label text-sm">السنة الدراسية</label>
         <select name="academicYearId" [(ngModel)]="newStudent.academicYearId" required class="input-field">
           <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }}</option>
         </select>
       </div>
-      <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn" class="input-field" placeholder="14 رقم..." pattern="[0-9]{14}" minlength="14" maxlength="14"></div>
+      <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn"
+          class="input-field" placeholder="14 رقم..." pattern="[0-9]{14}" minlength="14" maxlength="14"></div>
       <div class="sm:col-span-2">
         <label class="label text-sm">صور الطالب</label>
         <div class="flex flex-wrap gap-3">
-          <div *ngFor="let preview of imagePreviews()" class="w-16 h-16 rounded-xl border border-primary-500/30 overflow-hidden bg-dark-800 animate-fade-in">
+          <div *ngFor="let preview of imagePreviews()"
+            class="w-16 h-16 rounded-xl border border-primary-500/30 overflow-hidden bg-dark-800 animate-fade-in">
             <img [src]="preview" class="w-full h-full object-cover">
           </div>
-          <label class="w-16 h-16 rounded-xl border-2 border-dashed border-dark-700 flex flex-col items-center justify-center text-dark-500 hover:border-primary-500/50 hover:text-primary-400 cursor-pointer transition-all bg-dark-800/50">
-            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          <label
+            class="w-16 h-16 rounded-xl border-2 border-dashed border-dark-700 flex flex-col items-center justify-center text-dark-500 hover:border-primary-500/50 hover:text-primary-400 cursor-pointer transition-all bg-dark-800/50">
+            <svg class="w-5 h-5 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
             <span class="text-[9px] font-bold">رفع</span>
             <input type="file" (change)="onFileChange($event)" multiple accept="image/*" class="hidden">
           </label>
@@ -484,15 +625,22 @@
       </div>
       <div class="sm:col-span-2">
         <label class="label text-sm">أرقام الهواتف</label>
-        <div *ngFor="let phone of newStudent.phoneNumbers; let i = index; trackBy: trackByIndex" class="flex gap-2 mb-2">
-          <input type="text" name="phone-{{i}}" [(ngModel)]="newStudent.phoneNumbers[i]" class="input-field flex-1 text-sm" placeholder="رقم الهاتف..." maxlength="11">
-          <button type="button" (click)="removePhone(i)" class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg">✕</button>
+        <div *ngFor="let phone of newStudent.phoneNumbers; let i = index; trackBy: trackByIndex"
+          class="flex gap-2 mb-2">
+          <input type="text" name="phone-{{i}}" [(ngModel)]="newStudent.phoneNumbers[i]"
+            class="input-field flex-1 text-sm" placeholder="رقم الهاتف..." maxlength="11">
+          <button type="button" (click)="removePhone(i)"
+            class="p-2 text-red-400 hover:bg-red-500/10 rounded-lg">✕</button>
         </div>
-        <button type="button" (click)="addPhone()" class="text-primary-400 text-xs font-bold hover:underline">+ رقم آخر</button>
+        <button type="button" (click)="addPhone()" class="text-primary-400 text-xs font-bold hover:underline">+ رقم
+          آخر</button>
       </div>
-      <div class="sm:col-span-2"><label class="label text-sm">ملاحظات</label><textarea name="notes" [(ngModel)]="newStudent.notes" class="input-field min-h-[80px] text-sm" placeholder="ملاحظات..."></textarea></div>
+      <div class="sm:col-span-2"><label class="label text-sm">ملاحظات</label><textarea name="notes"
+          [(ngModel)]="newStudent.notes" class="input-field min-h-[80px] text-sm" placeholder="ملاحظات..."></textarea>
+      </div>
       <div class="sm:col-span-2 flex gap-3 pt-2">
-        <button type="submit" [disabled]="!studentForm.valid || isSaving()" class="btn-primary flex-1 py-3 text-sm">حفظ</button>
+        <button type="submit" [disabled]="!studentForm.valid || isSaving()"
+          class="btn-primary flex-1 py-3 text-sm">حفظ</button>
         <button type="button" (click)="closeAddStudentModal()" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
     </form>

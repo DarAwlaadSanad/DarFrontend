@@ -1,0 +1,334 @@
+<div class="space-y-6 animate-fade-in" dir="rtl" *ngIf="competition()">
+  
+  <!-- ── Breadcrumb & Header ──────────────────────────────── -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-800 pb-5">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2 text-xs text-dark-500">
+        <a routerLink="/dashboard/competitions" class="hover:text-amber-400 transition-colors">المسابقات الجماعية</a>
+        <svg class="w-3 h-3 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+        <span class="text-dark-300 font-medium">تفاصيل المسابقة</span>
+      </div>
+      <h1 class="text-2xl lg:text-3xl font-extrabold text-white flex items-center gap-3">
+        <span class="text-gradient-gold">{{ competition()?.title }}</span>
+      </h1>
+      <p class="text-xs text-dark-400 flex items-center gap-1.5 pt-0.5">
+        <svg class="w-4 h-4 text-amber-500/80" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        التاريخ: {{ competition()?.date | date:'longDate' }}
+      </p>
+    </div>
+
+    <!-- Back Button -->
+    <a routerLink="/dashboard/competitions" class="btn-secondary flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+      </svg>
+      رجوع للمسابقات
+    </a>
+  </div>
+
+  <!-- ── Main Grid Layout ──────────────────────────────────── -->
+  <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    
+    <!-- ── Right Column: Levels List (1/4 width) ────────────── -->
+    <div class="lg:col-span-1 space-y-4">
+      <div class="glass-card p-5">
+        <div class="flex items-center justify-between border-b border-dark-800 pb-3 mb-4">
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">مستويات المسابقة</h3>
+          <button (click)="openAddLevelModal()" class="text-xs font-bold text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            إضافة مستوى
+          </button>
+        </div>
+
+        <!-- Levels Navigation Links -->
+        <div class="space-y-2" *ngIf="competition()?.levels?.length! > 0">
+          <div *ngFor="let level of competition()?.levels" 
+               (click)="selectLevel(level)"
+               [class.border-amber-500]="selectedLevel()?.id === level.id"
+               [class.bg-amber-500\/5]="selectedLevel()?.id === level.id"
+               class="flex items-center justify-between p-3.5 rounded-xl border border-dark-800/80 hover:border-amber-500/20 hover:bg-dark-800/40 transition-all cursor-pointer group">
+            
+            <div class="space-y-1">
+              <p class="text-sm font-bold transition-colors"
+                 [class.text-amber-400]="selectedLevel()?.id === level.id"
+                 [class.text-dark-200]="selectedLevel()?.id !== level.id"
+                 [class.group-hover:text-amber-400]="selectedLevel()?.id !== level.id">
+                {{ level.name }}
+              </p>
+              <div class="flex items-center gap-2 text-[10px] text-dark-500">
+                <span>الدرجة القصوى: {{ level.maxScore }}</span>
+                <span>•</span>
+                <span>الطلاب: {{ level.registeredStudentsCount || 0 }}</span>
+              </div>
+            </div>
+
+            <!-- Delete Level Button -->
+            <button (click)="deleteLevel(level.id); $event.stopPropagation()" 
+                    class="p-1 rounded text-dark-500 hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity" 
+                    title="حذف المستوى">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Empty Levels State -->
+        <div *ngIf="competition()?.levels?.length === 0" class="text-center py-8 text-xs text-dark-500">
+          لم يتم تحديد أي مستويات بعد لهذه المسابقة.
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Left Column: Level Results & Grades (3/4 width) ────── -->
+    <div class="lg:col-span-3 space-y-6">
+      
+      <!-- If No Level Selected (Empty State) -->
+      <div *ngIf="!selectedLevel()" class="glass-card p-12 text-center text-dark-400 flex flex-col items-center justify-center space-y-4">
+        <div class="w-16 h-16 rounded-full bg-dark-800 flex items-center justify-center text-dark-500">
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-white">اختر أو أضف مستوى</h3>
+          <p class="text-sm text-dark-500 mt-1">يرجى اختيار مستوى من القائمة الجانبية أو إضافة مستوى جديد للبدء في تسجيل الطلاب ورصد درجاتهم.</p>
+        </div>
+      </div>
+
+      <!-- Level Details and Registered Students -->
+      <div class="glass-card overflow-hidden" *ngIf="selectedLevel()">
+        <!-- Header -->
+        <div class="px-6 py-5 border-b border-dark-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-dark-900/30">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
+              <h2 class="text-lg font-bold text-white">{{ selectedLevel()?.name }}</h2>
+            </div>
+            <p class="text-xs text-dark-400 mt-1">الدرجة القصوى للمستوى: <span class="font-bold text-amber-400">{{ selectedLevel()?.maxScore }} درجة</span></p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-3 self-end sm:self-center" *ngIf="!isLoadingResults()">
+            <!-- Mode 1: View Mode -->
+            <ng-container *ngIf="!isEditingGrades()">
+              <button (click)="openRegisterModal()" class="btn-secondary px-4 py-2 text-xs rounded-xl flex items-center gap-1.5 shadow-inner">
+                <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                تسجيل طالب
+              </button>
+              <button *ngIf="levelResults().length > 0" (click)="enableEditGrades()" class="btn-primary px-4 py-2 text-xs rounded-xl flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                رصد وإدخال الدرجات
+              </button>
+            </ng-container>
+
+            <!-- Mode 2: Edit/Rased Mode -->
+            <ng-container *ngIf="isEditingGrades()">
+              <button (click)="cancelEditGrades()" class="btn-secondary px-4 py-2 text-xs rounded-xl" [disabled]="isSavingGrades()">
+                إلغاء
+              </button>
+              <button (click)="submitGrades()" class="btn-primary px-4 py-2 text-xs rounded-xl flex items-center gap-1.5">
+                <span *ngIf="isSavingGrades()" class="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                حفظ الرصد
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+        <!-- Results Panel Content -->
+        <div class="p-6">
+          <!-- Loading Results -->
+          <div *ngIf="isLoadingResults()" class="flex justify-center py-12">
+            <div class="w-8 h-8 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+          </div>
+
+          <!-- Empty Registered Students State -->
+          <div *ngIf="!isLoadingResults() && levelResults().length === 0" 
+               class="py-12 flex flex-col items-center justify-center text-center space-y-4">
+            <div class="w-14 h-14 rounded-full bg-dark-800 flex items-center justify-center text-dark-500">
+              <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">لا يوجد طلاب مسجلين في هذا المستوى</h3>
+              <p class="text-xs text-dark-500 mt-1">سجل الطلاب المتقدمين لاختبار هذا المستوى للبدء في رصد درجاتهم.</p>
+            </div>
+            <button (click)="openRegisterModal()" class="btn-primary px-4 py-2 text-xs rounded-xl flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              تسجيل أول طالب
+            </button>
+          </div>
+
+          <!-- Students List Table -->
+          <div *ngIf="!isLoadingResults() && levelResults().length > 0" class="overflow-x-auto">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th class="w-20">كود الطالب</th>
+                  <th>اسم الطالب</th>
+                  <th class="w-32">الدرجة</th>
+                  <th>ملاحظات الرصد</th>
+                  <th class="w-20 text-center" *ngIf="!isEditingGrades()">إجراءات</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let res of levelResults()" class="hover:bg-dark-800/20 transition-colors">
+                  <!-- Code -->
+                  <td class="font-mono text-xs text-dark-400">{{ res.studentCode }}</td>
+                  <!-- Name -->
+                  <td class="font-bold text-white">{{ res.studentName }}</td>
+                  <!-- Score -->
+                  <td>
+                    <!-- View Mode -->
+                    <span *ngIf="!isEditingGrades()" 
+                          class="font-bold text-base"
+                          [class.text-amber-400]="res.score !== undefined && res.score !== null"
+                          [class.text-dark-500]="res.score === undefined || res.score === null">
+                      {{ res.score !== undefined && res.score !== null ? res.score : 'لم ترصد' }}
+                      <span class="text-xs text-dark-500 font-normal" *ngIf="res.score !== null">/ {{ res.maxScore }}</span>
+                    </span>
+
+                    <!-- Edit Mode -->
+                    <div class="flex items-center gap-1.5" *ngIf="isEditingGrades()">
+                      <input type="number" 
+                             [(ngModel)]="res.score" 
+                             name="score-{{res.id}}" 
+                             [max]="res.maxScore"
+                             min="0"
+                             step="0.5"
+                             class="input-field py-1.5 px-2.5 w-24 text-center font-bold text-white border-dark-700/80 focus:border-amber-500/70"
+                             placeholder="رصد">
+                      <span class="text-xs text-dark-500">/ {{ res.maxScore }}</span>
+                    </div>
+                  </td>
+                  <!-- Notes -->
+                  <td>
+                    <!-- View Mode -->
+                    <span *ngIf="!isEditingGrades()" class="text-xs text-dark-400 italic">
+                      {{ res.notes || '—' }}
+                    </span>
+
+                    <!-- Edit Mode -->
+                    <input type="text" 
+                           *ngIf="isEditingGrades()" 
+                           [(ngModel)]="res.notes" 
+                           name="notes-{{res.id}}" 
+                           class="input-field py-1.5 px-3 text-xs border-dark-700/80 focus:border-amber-500/70"
+                           placeholder="ملاحظات حول أداء الطالب...">
+                  </td>
+                  <!-- Actions -->
+                  <td class="text-center" *ngIf="!isEditingGrades()">
+                    <button (click)="unregisterStudent(res.studentId, res.studentName)"
+                            class="p-1.5 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                            title="إلغاء التسجيل">
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Add Level Modal ────────────────────────────────────── -->
+  <div *ngIf="showAddLevelModal()" class="modal-overlay">
+    <div class="modal-box">
+      <h3 class="modal-title text-gradient-gold">إضافة مستوى للمسابقة</h3>
+      
+      <form (ngSubmit)="submitCreateLevel()" class="space-y-4">
+        <div>
+          <label class="label">اسم المستوى</label>
+          <input type="text" [(ngModel)]="newLevel.name" name="name" required 
+                 placeholder="مثال: حفظ 10 أجزاء، أو المستوى المتوسط" class="input-field">
+        </div>
+        
+        <div>
+          <label class="label">الدرجة القصوى للمستوى</label>
+          <input type="number" [(ngModel)]="newLevel.maxScore" name="maxScore" required 
+                 min="1" class="input-field">
+        </div>
+
+        <div class="flex gap-3 justify-end pt-4 border-t border-dark-800">
+          <button type="button" (click)="showAddLevelModal.set(false)" class="btn-secondary">
+            إلغاء
+          </button>
+          <button type="submit" [disabled]="isSavingLevel() || !newLevel.name || !newLevel.maxScore" class="btn-primary">
+            <span *ngIf="isSavingLevel()" class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+            إضافة المستوى
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Register Student Modal ──────────────────────────────── -->
+  <div *ngIf="showRegisterModal()" class="modal-overlay">
+    <div class="modal-box max-w-lg">
+      <h3 class="modal-title text-gradient-gold">تسجيل طالب في المستوى</h3>
+      
+      <div class="space-y-4">
+        <!-- Search -->
+        <div class="flex gap-2">
+          <input type="text" [(ngModel)]="searchStudentQuery" 
+                 (keyup.enter)="searchStudents()"
+                 placeholder="البحث باسم الطالب أو الكود..." class="input-field">
+          <button (click)="searchStudents()" class="btn-secondary px-4 py-2 flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            بحث
+          </button>
+        </div>
+
+        <!-- Student list -->
+        <div class="max-h-60 overflow-y-auto space-y-1.5 pr-1">
+          <!-- Loader -->
+          <div *ngIf="isLoadingStudents()" class="flex justify-center py-6">
+            <div class="w-6 h-6 border-2 border-amber-500/20 border-t-amber-500 rounded-full animate-spin"></div>
+          </div>
+
+          <!-- Empty search results -->
+          <div *ngIf="!isLoadingStudents() && students().length === 0" class="text-center py-6 text-xs text-dark-500">
+            لا توجد نتائج مطابقة، أو أن جميع الطلاب بالبحث مسجلون بالفعل.
+          </div>
+
+          <!-- Students list cards -->
+          <div *ngFor="let s of students()" 
+               class="flex items-center justify-between p-3 bg-dark-900/60 hover:bg-dark-800/55 rounded-xl border border-dark-800/80 transition-colors">
+            <div>
+              <p class="text-sm font-bold text-white">{{ s.fullName }}</p>
+              <p class="text-[10px] text-dark-500 font-mono mt-0.5">{{ s.code }}</p>
+            </div>
+            <button (click)="registerStudent(s.id)" class="btn-primary py-1 px-3 text-xs rounded-lg">
+              تسجيل الطالب
+            </button>
+          </div>
+        </div>
+
+        <div class="flex justify-end pt-4 border-t border-dark-800">
+          <button type="button" (click)="showRegisterModal.set(false)" class="btn-secondary">
+            إغلاق
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

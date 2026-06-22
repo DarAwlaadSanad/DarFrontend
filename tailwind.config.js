@@ -46,8 +46,8 @@ module.exports = {
         }
       },
       fontFamily: {
-        sans:  ['Inter', 'sans-serif'],
-        arabic: ['Amiri', 'serif'],
+        sans:   ['Cairo', 'Inter', 'sans-serif'],
+        arabic: ['Cairo', 'serif'],
       },
       animation: {
         'fade-in':     'fadeIn 0.5s ease-in-out',

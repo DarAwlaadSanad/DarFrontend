@@ -9,6 +9,7 @@ import { StudentAddDTO } from '../../../core/models/student.models';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { UiService } from '../../../core/services/ui.service';
+import { ExportService } from '../../../core/services/export.service';
 
 @Component({
   selector: 'app-student-list',
@@ -21,6 +22,7 @@ export class StudentListComponent implements OnInit {
   private academicYearService = inject(AcademicYearService);
   private groupService = inject(GroupService);
   private ui = inject(UiService);
+  private exportService = inject(ExportService);
 
   searchQuery = signal('');
   isLoading = signal(false);
@@ -75,6 +77,17 @@ export class StudentListComponent implements OnInit {
     ).subscribe({
       next: () => this.isLoading.set(false),
       error: () => this.isLoading.set(false)
+    });
+  }
+
+  exportToExcel() {
+    this.ui.success('جاري تجهيز الملف، يرجى الانتظار...');
+    this.exportService.exportStudents(this.selectedGroupFilter() || undefined).subscribe({
+      next: (blob) => {
+        const name = this.selectedGroupFilter() ? `Students_Group_${this.selectedGroupFilter()}.xlsx` : `All_Students.xlsx`;
+        this.exportService.downloadBlob(blob, name);
+      },
+      error: () => this.ui.error('حدث خطأ أثناء تصدير الملف')
     });
   }
 

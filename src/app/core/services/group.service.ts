@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, of } from 'rxjs';
 import { GroupCardDTO, GroupDetailsDTO, GroupAddDTO } from '../models/group.models';
 import { environment } from '../../../environments/environment';
 
@@ -16,9 +16,20 @@ export class GroupService {
       tap(data => this.groups.set(data))
     );
   }
+  private detailsCache = new Map<string, GroupDetailsDTO>();
 
   getDetails(id: number, month: number, year: number): Observable<GroupDetailsDTO> {
-    return this.http.get<GroupDetailsDTO>(`${this.apiUrl}/${id}?month=${month}&year=${year}`);
+    const cacheKey = `${id}-${month}-${year}`;
+    if (this.detailsCache.has(cacheKey)) {
+      return of(this.detailsCache.get(cacheKey)!);
+    }
+    return this.http.get<GroupDetailsDTO>(`${this.apiUrl}/${id}?month=${month}&year=${year}`).pipe(
+      tap(data => this.detailsCache.set(cacheKey, data))
+    );
+  }
+  
+  clearDetailsCache() {
+    this.detailsCache.clear();
   }
 
   create(dto: GroupAddDTO): Observable<any> {

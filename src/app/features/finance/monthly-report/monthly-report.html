@@ -1,0 +1,224 @@
+<div class="space-y-7 animate-fade-in" dir="rtl">
+
+  <!-- Page Header -->
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary-500/15 flex items-center justify-center">
+          <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+          </svg>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">التقرير المالي الشهري</h1>
+      </div>
+      <p class="text-dark-400 text-sm mr-10">ملخص شامل للإيرادات والمصروفات والرواتب</p>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex flex-wrap items-center gap-3">
+      <!-- Month picker -->
+      <div class="flex items-center gap-1 rounded-xl overflow-hidden" style="background: rgba(30,41,59,0.7); border: 1px solid rgba(51,65,85,0.6);">
+        <select [(ngModel)]="selectedMonth" (ngModelChange)="loadSummary()"
+                class="bg-transparent text-dark-200 text-sm font-medium px-3 py-2.5 focus:outline-none cursor-pointer">
+          <option *ngFor="let m of months" [value]="m">شهر {{ m }}</option>
+        </select>
+        <div style="width:1px; height:24px; background: rgba(51,65,85,0.6);"></div>
+        <select [(ngModel)]="selectedYear" (ngModelChange)="loadSummary()"
+                class="bg-transparent text-dark-200 text-sm font-medium px-3 py-2.5 focus:outline-none cursor-pointer">
+          <option *ngFor="let y of years" [value]="y">{{ y }}</option>
+        </select>
+      </div>
+
+      <!-- Export button -->
+      <button (click)="exportToExcel()"
+              class="btn-primary">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        تصدير إكسيل
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div *ngFor="let i of [1,2,3,4]" class="card p-6 animate-pulse">
+      <div class="h-4 bg-dark-700 rounded w-1/2 mb-3"></div>
+      <div class="h-8 bg-dark-700 rounded w-3/4 mb-2"></div>
+      <div class="h-3 bg-dark-800 rounded w-full"></div>
+    </div>
+  </div>
+
+  <div *ngIf="summary && !isLoading" class="space-y-6">
+
+    <!-- KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+
+      <!-- إجمالي الدخل -->
+      <div class="kpi-card relative overflow-hidden rounded-2xl p-5"
+           style="background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(10,16,30,0.98) 100%); border: 1px solid rgba(74,222,128,0.15);">
+        <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-primary-500 to-primary-400 opacity-60"></div>
+        <div class="absolute top-4 left-4 w-20 h-20 rounded-full opacity-5 bg-primary-400" style="filter:blur(20px)"></div>
+
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-dark-400 text-sm font-medium">إجمالي الدخل</span>
+          <div class="w-9 h-9 rounded-xl bg-primary-500/10 flex items-center justify-center">
+            <svg class="w-4.5 h-4.5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white mb-1">{{ (summary.totalStudentFees + summary.totalOtherIncomes) | number }} <span class="text-sm text-primary-400 font-semibold">ج.م</span></div>
+        <div class="flex items-center gap-3 text-xs text-dark-400 mt-2">
+          <span class="flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-primary-400 inline-block"></span>
+            رسوم: {{ summary.totalStudentFees | number }}
+          </span>
+          <span class="flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-300 inline-block"></span>
+            تبرعات: {{ summary.totalOtherIncomes | number }}
+          </span>
+        </div>
+      </div>
+
+      <!-- إجمالي الرواتب -->
+      <div class="kpi-card relative overflow-hidden rounded-2xl p-5"
+           style="background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(10,16,30,0.98) 100%); border: 1px solid rgba(96,165,250,0.15);">
+        <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-blue-500 to-blue-400 opacity-60"></div>
+        <div class="absolute top-4 left-4 w-20 h-20 rounded-full opacity-5 bg-blue-400" style="filter:blur(20px)"></div>
+
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-dark-400 text-sm font-medium">إجمالي الرواتب</span>
+          <div class="w-9 h-9 rounded-xl bg-blue-500/10 flex items-center justify-center">
+            <svg class="w-4.5 h-4.5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white mb-1">{{ summary.totalSalaries | number }} <span class="text-sm text-blue-400 font-semibold">ج.م</span></div>
+        <div class="text-xs text-dark-400 mt-2">رواتب المعلمين والإداريين الصافية</div>
+      </div>
+
+      <!-- إجمالي المصروفات -->
+      <div class="kpi-card relative overflow-hidden rounded-2xl p-5"
+           style="background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(10,16,30,0.98) 100%); border: 1px solid rgba(248,113,113,0.15);">
+        <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-red-500 to-rose-400 opacity-60"></div>
+        <div class="absolute top-4 left-4 w-20 h-20 rounded-full opacity-5 bg-red-400" style="filter:blur(20px)"></div>
+
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-dark-400 text-sm font-medium">المصروفات العامة</span>
+          <div class="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center">
+            <svg class="w-4.5 h-4.5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white mb-1">{{ summary.totalCenterExpenses | number }} <span class="text-sm text-red-400 font-semibold">ج.م</span></div>
+        <div class="text-xs text-dark-400 mt-2">إيجار، كهرباء، صيانة وغيرها</div>
+      </div>
+
+      <!-- صافي الربح / العجز -->
+      <div class="kpi-card relative overflow-hidden rounded-2xl p-5"
+           [style]="summary.netIncome >= 0
+             ? 'background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(10,16,30,0.98) 100%); border: 1px solid rgba(168,85,247,0.2);'
+             : 'background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(30,10,10,0.98) 100%); border: 1px solid rgba(239,68,68,0.2);'">
+        <div class="absolute top-0 left-0 w-full h-0.5"
+             [style]="summary.netIncome >= 0 ? 'background: linear-gradient(90deg, #a855f7, #7c3aed); opacity: 0.7;' : 'background: linear-gradient(90deg, #ef4444, #dc2626); opacity: 0.7;'">
+        </div>
+
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-dark-400 text-sm font-medium">{{ summary.netIncome >= 0 ? 'صافي الربح' : 'صافي العجز' }}</span>
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center"
+               [style]="summary.netIncome >= 0 ? 'background: rgba(168,85,247,0.1)' : 'background: rgba(239,68,68,0.1)'">
+            <svg class="w-4.5 h-4.5" [style]="summary.netIncome >= 0 ? 'color:#a855f7' : 'color:#ef4444'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" [attr.d]="summary.netIncome >= 0 ? 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' : 'M13 17h8m0 0V9m0 8l-8-8-4 4-6-6'"/>
+            </svg>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white mb-1">
+          {{ (summary.netIncome >= 0 ? summary.netIncome : summary.netIncome * -1) | number }}
+          <span class="text-sm font-semibold" [style]="summary.netIncome >= 0 ? 'color:#a855f7' : 'color:#ef4444'">ج.م</span>
+        </div>
+        <div class="text-xs text-dark-400 mt-2">الرصيد النهائي للشهر</div>
+      </div>
+
+    </div>
+
+    <!-- Detailed Breakdowns -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+      <!-- تفاصيل المصروفات -->
+      <div class="card overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-red-400"></div>
+            <h3 class="font-bold text-white text-sm">تفاصيل المصروفات</h3>
+          </div>
+          <span class="badge-red">{{ summary.totalCenterExpenses | number }} ج.م</span>
+        </div>
+        <div class="max-h-72 overflow-y-auto">
+          <table class="w-full text-sm">
+            <tbody>
+              <tr *ngFor="let exp of summary.expensesBreakdown"
+                  class="border-t transition-colors hover:bg-dark-800/30"
+                  style="border-color: rgba(51,65,85,0.3);">
+                <td class="px-4 py-3 text-dark-500 text-xs whitespace-nowrap">{{ exp.date | date:'dd/MM' }}</td>
+                <td class="px-4 py-3 text-dark-200 font-medium">{{ exp.title }}</td>
+                <td class="px-4 py-3">
+                  <span class="badge-gray text-xs">{{ exp.category }}</span>
+                </td>
+                <td class="px-4 py-3 text-red-400 font-bold text-right whitespace-nowrap">{{ exp.amount | number }} ج</td>
+              </tr>
+              <tr *ngIf="summary.expensesBreakdown.length === 0">
+                <td colspan="4" class="px-4 py-8 text-center text-dark-500 text-sm">لا توجد مصروفات مسجلة</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- تفاصيل الإيرادات الأخرى -->
+      <div class="card overflow-hidden">
+        <div class="px-5 py-4 flex items-center justify-between" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
+          <div class="flex items-center gap-2">
+            <div class="w-2 h-2 rounded-full bg-primary-400"></div>
+            <h3 class="font-bold text-white text-sm">الإيرادات الأخرى (تبرعات)</h3>
+          </div>
+          <span class="badge-green">{{ summary.totalOtherIncomes | number }} ج.م</span>
+        </div>
+        <div class="max-h-72 overflow-y-auto">
+          <table class="w-full text-sm">
+            <tbody>
+              <tr *ngFor="let inc of summary.incomesBreakdown"
+                  class="border-t transition-colors hover:bg-dark-800/30"
+                  style="border-color: rgba(51,65,85,0.3);">
+                <td class="px-4 py-3 text-dark-500 text-xs whitespace-nowrap">{{ inc.date | date:'dd/MM' }}</td>
+                <td class="px-4 py-3 text-dark-200 font-medium">{{ inc.title }}</td>
+                <td class="px-4 py-3">
+                  <span class="badge-gray text-xs">{{ inc.category }}</span>
+                </td>
+                <td class="px-4 py-3 text-primary-400 font-bold text-right whitespace-nowrap">{{ inc.amount | number }} ج</td>
+              </tr>
+              <tr *ngIf="summary.incomesBreakdown.length === 0">
+                <td colspan="4" class="px-4 py-8 text-center text-dark-500 text-sm">لا توجد إيرادات أخرى مسجلة</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- No Data State -->
+  <div *ngIf="!summary && !isLoading" class="card p-16 text-center">
+    <div class="w-16 h-16 rounded-2xl bg-dark-800 flex items-center justify-center mx-auto mb-5">
+      <svg class="w-8 h-8 text-dark-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+    </div>
+    <h3 class="text-lg font-semibold text-dark-300 mb-2">لا توجد بيانات للشهر المحدد</h3>
+    <p class="text-dark-500 text-sm">اختر شهراً مختلفاً أو قم بإضافة بيانات مالية</p>
+  </div>
+
+</div>

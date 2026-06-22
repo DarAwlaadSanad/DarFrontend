@@ -84,4 +84,13 @@ export class GroupListComponent implements OnInit {
       }
     });
   }
+
+  getTotalStudents(): number {
+    return this.groups().reduce((sum, g) => sum + (g.studentCount || 0), 0);
+  }
+
+  getUniqueTeachers(): number {
+    const teacherIds = new Set(this.groups().map(g => g.teacherName).filter(Boolean));
+    return teacherIds.size;
+  }
 }
