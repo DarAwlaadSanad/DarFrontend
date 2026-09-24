@@ -4,6 +4,15 @@ import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { TeacherAttendanceRecordDTO, CheckInResponseDTO, CheckOutResponseDTO, MarkTeacherAbsentDTO } from '../models/teacher-attendance.models';
 
+export interface TeacherMonthlyAttendanceReportDTO {
+  teacherId: string;
+  teacherName: string;
+  absentDays: number;
+  totalLateMinutes: number;
+  absentSessions: number;
+  lateSessions: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TeacherAttendanceService {
   private readonly apiUrl = `${environment.apiUrl}/TeacherAttendance`;
@@ -46,5 +55,9 @@ export class TeacherAttendanceService {
 
   markAbsent(dto: MarkTeacherAbsentDTO): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/mark-absent`, dto);
+  }
+
+  getMonthlyReport(year: number, month: number): Observable<TeacherMonthlyAttendanceReportDTO[]> {
+    return this.http.get<TeacherMonthlyAttendanceReportDTO[]>(`${this.apiUrl}/monthly-report?year=${year}&month=${month}`);
   }
 }

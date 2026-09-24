@@ -2,11 +2,12 @@ import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
-import { TeacherAttendanceService } from '../../../core/services/teacher-attendance.service';
+import { TeacherAttendanceService, TeacherMonthlyAttendanceReportDTO } from '../../../core/services/teacher-attendance.service';
 import { SessionService, SessionView } from '../../../core/services/session.service';
 import { UiService } from '../../../core/services/ui.service';
 import { UserViewDTO } from '../../../core/models/user.models';
 import { ExportService } from '../../../core/services/export.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-admin-absences',
@@ -15,13 +16,14 @@ import { ExportService } from '../../../core/services/export.service';
   templateUrl: './admin-absences.component.html'
 })
 export class AdminAbsencesComponent implements OnInit {
-  teachers = signal<UserViewDTO[]>([]);
+  users = signal<UserViewDTO[]>([]);
   
   selectedTeacherId = signal<string>('');
   selectedDate = signal<string>(new Date().toISOString().split('T')[0]);
   absenceReason = signal<string>('');
   
   sessions = signal<SessionView[]>([]);
+  monthlyReports = signal<TeacherMonthlyAttendanceReportDTO[]>([]);
   isLoading = signal<boolean>(false);
 
   constructor(
@@ -29,25 +31,52 @@ export class AdminAbsencesComponent implements OnInit {
     private attendanceService: TeacherAttendanceService,
     private sessionService: SessionService,
     private uiService: UiService,
-    private exportService: ExportService
+    private exportService: ExportService,
+    public authService: AuthService
   ) {}
 
   currentMonth = signal(new Date().getMonth() + 1);
   currentYear = signal(new Date().getFullYear());
 
+  months = [
+    { value: 1, label: 'يناير' }, { value: 2, label: 'فبراير' }, { value: 3, label: 'مارس' },
+    { value: 4, label: 'أبريل' }, { value: 5, label: 'مايو' }, { value: 6, label: 'يونيو' },
+    { value: 7, label: 'يوليو' }, { value: 8, label: 'أغسطس' }, { value: 9, label: 'سبتمبر' },
+    { value: 10, label: 'أكتوبر' }, { value: 11, label: 'نوفمبر' }, { value: 12, label: 'ديسمبر' }
+  ];
+
   ngOnInit(): void {
-    this.fetchTeachers();
+    this.fetchUsers();
+    this.loadMonthlyReport();
   }
 
-  fetchTeachers(): void {
+  onMonthYearChange(): void {
+    this.loadMonthlyReport();
+  }
+
+  loadMonthlyReport(): void {
     this.isLoading.set(true);
-    this.userService.getTeachers().subscribe({
+    this.attendanceService.getMonthlyReport(this.currentYear(), this.currentMonth()).subscribe({
       next: (data) => {
-        this.teachers.set(data);
+        this.monthlyReports.set(data);
         this.isLoading.set(false);
       },
       error: () => {
-        this.uiService.error('فشل في تحميل قائمة المعلمين');
+        this.uiService.error('فشل في تحميل التقرير الشهري');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  fetchUsers(): void {
+    this.isLoading.set(true);
+    this.userService.getAll().subscribe({
+      next: (data) => {
+        this.users.set(data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.uiService.error('فشل في تحميل قائمة المستخدمين');
         this.isLoading.set(false);
       }
     });
@@ -114,8 +143,9 @@ export class AdminAbsencesComponent implements OnInit {
         this.uiService.success('تم تعيين المعلم البديل بنجاح');
         this.loadSessions();
       },
-      error: () => {
-        this.uiService.error('فشل في تعيين المعلم البديل');
+      error: (err) => {
+        const errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'فشل في تعيين المعلم البديل';
+        this.uiService.error(errorMsg);
         this.isLoading.set(false);
       }
     });

@@ -7,6 +7,7 @@ import { ExamDTO, ExamResultDTO } from '../../core/models/exam.models';
 import { GroupService } from '../../core/services/group.service';
 import { GroupDetailsDTO } from '../../core/models/group.models';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-exam-results',
@@ -79,7 +80,7 @@ import { RouterModule } from '@angular/router';
            </p>
         </div>
 
-        <button (click)="saveChanges()" [disabled]="!hasChanges() || isSaving()" class="btn-primary flex items-center gap-2 disabled:opacity-50">
+        <button *ngIf="authService.hasPermission('Permissions.Exams.Manage')" (click)="saveChanges()" [disabled]="!hasChanges() || isSaving()" class="btn-primary flex items-center gap-2 disabled:opacity-50">
           <svg *ngIf="isSaving()" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
           <svg *ngIf="!isSaving()" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
           حفظ الدرجات
@@ -108,14 +109,16 @@ import { RouterModule } from '@angular/router';
                          (ngModelChange)="markChanged()"
                          [max]="exam()?.maxScore || 100" 
                          min="0"
-                         class="input-field w-full text-center font-mono font-bold" 
+                         [disabled]="!authService.hasPermission('Permissions.Exams.Manage')"
+                         class="input-field w-full text-center font-mono font-bold disabled:opacity-75 disabled:cursor-not-allowed" 
                          placeholder="---">
                 </td>
                 <td class="p-4">
                   <input type="text" 
                          [(ngModel)]="result.notes" 
                          (ngModelChange)="markChanged()"
-                         class="input-field w-full text-sm" 
+                         [disabled]="!authService.hasPermission('Permissions.Exams.Manage')"
+                         class="input-field w-full text-sm disabled:opacity-75 disabled:cursor-not-allowed" 
                          placeholder="ملاحظات حول أداء الطالب...">
                 </td>
               </tr>
@@ -139,6 +142,7 @@ export class ExamResultsComponent implements OnInit {
   private groupService = inject(GroupService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  public authService = inject(AuthService);
 
   examId = 0;
   groupId = 0;

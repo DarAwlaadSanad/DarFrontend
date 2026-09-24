@@ -60,6 +60,7 @@
             <th class="px-4 py-3.5 text-right text-xs font-semibold text-primary-400">إضافات</th>
             <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">يدوي</th>
             <th class="px-4 py-3.5 text-right text-xs font-semibold text-blue-400">الصافي</th>
+            <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">حالة التسليم</th>
             <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">إجراء</th>
           </tr>
         </thead>
@@ -70,7 +71,7 @@
             <td class="px-4 py-3.5">
               <div class="flex items-center gap-3">
                 <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-dark-700 to-dark-600 flex items-center justify-center font-bold text-xs text-dark-300 flex-shrink-0">
-                  {{ rep.userName?.charAt(0) }}
+                  {{ rep.userName ? rep.userName.charAt(0) : '' }}
                 </div>
                 <div>
                   <div class="font-semibold text-dark-100 text-sm">{{ rep.userName }}</div>
@@ -105,6 +106,21 @@
             <td class="px-4 py-3.5">
               <span class="text-lg font-black text-blue-400">{{ rep.netSalary | number }}</span>
               <span class="text-xs text-dark-500 mr-1">ج.م</span>
+            </td>
+            <td class="px-4 py-3.5 text-center">
+              <button (click)="togglePayment(rep)"
+                      class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border"
+                      [class.bg-emerald-500/10]="rep.isPaid"
+                      [class.text-emerald-400]="rep.isPaid"
+                      [class.border-emerald-500/20]="rep.isPaid"
+                      [class.bg-dark-800]="!rep.isPaid"
+                      [class.text-dark-400]="!rep.isPaid"
+                      [class.border-dark-700]="!rep.isPaid"
+                      [class.hover:bg-emerald-500/20]="rep.isPaid"
+                      [class.hover:bg-dark-700]="!rep.isPaid"
+                      [class.hover:text-white]="!rep.isPaid">
+                {{ rep.isPaid ? 'تم التسليم' : 'لم يتم التسليم' }}
+              </button>
             </td>
             <td class="px-4 py-3.5 text-center">
               <button (click)="openTransactionModal(rep.userId)"

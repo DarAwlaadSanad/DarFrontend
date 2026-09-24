@@ -17,4 +17,8 @@ export class UserService {
   getTeachers(): Observable<UserViewDTO[]> {
     return this.http.get<UserViewDTO[]>(`${this.apiUrl}/teachers`);
   }
+
+  assignRoles(userId: string, roles: string[]): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${userId}/roles`, { roles });
+  }
 }

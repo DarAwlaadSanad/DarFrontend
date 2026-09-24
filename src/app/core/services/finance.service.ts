@@ -62,4 +62,8 @@ export class FinanceService {
   getUserMonthlyPayroll(userId: string, month: number, year: number): Observable<MonthlyPayrollReport> {
     return this.http.get<MonthlyPayrollReport>(`${this.apiUrl}/payroll/monthly/${userId}?month=${month}&year=${year}`);
   }
+
+  toggleSalaryPayment(userId: string, month: number, year: number, amount: number): Observable<{isPaid: boolean, message: string}> {
+    return this.http.post<{isPaid: boolean, message: string}>(`${this.apiUrl}/payroll/toggle-payment`, { userId, month, year, amount });
+  }
 }

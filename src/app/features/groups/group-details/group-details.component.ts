@@ -8,6 +8,7 @@ import { StudentService } from '../../../core/services/student.service';
 import { ScheduleService } from '../../../core/services/schedule.service';
 import { AttendanceBatchService } from '../../../core/services/attendance-batch.service';
 import { EvaluationService } from '../../../core/services/evaluation.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { GroupDetailsDTO, AttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
 import { StudentAddDTO } from '../../../core/models/student.models';
 import { GroupScheduleViewDTO, CreateGroupScheduleDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
@@ -49,6 +50,7 @@ export class GroupDetailsComponent implements OnInit {
   private ui = inject(UiService);
   private exportService = inject(ExportService);
   private route = inject(ActivatedRoute);
+  public authService = inject(AuthService);
 
   details = signal<GroupDetailsDTO | null>(null);
   activeTab = signal<'records' | 'schedules' | 'fee-plans' | 'student-fees' | 'exams'>('records');
@@ -174,6 +176,10 @@ export class GroupDetailsComponent implements OnInit {
 
   // ── Session Editor ──────────────────────────────────────────────────────────
   openSessionEditor(session: SessionViewDTO) {
+    if (!this.authService.hasPermission('Permissions.Sessions.Manage')) {
+      this.ui.error('ليس لديك صلاحية لتعديل سجلات الجلسة');
+      return;
+    }
     this.editingSession.set(session);
     const students = this.details()?.students ?? [];
 
@@ -271,7 +277,11 @@ export class GroupDetailsComponent implements OnInit {
         this.loadSchedules(this.details()!.groupId);
         this.loadDetails(this.details()!.groupId);
       },
-      error: () => { this.isSaving.set(false); this.ui.error('حدث خطأ أثناء إضافة الموعد'); }
+      error: (err) => { 
+        this.isSaving.set(false); 
+        const errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'حدث خطأ أثناء إضافة الموعد';
+        this.ui.error(errorMsg); 
+      }
     });
   }
 
@@ -510,5 +520,15 @@ export class GroupDetailsComponent implements OnInit {
   }
   getStatusBg(status: AttendanceStatus): string {
     return this.statusOptions.find(s => s.value === +status)?.cls ?? 'bg-dark-700';
+  }
+
+  getSchoolTypeLabel(type: number | undefined): string {
+    if (type === undefined || type === null) return 'غير محدد';
+    switch (+type) {
+      case 0: return 'عام';
+      case 1: return 'أزهري';
+      case 2: return 'أخرى';
+      default: return 'غير محدد';
+    }
   }
 }

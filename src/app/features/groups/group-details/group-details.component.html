@@ -13,19 +13,26 @@
         <div class="flex items-center gap-2">
           <h1 class="text-lg lg:text-2xl font-bold text-white leading-tight">{{ data.groupName }}</h1>
           <span class="badge-green hidden sm:inline-flex">{{ data.students.length }} طالب</span>
+          <span *ngIf="data.isOnline"
+            class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">أونلاين</span>
+          <span *ngIf="!data.isOnline && data.roomName"
+            class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">غرفة:
+            {{ data.roomName }}</span>
         </div>
         <p class="text-dark-400 text-xs lg:text-sm">{{ data.teacherName }}</p>
       </div>
     </div>
     <div class="flex items-center gap-2 flex-wrap">
-      <button (click)="exportStudents()" class="btn-secondary text-sm py-2 gap-1.5">
+      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportStudents()"
+        class="btn-secondary text-sm py-2 gap-1.5">
         <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
         <span class="hidden sm:inline">إكسيل الطلاب</span>
       </button>
-      <button (click)="openAddStudentModal()" class="btn-primary py-2 text-sm gap-1.5">
+      <button *ngIf="authService.hasPermission('Permissions.Students.Manage')" (click)="openAddStudentModal()"
+        class="btn-primary py-2 text-sm gap-1.5">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path d="M12 4v16m8-8H4" />
         </svg>
@@ -44,19 +51,22 @@
 
   <!-- Tabs -->
   <div class="flex no-print overflow-x-auto" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
-    <button (click)="activeTab.set('records')"
+    <button *ngIf="authService.hasPermission('Permissions.Attendance.View')" (click)="activeTab.set('records')"
       [class]="activeTab()==='records' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
       class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">سجل المتابعة</button>
-    <button (click)="activeTab.set('schedules')"
+    <button *ngIf="authService.hasPermission('Permissions.Schedules.View')" (click)="activeTab.set('schedules')"
       [class]="activeTab()==='schedules' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
       class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">مواعيد الحلقة</button>
-    <button (click)="activeTab.set('fee-plans')"
+    <button *ngIf="authService.hasPermission('Permissions.FeePlans.View')" (click)="activeTab.set('fee-plans')"
       [class]="activeTab()==='fee-plans' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
       class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">خطط الدفع</button>
-    <button (click)="activeTab.set('student-fees')"
-      [class]="activeTab()==='student-fees' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
-      class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">تحصيل الرسوم</button>
-    <button (click)="activeTab.set('exams')"
+    <button *ngIf="authService.hasPermission('Permissions.GroupFees.View')" (click)="activeTab.set('student-fees')"
+      [class.border-amber-400]="activeTab() === 'student-fees'" [class.text-amber-400]="activeTab() === 'student-fees'"
+      [class.border-transparent]="activeTab() !== 'student-fees'" [class.text-dark-400]="activeTab() !== 'student-fees'"
+      class="px-4 py-3 text-sm font-bold border-b-2 hover:text-white transition-colors">
+      تحصيل الرسوم
+    </button>
+    <button *ngIf="authService.hasPermission('Permissions.Exams.View')" (click)="activeTab.set('exams')"
       [class]="activeTab()==='exams' ? 'border-primary-500 text-primary-400' : 'border-transparent text-dark-500 hover:text-dark-300'"
       class="px-4 lg:px-6 py-3 border-b-2 font-semibold transition-all text-sm whitespace-nowrap">الاختبارات</button>
   </div>
@@ -72,7 +82,7 @@
         <option [value]="2025">2025</option>
         <option [value]="2026">2026</option>
       </select>
-      <button (click)="exportAttendance()"
+      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportAttendance()"
         class="px-3 py-2 rounded-xl font-bold bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-white transition-all flex items-center gap-1.5 text-sm">
         <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -97,7 +107,8 @@
                   session.date | date:'EEE' }}</div>
                 <div class="text-xs font-bold text-white group-hover:text-primary-400 transition-colors">{{ session.date
                   | date:'d/M' }}</div>
-                <div class="text-[9px] text-dark-600 group-hover:text-primary-500 mt-0.5 hidden lg:block">تعديل</div>
+                <div *ngIf="authService.hasPermission('Permissions.Sessions.Manage')"
+                  class="text-[9px] text-dark-600 group-hover:text-primary-500 mt-0.5 hidden lg:block">تعديل</div>
               </th>
               <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-primary-400 bg-primary-500/5 text-[10px]">
                 حضور</th>
@@ -162,7 +173,8 @@
   <div *ngIf="activeTab() === 'schedules'" class="space-y-4">
     <div class="flex justify-between items-center">
       <h3 class="text-base lg:text-lg font-bold text-white">مواعيد الحلقة</h3>
-      <button (click)="openAddScheduleModal()" class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
+      <button *ngIf="authService.hasPermission('Permissions.Schedules.Manage')" (click)="openAddScheduleModal()"
+        class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path d="M12 4v16m8-8H4" />
         </svg>
@@ -194,7 +206,8 @@
           <span class="text-dark-500">من: {{ sch.effectiveFrom }}</span>
           <span *ngIf="sch.effectiveTo" class="text-red-400/70">انتهى: {{ sch.effectiveTo }}</span>
         </div>
-        <div *ngIf="sch.isActive" class="mt-3 pt-3 border-t border-dark-800">
+        <div *ngIf="sch.isActive && authService.hasPermission('Permissions.Schedules.Manage')"
+          class="mt-3 pt-3 border-t border-dark-800">
           <button (click)="removeSchedule(sch.id)"
             class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
             <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -212,7 +225,8 @@
   <div *ngIf="activeTab() === 'fee-plans'" class="space-y-4">
     <div class="flex justify-between items-center">
       <h3 class="text-base lg:text-lg font-bold text-white">خطط الدفع</h3>
-      <button (click)="openAddFeePlanModal()" class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
+      <button *ngIf="authService.hasPermission('Permissions.FeePlans.Manage')" (click)="openAddFeePlanModal()"
+        class="btn-secondary py-2 px-3 flex items-center gap-1.5 text-sm">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path d="M12 4v16m8-8H4" />
         </svg>
@@ -254,7 +268,8 @@
           </div>
         </div>
 
-        <div *ngIf="plan.isActive" class="mt-4 pt-4 border-t border-dark-800">
+        <div *ngIf="plan.isActive && authService.hasPermission('Permissions.FeePlans.Manage')"
+          class="mt-4 pt-4 border-t border-dark-800">
           <button (click)="deactivateFeePlan(plan.id)"
             class="w-full text-xs text-red-400 hover:text-white hover:bg-red-600/20 py-2 rounded-lg transition-all flex items-center justify-center gap-1">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -270,30 +285,21 @@
 
   <!-- ── Student Fees Tab ──────────────────────────────────────────────────────── -->
   <div *ngIf="activeTab() === 'student-fees'" class="space-y-4">
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-      <div>
-        <h3 class="text-base lg:text-lg font-bold text-white">تحصيل الرسوم - {{ months[currentMonth()-1].label }} {{
-          currentYear() }}</h3>
-        <p class="text-dark-500 text-[10px]">عرض حالة الدفع للطلاب في الشهر المحدد</p>
-      </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <button (click)="generateFees()" [disabled]="isSaving()"
-          class="btn-primary py-2 px-4 flex items-center gap-2 text-sm flex-1 sm:flex-initial">
-          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-          </svg>
-          توليد رسوم الشهر
-        </button>
-        <div class="flex gap-1 no-print">
-          <select [(ngModel)]="currentMonth" (change)="onMonthYearChange()" class="input-field py-2 px-2 text-xs w-24">
-            <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
-          </select>
-          <select [(ngModel)]="currentYear" (change)="onMonthYearChange()" class="input-field py-2 px-2 text-xs w-20">
-            <option [value]="2025">2025</option>
-            <option [value]="2026">2026</option>
-          </select>
-        </div>
-      </div>
+    <div class="flex flex-wrap items-center justify-between mb-4 gap-4">
+      <h3 class="text-xl font-bold text-white flex items-center gap-2">
+        <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        الرسوم المستحقة على طلاب المجموعة
+      </h3>
+      <button *ngIf="authService.hasPermission('Permissions.GroupFees.Manage')" (click)="generateFees()"
+        [disabled]="isSaving()" class="btn-primary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        توليد رسوم هذا الشهر
+      </button>
     </div>
 
     <div class="glass-card border-dark-800 overflow-hidden shadow-xl">
@@ -326,21 +332,31 @@
                 {{ fee.paymentDate || '---' }}
               </td>
               <td class="px-4 py-4 text-center">
-                <span *ngIf="fee.amountPaid >= fee.requiredAmount"
+                <!-- Exempted -->
+                <span *ngIf="fee.isExempted"
+                  class="px-2 py-1 rounded-md bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20">معفى</span>
+                <!-- Paid -->
+                <span *ngIf="!fee.isExempted && fee.amountPaid >= fee.requiredAmount"
                   class="px-2 py-1 rounded-md bg-green-500/10 text-green-400 text-[10px] font-bold border border-green-500/20">تم
                   السداد</span>
-                <span *ngIf="fee.amountPaid > 0 && fee.amountPaid < fee.requiredAmount"
+                <!-- Partial -->
+                <span *ngIf="!fee.isExempted && fee.amountPaid > 0 && fee.amountPaid < fee.requiredAmount"
                   class="px-2 py-1 rounded-md bg-yellow-500/10 text-yellow-400 text-[10px] font-bold border border-yellow-500/20">سداد
                   جزئي</span>
-                <span *ngIf="fee.amountPaid === 0"
+                <!-- Unpaid -->
+                <span *ngIf="!fee.isExempted && fee.amountPaid === 0"
                   class="px-2 py-1 rounded-md bg-red-500/10 text-red-400 text-[10px] font-bold border border-red-500/20">لم
                   يسدد</span>
               </td>
               <td class="px-4 py-4 text-center no-print">
-                <button (click)="openPaymentModal(fee)"
+                <button *ngIf="!fee.isExempted && authService.hasPermission('Permissions.GroupFees.Manage')"
+                  (click)="openPaymentModal(fee)"
                   class="text-primary-400 hover:text-white hover:bg-primary-500/20 px-3 py-1.5 rounded-lg text-xs transition-all font-bold">
                   تحديث الدفع
                 </button>
+                <span
+                  *ngIf="fee.isExempted || (!fee.isExempted && !authService.hasPermission('Permissions.GroupFees.Manage'))"
+                  class="text-dark-600 text-xs italic">—</span>
               </td>
             </tr>
             <tr *ngIf="studentFees().length === 0">
@@ -581,7 +597,14 @@
       <div><label class="label text-sm">تاريخ التفعيل</label><input type="date" name="effective"
           [(ngModel)]="newSchedule.effectiveFrom" class="input-field"></div>
       <div class="flex gap-3 pt-2">
-        <button type="submit" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm">حفظ</button>
+        <button type="submit" [disabled]="isSaving()"
+          class="btn-primary flex-1 py-3 text-sm flex items-center justify-center">
+          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          حفظ
+        </button>
         <button type="button" (click)="showAddScheduleModal.set(false)"
           class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
@@ -601,13 +624,13 @@
           [(ngModel)]="newStudent.fullName" required class="input-field" placeholder="اسم الطالب..."></div>
       <div><label class="label text-sm">السنة الدراسية</label>
         <select name="academicYearId" [(ngModel)]="newStudent.academicYearId" required class="input-field">
-          <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }}</option>
+          <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }} ({{ getSchoolTypeLabel(ay.typeSchool) }})</option>
         </select>
       </div>
       <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn"
           class="input-field" placeholder="14 رقم..." pattern="[0-9]{14}" minlength="14" maxlength="14"></div>
       <div class="sm:col-span-2">
-        <label class="label text-sm">صور الطالب</label>
+        <label class="label text-sm">صور الطالب (اختياري)</label>
         <div class="flex flex-wrap gap-3">
           <div *ngFor="let preview of imagePreviews()"
             class="w-16 h-16 rounded-xl border border-primary-500/30 overflow-hidden bg-dark-800 animate-fade-in">
@@ -640,7 +663,13 @@
       </div>
       <div class="sm:col-span-2 flex gap-3 pt-2">
         <button type="submit" [disabled]="!studentForm.valid || isSaving()"
-          class="btn-primary flex-1 py-3 text-sm">حفظ</button>
+          class="btn-primary flex-1 py-3 text-sm flex items-center justify-center">
+          <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          حفظ
+        </button>
         <button type="button" (click)="closeAddStudentModal()" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
     </form>

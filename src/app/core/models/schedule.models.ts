@@ -25,4 +25,20 @@ export interface CreateGroupScheduleDTO {
   startTime: string;
   endTime: string;
   effectiveFrom: string;
+  effectiveTo?: string;
+}
+
+export interface WeeklyScheduleItemDTO {
+  scheduleId: number;
+  groupId: number;
+  groupName: string;
+  teacherId?: string;
+  teacherName?: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  effectiveFrom: string;
+  effectiveTo?: string;
+  isOnline: boolean;
+  roomName?: string;
 }

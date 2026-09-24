@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { CompetitionService, CompetitionView } from '../../../core/services/competition.service';
 import { UiService } from '../../../core/services/ui.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-competition-list',
@@ -14,6 +15,7 @@ import { UiService } from '../../../core/services/ui.service';
 export class CompetitionListComponent implements OnInit {
   private competitionService = inject(CompetitionService);
   private ui = inject(UiService);
+  public authService = inject(AuthService);
 
   competitions = signal<CompetitionView[]>([]);
   isLoading = signal(false);
@@ -70,9 +72,9 @@ export class CompetitionListComponent implements OnInit {
     });
   }
 
-  deleteCompetition(id: number, event: Event) {
+  async deleteCompetition(id: number, event: Event) {
     event.stopPropagation();
-    if (confirm('هل أنت متأكد من حذف هذه المسابقة؟ سيتم حذف جميع مستوياتها ونتائج الطلاب فيها نهائياً.')) {
+    if (await this.ui.confirm('هل أنت متأكد من حذف هذه المسابقة؟ سيتم حذف جميع مستوياتها ونتائج الطلاب فيها نهائياً.')) {
       this.competitionService.deleteCompetition(id).subscribe({
         next: () => {
           this.ui.success('تم حذف المسابقة بنجاح');

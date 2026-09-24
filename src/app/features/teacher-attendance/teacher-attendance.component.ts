@@ -1,7 +1,9 @@
-import { Component, OnInit, signal, OnDestroy } from '@angular/core';
+import { Component, OnInit, signal, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { TeacherAttendanceService } from '../../core/services/teacher-attendance.service';
 import { UiService } from '../../core/services/ui.service';
+import { AuthService } from '../../core/services/auth.service';
 
 @Component({
   selector: 'app-teacher-attendance',
@@ -13,6 +15,8 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   currentTime = signal<Date>(new Date());
   isLoading = signal<boolean>(false);
   private timer: any;
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   constructor(
     public attendanceService: TeacherAttendanceService,
@@ -20,6 +24,11 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    if (this.authService.hasRole('Admin') || this.authService.hasRole('SuperAdmin')) {
+      this.router.navigate(['/dashboard/home']);
+      return;
+    }
+
     this.timer = setInterval(() => {
       this.currentTime.set(new Date());
     }, 1000);

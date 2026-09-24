@@ -41,7 +41,7 @@
             <td class="px-4 py-3.5">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-700 to-primary-900 flex items-center justify-center font-bold text-sm text-primary-200 flex-shrink-0">
-                  {{ user.fullName?.charAt(0) || '?' }}
+                  {{ user.fullName ? user.fullName.charAt(0) : '?' }}
                 </div>
                 <div>
                   <div class="font-semibold text-dark-100 text-sm">{{ user.fullName }}</div>

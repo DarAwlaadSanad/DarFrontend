@@ -12,6 +12,7 @@ export interface RegisterDTO {
 
 export interface AuthResponse {
   token: string;
+  refreshToken: string;
   userName?: string;
   fullName?: string;
   studentId?: number;
@@ -21,4 +22,18 @@ export interface AuthResponse {
 export interface StudentLoginDTO {
   code: string;
   password: string;
+}
+
+export interface StudentLoginResponse {
+  studentId: number;
+  token: string;
+  refreshToken: string;
+  fullName: string;
+  code: string;
+  role: string;
+}
+
+export interface RefreshTokenRequest {
+  token: string;
+  refreshToken: string;
 }

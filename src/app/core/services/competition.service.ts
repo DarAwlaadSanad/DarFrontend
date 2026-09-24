@@ -31,11 +31,21 @@ export interface CompetitionResultView {
   notes?: string;
 }
 
+export interface StudentCompetitionResult {
+  id: number;
+  title: string;
+  date: string;
+  levelName: string;
+  maxScore: number;
+  score?: number;
+  notes?: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class CompetitionService {
   private readonly apiUrl = `${environment.apiUrl}/Competition`;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAllCompetitions(): Observable<CompetitionView[]> {
     return this.http.get<CompetitionView[]>(this.apiUrl);
@@ -75,5 +85,9 @@ export class CompetitionService {
 
   saveLevelResults(levelId: number, results: { studentId: number; score?: number; notes?: string }[]): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/level/${levelId}/results`, { results });
+  }
+
+  getStudentCompetitions(studentId: number): Observable<StudentCompetitionResult[]> {
+    return this.http.get<StudentCompetitionResult[]>(`${this.apiUrl}/student/${studentId}`);
   }
 }

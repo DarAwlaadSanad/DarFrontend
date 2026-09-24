@@ -62,6 +62,10 @@ export const routes: Routes = [
           import('./features/academic-years/academic-year-list.component').then(m => m.AcademicYearListComponent),
       },
       {
+        path: 'timetable',
+        loadComponent: () => import('./features/weekly-schedule/weekly-schedule.component').then(c => c.WeeklyScheduleComponent)
+      },
+      {
         path: 'fees',
         loadComponent: () =>
           import('./features/student-fees/student-fee-list.component').then(m => m.StudentFeeListComponent),
@@ -69,6 +73,10 @@ export const routes: Routes = [
       { path: 'roles', loadComponent: () => import('./features/roles/role-list/role-list.component').then(m => m.RoleListComponent) },
       { path: 'roles/create', loadComponent: () => import('./features/roles/role-form/role-form.component').then(m => m.RoleFormComponent) },
       { path: 'roles/edit/:id', loadComponent: () => import('./features/roles/role-form/role-form.component').then(m => m.RoleFormComponent) },
+      {
+        path: 'rooms',
+        loadComponent: () => import('./features/settings/rooms/rooms').then(m => m.RoomsComponent)
+      },
       {
         path: 'attendance',
         loadComponent: () =>

@@ -1,0 +1,101 @@
+<div class="space-y-7 animate-fade-in" dir="rtl">
+  <!-- Page Header -->
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <div class="w-8 h-8 rounded-lg bg-primary-500/15 flex items-center justify-center">
+          <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        </div>
+        <h1 class="text-2xl lg:text-3xl font-bold text-white">غرف الدار</h1>
+      </div>
+      <p class="text-dark-400 text-sm mr-10">إدارة الغرف والأماكن المتاحة في الدار</p>
+    </div>
+    <button (click)="openNew()" class="btn-primary">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      إضافة غرفة
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center h-64 space-y-4">
+    <div class="w-10 h-10 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
+    <p class="text-dark-400 text-sm animate-pulse">جارٍ التحميل...</p>
+  </div>
+
+  <!-- Data Grid -->
+  <div *ngIf="!isLoading()" class="glass-card border-dark-800 overflow-hidden shadow-xl">
+    <div class="overflow-x-auto">
+      <table class="w-full text-right border-collapse">
+        <thead>
+          <tr class="bg-dark-800/80 border-b border-dark-700">
+            <th class="px-6 py-4 font-bold text-white text-sm">اسم الغرفة</th>
+            <th class="px-6 py-4 font-bold text-white text-sm">ملاحظات</th>
+            <th class="px-6 py-4 font-bold text-white text-sm text-center">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-dark-800">
+          <tr *ngFor="let room of rooms()" class="hover:bg-dark-800/40 transition-colors group">
+            <td class="px-6 py-4">
+              <span class="text-white font-medium text-sm">{{ room.name }}</span>
+            </td>
+            <td class="px-6 py-4">
+              <span class="text-dark-300 text-sm">{{ room.notes || '---' }}</span>
+            </td>
+            <td class="px-6 py-4 text-center">
+              <div class="flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button (click)="editRoom(room)" class="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-400 hover:bg-blue-500 hover:text-white flex items-center justify-center transition-colors">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+                <button (click)="deleteRoom(room)" class="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white flex items-center justify-center transition-colors">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+          <tr *ngIf="rooms().length === 0">
+            <td colspan="3" class="px-6 py-12 text-center text-dark-500">
+              <p class="mb-3">لا توجد غرف مضافة حالياً.</p>
+              <button (click)="openNew()" class="text-primary-400 hover:underline text-sm font-bold">إضافة أول غرفة</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div *ngIf="displayDialog()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm" (click)="closeDialog()"></div>
+    <div class="relative bg-dark-900 w-full sm:max-w-md sm:rounded-2xl border-t sm:border border-dark-700 p-6 animate-slide-up" dir="rtl">
+      <h2 class="text-xl font-bold text-white mb-5">{{ isEditMode() ? 'تعديل الغرفة' : 'إضافة غرفة' }}</h2>
+      <form (ngSubmit)="saveRoom()" #roomForm="ngForm" class="space-y-4">
+        <div>
+          <label class="label text-sm">اسم الغرفة <span class="text-red-400">*</span></label>
+          <input type="text" name="name" [(ngModel)]="roomDialogData.name" required class="input-field" placeholder="مثال: قاعة 1">
+        </div>
+        <div>
+          <label class="label text-sm">ملاحظات</label>
+          <input type="text" name="notes" [(ngModel)]="roomDialogData.notes" class="input-field" placeholder="ملاحظات...">
+        </div>
+        <div class="flex gap-3 pt-2">
+          <button type="submit" [disabled]="!roomForm.valid || isSaving()" class="btn-primary flex-1 py-3 text-sm">
+            <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            حفظ
+          </button>
+          <button type="button" (click)="closeDialog()" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

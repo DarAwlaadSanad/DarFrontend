@@ -7,6 +7,8 @@ import { ExamDTO } from '../../core/models/exam.models';
 import { GroupService } from '../../core/services/group.service';
 import { GroupDetailsDTO } from '../../core/models/group.models';
 import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth.service';
+import { UiService } from '../../core/services/ui.service';
 
 @Component({
   selector: 'app-group-exams',
@@ -28,7 +30,7 @@ import { RouterModule } from '@angular/router';
           <p class="text-dark-400 text-sm">إدارة الاختبارات ورصد الدرجات</p>
         </div>
 
-        <button (click)="openCreateModal()" class="btn-primary flex items-center gap-2">
+        <button *ngIf="authService.hasPermission('Permissions.Exams.Manage')" (click)="openCreateModal()" class="btn-primary flex items-center gap-2">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           إضافة اختبار جديد
         </button>
@@ -38,7 +40,7 @@ import { RouterModule } from '@angular/router';
         <div *ngFor="let exam of exams()" class="card p-6 border-dark-800 hover:border-primary-500/50 transition-colors cursor-pointer group" (click)="goToResults(exam.id)">
           <div class="flex justify-between items-start mb-4">
             <h3 class="text-xl font-bold text-white group-hover:text-primary-400 transition-colors">{{ exam.title }}</h3>
-            <button (click)="deleteExam(exam.id, $event)" class="text-dark-500 hover:text-red-400 transition-colors" title="حذف الاختبار">
+            <button *ngIf="authService.hasPermission('Permissions.Exams.Manage')" (click)="deleteExam(exam.id, $event)" class="text-dark-500 hover:text-red-400 transition-colors" title="حذف الاختبار">
                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </button>
           </div>
@@ -108,6 +110,8 @@ export class GroupExamsComponent implements OnInit {
   private groupService = inject(GroupService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
+  public authService = inject(AuthService);
+  private ui = inject(UiService);
 
   @Input() set inputGroupId(val: number) {
     if(val && val !== this.groupId) {
@@ -185,11 +189,15 @@ export class GroupExamsComponent implements OnInit {
     });
   }
 
-  deleteExam(id: number, event: Event) {
+  async deleteExam(id: number, event: Event) {
     event.stopPropagation();
-    if (confirm('هل أنت متأكد من حذف هذا الاختبار؟ سيتم حذف درجات جميع الطلاب أيضاً.')) {
+    if (await this.ui.confirm('هل أنت متأكد من حذف هذا الاختبار؟ سيتم حذف درجات جميع الطلاب أيضاً.')) {
       this.examService.deleteExam(id).subscribe({
-        next: () => this.loadExams()
+        next: () => {
+          this.ui.success('تم حذف الاختبار بنجاح');
+          this.loadExams();
+        },
+        error: () => this.ui.error('حدث خطأ أثناء حذف الاختبار')
       });
     }
   }

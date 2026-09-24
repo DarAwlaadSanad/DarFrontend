@@ -246,4 +246,14 @@ export class StudentListComponent implements OnInit {
   addStudent() {
     this.openAddModal();
   }
+
+  getSchoolTypeLabel(type: number | undefined): string {
+    if (type === undefined || type === null) return 'غير محدد';
+    switch (+type) {
+      case 0: return 'عام';
+      case 1: return 'أزهري';
+      case 2: return 'أخرى';
+      default: return 'غير محدد';
+    }
+  }
 }

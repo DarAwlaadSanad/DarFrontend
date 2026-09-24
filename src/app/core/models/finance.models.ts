@@ -65,4 +65,5 @@ export interface MonthlyPayrollReport {
   manualAdditions: number;
 
   netSalary: number;
+  isPaid: boolean;
 }

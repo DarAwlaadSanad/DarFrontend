@@ -6,6 +6,7 @@ import { CompetitionService, CompetitionView, CompetitionLevelView, CompetitionR
 import { StudentService } from '../../../core/services/student.service';
 import { StudentDetailsDTO } from '../../../core/models/student.models';
 import { UiService } from '../../../core/services/ui.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-competition-details',
@@ -18,17 +19,18 @@ export class CompetitionDetailsComponent implements OnInit {
   private competitionService = inject(CompetitionService);
   private studentService = inject(StudentService);
   private ui = inject(UiService);
+  public authService = inject(AuthService);
 
   competitionId = 0;
   competition = signal<CompetitionView | null>(null);
   selectedLevel = signal<CompetitionLevelView | null>(null);
   levelResults = signal<CompetitionResultView[]>([]);
-  
+
   isLoading = signal(false);
   isLoadingResults = signal(false);
   isSavingLevel = signal(false);
   isSavingGrades = signal(false);
-  
+
   showAddLevelModal = signal(false);
   showRegisterModal = signal(false);
   isEditingGrades = signal(false);
@@ -58,10 +60,10 @@ export class CompetitionDetailsComponent implements OnInit {
 
         // Auto select level if requested or select first level
         if (data.levels && data.levels.length > 0) {
-          const target = selectLevelId 
-            ? data.levels.find(l => l.id === selectLevelId) 
+          const target = selectLevelId
+            ? data.levels.find(l => l.id === selectLevelId)
             : data.levels[0];
-          
+
           this.selectLevel(target || data.levels[0]);
         } else {
           this.selectedLevel.set(null);
@@ -103,7 +105,7 @@ export class CompetitionDetailsComponent implements OnInit {
   submitCreateLevel() {
     if (!this.newLevel.name || !this.newLevel.maxScore) return;
     this.isSavingLevel.set(true);
-    
+
     this.competitionService.createLevel({
       competitionId: this.competitionId,
       name: this.newLevel.name,
@@ -122,8 +124,8 @@ export class CompetitionDetailsComponent implements OnInit {
     });
   }
 
-  deleteLevel(levelId: number) {
-    if (confirm('هل أنت متأكد من حذف هذا المستوى؟ سيتم إلغاء تسجيل جميع الطلاب فيه وحذف نتائجهم.')) {
+  async deleteLevel(levelId: number) {
+    if (await this.ui.confirm('هل أنت متأكد من حذف هذا المستوى؟ سيتم إلغاء تسجيل جميع الطلاب فيه وحذف نتائجهم.')) {
       this.competitionService.deleteLevel(levelId).subscribe({
         next: () => {
           this.ui.success('تم حذف المستوى بنجاح');
@@ -147,11 +149,11 @@ export class CompetitionDetailsComponent implements OnInit {
   searchStudents() {
     this.isLoadingStudents.set(true);
     this.studentService.getStudents(
-      1, 
-      50, 
-      undefined, 
-      undefined, 
-      this.searchStudentQuery() || undefined, 
+      1,
+      50,
+      undefined,
+      undefined,
+      this.searchStudentQuery() || undefined,
       true
     ).subscribe({
       next: (res) => {
@@ -194,11 +196,11 @@ export class CompetitionDetailsComponent implements OnInit {
     });
   }
 
-  unregisterStudent(studentId: number, name: string) {
+  async unregisterStudent(studentId: number, name: string) {
     const level = this.selectedLevel();
     if (!level) return;
 
-    if (confirm(`هل أنت متأكد من إلغاء تسجيل الطالب (${name}) من هذا المستوى؟`)) {
+    if (await this.ui.confirm(`هل أنت متأكد من إلغاء تسجيل الطالب (${name}) من هذا المستوى؟`)) {
       this.competitionService.unregisterStudent(level.id, studentId).subscribe({
         next: () => {
           this.ui.success('تم إلغاء تسجيل الطالب بنجاح');

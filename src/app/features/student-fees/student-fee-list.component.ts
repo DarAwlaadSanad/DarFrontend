@@ -12,8 +12,8 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
     <div class="space-y-6 animate-fade-in" dir="rtl">
       <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 class="text-2xl font-bold text-white mb-1">إدارة المصروفات</h1>
-          <p class="text-dark-400 text-sm">متابعة كافة تحصيلات المصروفات الشهرية</p>
+          <h1 class="text-2xl font-bold text-white mb-1">إدارة الشهريات</h1>
+          <p class="text-dark-400 text-sm">متابعة كافة تحصيلات الشهريات</p>
         </div>
 
         <div class="flex items-center gap-4 bg-dark-900/50 p-4 rounded-2xl border border-dark-800">
@@ -97,7 +97,7 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
                   <div class="w-16 h-16 mx-auto rounded-2xl bg-dark-800 flex items-center justify-center mb-4 text-dark-600">
                     <svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   </div>
-                  <p>لا توجد سجلات مصروفات للفترة المحددة</p>
+                  <p>لا توجد سجلات شهريات للفترة المحددة</p>
                 </td>
               </tr>
             </tbody>
@@ -112,8 +112,8 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
       <!-- Exemption Modal -->
       <div *ngIf="selectedFeeForExempt()" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
         <div class="bg-dark-900 rounded-2xl shadow-2xl p-6 w-full max-w-sm border border-dark-800">
-          <h3 class="text-xl font-bold text-white mb-4">إعفاء من المصروفات</h3>
-          <p class="text-dark-400 text-sm mb-4">أنت تقوم بإعفاء الطالب <strong>{{ selectedFeeForExempt()?.studentName }}</strong> من مصروفات شهر {{ currentMonth() }}.</p>
+          <h3 class="text-xl font-bold text-white mb-4">إعفاء من الشهريات</h3>
+          <p class="text-dark-400 text-sm mb-4">أنت تقوم بإعفاء الطالب <strong>{{ selectedFeeForExempt()?.studentName }}</strong> من شهريات شهر {{ currentMonth() }}.</p>
           
           <div class="mb-6">
             <label class="block text-xs font-bold text-dark-400 mb-2">سبب الإعفاء</label>

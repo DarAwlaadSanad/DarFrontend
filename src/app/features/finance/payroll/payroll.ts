@@ -2,6 +2,7 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../../core/services/finance.service';
+import { UiService } from '../../../core/services/ui.service';
 import { MonthlyPayrollReport, TransactionType, AddFinancialTransaction } from '../../../core/models/finance.models';
 
 @Component({
@@ -38,7 +39,8 @@ export class PayrollComponent implements OnInit {
 
   constructor(
     private financeService: FinanceService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ui: UiService
   ) {}
 
   ngOnInit(): void {
@@ -91,5 +93,24 @@ export class PayrollComponent implements OnInit {
 
   getTotalPayroll(): number {
     return this.reports.reduce((sum, r) => sum + (r.netSalary || 0), 0);
+  }
+
+  async togglePayment(report: MonthlyPayrollReport): Promise<void> {
+    if (await this.ui.confirm(`هل أنت متأكد من تغيير حالة تسليم المرتب للموظف ${report.userName}؟`)) {
+      this.financeService.toggleSalaryPayment(report.userId, this.selectedMonth, this.selectedYear, report.netSalary).subscribe({
+        next: (res) => {
+          if (res.isPaid) {
+            this.ui.success(res.message);
+          } else {
+            this.ui.info(res.message);
+          }
+          report.isPaid = res.isPaid;
+        },
+        error: (err) => {
+          console.error(err);
+          this.ui.error('حدث خطأ أثناء تغيير حالة التسليم');
+        }
+      });
+    }
   }
 }

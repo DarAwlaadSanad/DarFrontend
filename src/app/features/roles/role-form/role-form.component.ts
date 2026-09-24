@@ -84,17 +84,30 @@ export class RoleFormComponent implements OnInit {
       'Users': 'المستخدمين',
       'Roles': 'الأدوار والصلاحيات',
       'AcademicYears': 'السنوات الدراسية',
-      'Fees': 'الرسوم',
-      'Attendance': 'الحضور والانصراف',
-      'TeacherDashboard': 'لوحة تحكم المعلم'
+      'Fees': 'الشهريات',
+      'GroupFees': 'تحصيل الرسوم',
+      'Finance': 'المالية',
+      'FeePlans': 'خطط الدفع',
+      'Attendance': 'الحضور والجلسات',
+      'Sessions': 'الجلسات',
+      'TeacherDashboard': 'لوحة تحكم المعلم',
+      'Exams': 'الاختبارات',
+      'Competitions': 'المسابقات',
+      'Memorization': 'الحفظ والمراجعة',
+      'Schedules': 'الجداول والمواعيد',
+      'TeacherAttendance': 'حضور المعلمين',
+      'Reports': 'التقارير'
     };
     return labels[group] || group;
   }
 
   getPermissionLabel(perm: string): string {
-    const action = perm.split('.')[2]; // View or Manage
+    const action = perm.split('.')[2]; // View or Manage or Delete etc
     if (action === 'View') return 'عرض';
     if (action === 'Manage') return 'إدارة كاملة';
+    if (action === 'Delete') return 'حذف';
+    if (action === 'Exempt') return 'إعفاء';
+    if (action === 'Export') return 'تصدير';
     return action;
   }
 

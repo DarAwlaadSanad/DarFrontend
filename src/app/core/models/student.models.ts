@@ -26,7 +26,7 @@ import { GroupCardDTO } from './group.models';
 export interface StudentDetailsDTO {
   id: number;
   fullName: string;
-  ssn?: string;
+  ssn: string;
   isActive: boolean;
   code: string;
   notes?: string;
@@ -39,7 +39,7 @@ export interface StudentDetailsDTO {
 
 export interface StudentAddDTO {
   fullName: string;
-  ssn?: string;
+  ssn: string;
   notes?: string;
   academicYearId: number;
   groupIds: number[];
@@ -49,7 +49,7 @@ export interface StudentAddDTO {
 
 export interface StudentUpdateDTO {
   fullName: string;
-  ssn?: string;
+  ssn: string;
   notes?: string;
 }
 

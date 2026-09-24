@@ -1,0 +1,128 @@
+<div class="space-y-6" dir="rtl">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+      <h1 class="page-title text-gradient-gold">جدول مواعيد الحصص الأسبوعي</h1>
+      <p class="page-subtitle text-dark-400 text-sm mt-1">عرض ومتابعة جداول المجموعات</p>
+    </div>
+    
+    <div class="flex items-center gap-3 w-full sm:w-auto">
+      <div class="relative w-full sm:w-64">
+        <select [(ngModel)]="selectedTeacherId" class="input-field py-2.5 px-4 w-full pr-10 appearance-none bg-dark-900/50 border-dark-700 font-medium">
+          <option value="all">كل المعلمين</option>
+          <option *ngFor="let t of teachers()" [value]="t.id">{{ t.name }}</option>
+        </select>
+        <svg class="w-5 h-5 absolute right-3 top-1/2 -translate-y-1/2 text-dark-500 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+      <button (click)="loadTimetable()" class="w-11 h-11 rounded-xl bg-dark-800 border border-dark-700 flex items-center justify-center text-primary-400 hover:text-white hover:border-primary-500/50 transition-all shadow-lg flex-shrink-0">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-20 space-y-4 glass-card border-dark-800">
+    <div class="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin shadow-[0_0_15px_rgba(var(--color-primary-500),0.5)]"></div>
+    <p class="text-dark-400 font-medium animate-pulse">جاري تحميل الجدول الأسبوعي...</p>
+  </div>
+
+  <div *ngIf="error()" class="glass-card border-red-500/20 bg-red-500/5 p-8 text-center text-red-400 font-bold flex flex-col items-center gap-3">
+    <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+    {{ error() }}
+  </div>
+
+  <div *ngIf="!isLoading() && !error()" class="glass-card border-dark-800 overflow-hidden shadow-2xl relative">
+    <!-- Empty state -->
+    <div *ngIf="filteredSchedules().length === 0" class="py-24 text-center flex flex-col items-center gap-4">
+      <div class="w-20 h-20 rounded-full bg-dark-800 flex items-center justify-center text-dark-600">
+        <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-white font-bold text-lg">لا يوجد مواعيد</h3>
+        <p class="text-dark-400 text-sm mt-1">لم يتم العثور على أي حصص مطابقة للفلتر المحدد.</p>
+      </div>
+    </div>
+
+    <!-- Timetable -->
+    <div *ngIf="filteredSchedules().length > 0" class="overflow-x-auto custom-scrollbar">
+      <table class="w-max min-w-full border-collapse text-right">
+        <thead class="bg-dark-900/90 backdrop-blur-md sticky top-0 z-20 shadow-sm">
+          <tr>
+            <th class="w-24 min-w-[96px] px-4 py-5 border-b border-l border-dark-700/50 text-dark-400 text-sm font-bold text-center">الوقت</th>
+            <th *ngFor="let day of days" class="px-3 py-5 border-b border-l border-dark-700/50 relative group transition-all duration-300"
+                [style.min-width.px]="(maxOverlapsPerDay().get(day.value) || 1) * 75 + 30">
+              <div class="text-center">
+                <span class="text-white font-bold text-base tracking-wide">{{ day.label }}</span>
+                <div class="absolute bottom-0 left-0 w-full h-0.5 bg-gradient-to-r from-transparent via-primary-500/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              </div>
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-dark-700/30">
+          <tr>
+            <!-- Time axis -->
+            <td class="p-0 border-r border-dark-700/30 bg-dark-900/30 sticky right-0 z-10 backdrop-blur-md">
+              <div class="relative" [style.height.px]="hours.length * hourHeight">
+                <div *ngFor="let hour of hours; let i = index" 
+                     class="absolute w-full flex items-start justify-center border-b border-dark-700/30"
+                     [style.top.px]="i * hourHeight" [style.height.px]="hourHeight">
+                  <span class="text-xs font-bold text-dark-500 mt-2">{{ formatHour(hour) }}</span>
+                </div>
+              </div>
+            </td>
+            
+            <!-- Day columns -->
+            <td *ngFor="let day of days" class="p-0 border-l border-dark-700/30 align-top relative"
+                [style.height.px]="hours.length * hourHeight"
+                [style.min-width.px]="(maxOverlapsPerDay().get(day.value) || 1) * 75 + 30">
+              <!-- Grid lines -->
+              <div class="absolute inset-0 w-full h-full pointer-events-none">
+                 <div *ngFor="let h of hours; let i = index" class="w-full border-b border-dark-700/10" [style.height.px]="hourHeight"></div>
+              </div>
+
+              <!-- Events -->
+              <div *ngFor="let s of getSchedulesForDay(day.value)" 
+                   [ngStyle]="getEventStyle(s)"
+                   class="rounded-lg p-2 border border-primary-500/20 bg-gradient-to-br from-primary-900/60 to-dark-800/80 shadow-lg hover:shadow-primary-500/30 hover:border-primary-500/80 transition-all cursor-pointer group/card overflow-hidden flex flex-col z-10 hover:!z-50 hover:scale-[1.03]"
+                   [routerLink]="['/dashboard/groups', s.groupId]">
+                
+                <div class="absolute right-0 top-0 bottom-0 w-1 bg-primary-500 rounded-r-lg shadow-[0_0_10px_rgba(var(--color-primary-500),0.5)]"></div>
+                
+                <div class="flex-1 flex justify-center items-center overflow-hidden py-2 px-1 text-center" style="writing-mode: vertical-rl; text-orientation: mixed;">
+                  <div class="flex items-center gap-3 h-full">
+                    <div class="text-white font-bold text-sm tracking-wide group-hover/card:text-primary-300 transition-colors" [title]="s.groupName">
+                      {{ s.groupName }}
+                    </div>
+                    
+                    <div class="flex items-center gap-1.5 text-dark-400 text-[10px]" *ngIf="s.startTime">
+                      <svg class="w-3 h-3 text-gold-400/80 transform -rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span dir="ltr">{{ formatTime(s.startTime) }} - {{ formatTime(s.endTime) }}</span>
+                    </div>
+
+                    <div class="flex items-center gap-1 text-primary-400/80 text-[10px] bg-primary-500/10 px-2 py-1 rounded-md" *ngIf="s.teacherName">
+                      <span [title]="s.teacherName">{{ s.teacherName }}</span>
+                    </div>
+                    
+                    <div class="flex gap-1.5 mt-2">
+                      <span *ngIf="s.isOnline" class="px-2 py-1 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">أونلاين</span>
+                      <span *ngIf="!s.isOnline && s.roomName" class="px-2 py-1 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20 whitespace-nowrap">{{ s.roomName }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

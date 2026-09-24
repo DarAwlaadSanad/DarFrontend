@@ -33,6 +33,9 @@ export interface GroupDetailsDTO {
   teacherName?: string;
   month: number;
   year: number;
+  isOnline: boolean;
+  roomId?: number;
+  roomName?: string;
   sessions: SessionViewDTO[];
   students: StudentInGroupDTO[];
 }
@@ -41,12 +44,18 @@ export interface GroupCardDTO {
   id: number;
   name: string;
   description?: string;
+  teacherId?: string;
   teacherName?: string;
   studentCount: number;
+  isOnline: boolean;
+  roomId?: number;
+  roomName?: string;
 }
 
 export interface GroupAddDTO {
   name: string;
   description?: string;
   teacherId: string;
+  isOnline: boolean;
+  roomId?: number;
 }

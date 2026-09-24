@@ -32,6 +32,22 @@ export class ExportService {
     return this.http.get(url, { responseType: 'blob' });
   }
 
+  exportGroupsData() {
+    const url = `${this.apiUrl}/groups-data`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  exportGroupsTemplate() {
+    const url = `${this.apiUrl}/groups-template`;
+    return this.http.get(url, { responseType: 'blob' });
+  }
+
+  importGroups(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post(`${this.apiUrl}/import-groups`, formData);
+  }
+
   downloadBlob(blob: Blob, fileName: string) {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

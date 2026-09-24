@@ -1,7 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, finalize } from 'rxjs';
-import { LoginDTO, RegisterDTO, AuthResponse } from '../models/auth.models';
+import { Observable, tap, finalize, throwError } from 'rxjs';
+import { LoginDTO, RegisterDTO, AuthResponse, RefreshTokenRequest } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -70,6 +70,32 @@ export class AuthService {
 
   getToken(): string | null {
     return this.authState()?.token || null;
+  }
+
+  getRefreshToken(): string | null {
+    return this.authState()?.refreshToken || null;
+  }
+
+  refreshToken(): Observable<AuthResponse> {
+    const token = this.getToken();
+    const refreshToken = this.getRefreshToken();
+
+    if (!token || !refreshToken) {
+      this.logout();
+      return throwError(() => new Error('No tokens available'));
+    }
+
+    const payload: RefreshTokenRequest = { token, refreshToken };
+    const isStudent = this.isStudent();
+    const url = isStudent ? `${environment.apiUrl}/Student/refresh` : `${this.apiUrl}/refresh`;
+
+    return this.http.post<AuthResponse>(url, payload).pipe(
+      tap(response => {
+        // If it's a student, the response might be StudentLoginResponse, which matches AuthResponse shape enough
+        // but let's make sure we preserve the role if not returned properly.
+        this.setAuth(response);
+      })
+    );
   }
 
   private setAuth(data: AuthResponse) {

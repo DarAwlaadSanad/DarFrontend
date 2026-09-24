@@ -1,7 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { GroupScheduleViewDTO, CreateGroupScheduleDTO } from '../models/schedule.models';
+import { GroupScheduleViewDTO, CreateGroupScheduleDTO, WeeklyScheduleItemDTO } from '../models/schedule.models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -15,6 +15,10 @@ export class ScheduleService {
     return this.http.get<GroupScheduleViewDTO[]>(`${this.apiUrl}/group/${groupId}`).pipe(
       tap(data => this.schedules.set(data))
     );
+  }
+
+  getWeeklyTimetable(): Observable<WeeklyScheduleItemDTO[]> {
+    return this.http.get<WeeklyScheduleItemDTO[]>(`${this.apiUrl}/weekly`);
   }
 
   addSchedule(dto: CreateGroupScheduleDTO): Observable<GroupScheduleViewDTO> {

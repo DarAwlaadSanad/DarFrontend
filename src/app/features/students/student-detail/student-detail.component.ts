@@ -10,6 +10,8 @@ import { GroupCardDTO } from '../../../core/models/group.models';
 import { ExamService } from '../../../core/services/exam.service';
 import { ExamResultDTO } from '../../../core/models/exam.models';
 import { UiService } from '../../../core/services/ui.service';
+import { StudentFeeService } from '../../../core/services/student-fee.service';
+import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
 
 @Component({
   selector: 'app-student-detail',
@@ -22,6 +24,7 @@ export class StudentDetailComponent implements OnInit {
   private memorizationService = inject(MemorizationService);
   private groupService = inject(GroupService);
   private examService = inject(ExamService);
+  private feeService = inject(StudentFeeService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private ui = inject(UiService);
@@ -66,6 +69,11 @@ export class StudentDetailComponent implements OnInit {
   // Exams
   examResults = signal<ExamResultDTO[]>([]);
 
+  // Fees
+  studentFees = signal<StudentFeeViewDTO[]>([]);
+  isExemptedThisMonth = signal<boolean | null>(null);
+  exemptionReason = signal<string | null>(null);
+
   ngOnInit() {
     this.loadStudent();
     this.loadAllGroups();
@@ -80,6 +88,7 @@ export class StudentDetailComponent implements OnInit {
         this.newMemRecord.studentId = data.id;
         this.loadStudentGroups(data.id);
         this.loadExamResults(data.id);
+        this.loadStudentFees(data.id);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
@@ -95,6 +104,23 @@ export class StudentDetailComponent implements OnInit {
   loadExamResults(id: number) {
     this.examService.getStudentResults(id).subscribe({
       next: (data) => this.examResults.set(data)
+    });
+  }
+
+  loadStudentFees(id: number) {
+    this.feeService.getByStudentId(id).subscribe({
+      next: (fees) => {
+        this.studentFees.set(fees);
+        const now = new Date();
+        const currentFee = fees.find(f => f.month === now.getMonth() + 1 && f.year === now.getFullYear());
+        if (currentFee) {
+          this.isExemptedThisMonth.set(currentFee.isExempted ?? false);
+          this.exemptionReason.set(currentFee.exemptionReason ?? null);
+        } else {
+          this.isExemptedThisMonth.set(null);
+        }
+      },
+      error: () => this.isExemptedThisMonth.set(null)
     });
   }
 
