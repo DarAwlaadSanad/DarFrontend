@@ -3,6 +3,26 @@ export enum SalaryType {
   PerGroup = 2
 }
 
+export function normalizeSalaryType(type: any): SalaryType {
+  if (type === null || type === undefined) return SalaryType.PerGroup;
+  if (typeof type === 'number') {
+    return type === SalaryType.FixedMonthly ? SalaryType.FixedMonthly : SalaryType.PerGroup;
+  }
+  const str = String(type).trim().toLowerCase();
+  if (str === '1' || str === 'fixedmonthly' || str === 'ثابت' || str === 'راتب شهري ثابت') {
+    return SalaryType.FixedMonthly;
+  }
+  return SalaryType.PerGroup;
+}
+
+export function isFixedMonthly(type: any): boolean {
+  return normalizeSalaryType(type) === SalaryType.FixedMonthly;
+}
+
+export function getSalaryTypeName(type: any): string {
+  return normalizeSalaryType(type) === SalaryType.FixedMonthly ? 'راتب شهري ثابت' : 'راتب على المجموعة';
+}
+
 export enum TransactionType {
   ManualBonus = 1,
   ManualDeduction = 2,

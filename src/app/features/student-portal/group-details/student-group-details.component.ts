@@ -6,7 +6,7 @@ import { StudentService } from '../../../core/services/student.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ScheduleService } from '../../../core/services/schedule.service';
 import { StudentFeeService } from '../../../core/services/student-fee.service';
-import { GroupDetailsDTO, StudentInGroupDTO } from '../../../core/models/group.models';
+import { GroupDetailsDTO, StudentInGroupDTO, AttendanceStatus, normalizeAttendanceStatus } from '../../../core/models/group.models';
 import { GroupScheduleViewDTO } from '../../../core/models/schedule.models';
 import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
 
@@ -341,32 +341,35 @@ export class StudentGroupDetailsComponent implements OnInit {
     return this.myInfo()?.records[sessionId];
   }
 
-  getStatusClass(status?: number): string {
-    switch (status) {
-      case 1: return 'bg-green-500/20 text-green-400'; // Present
-      case 2: return 'bg-red-500/20 text-red-400';    // Absent
-      case 4: return 'bg-yellow-500/20 text-yellow-400'; // Late
-      case 3: return 'bg-blue-500/20 text-blue-400';  // Excused
+  getStatusClass(status?: any): string {
+    const s = normalizeAttendanceStatus(status);
+    switch (s) {
+      case AttendanceStatus.Present: return 'bg-green-500/20 text-green-400';
+      case AttendanceStatus.Absent: return 'bg-red-500/20 text-red-400';
+      case AttendanceStatus.Late: return 'bg-yellow-500/20 text-yellow-400';
+      case AttendanceStatus.Excused: return 'bg-blue-500/20 text-blue-400';
       default: return 'bg-dark-800 text-dark-500';
     }
   }
 
-  getStatusIcon(status?: number): string {
-    switch (status) {
-      case 1: return '✓';
-      case 2: return '✕';
-      case 4: return '⏰';
-      case 3: return '✉';
+  getStatusIcon(status?: any): string {
+    const s = normalizeAttendanceStatus(status);
+    switch (s) {
+      case AttendanceStatus.Present: return '✓';
+      case AttendanceStatus.Absent: return '✕';
+      case AttendanceStatus.Late: return '⏰';
+      case AttendanceStatus.Excused: return '✉';
       default: return '-';
     }
   }
 
-  getStatusLabel(status?: number): string {
-    switch (status) {
-      case 1: return 'حاضر';
-      case 2: return 'غائب';
-      case 4: return 'متأخر';
-      case 3: return 'بعذر';
+  getStatusLabel(status?: any): string {
+    const s = normalizeAttendanceStatus(status);
+    switch (s) {
+      case AttendanceStatus.Present: return 'حاضر';
+      case AttendanceStatus.Absent: return 'غائب';
+      case AttendanceStatus.Late: return 'متأخر';
+      case AttendanceStatus.Excused: return 'بعذر';
       default: return 'غير محدد';
     }
   }

@@ -5,6 +5,31 @@ export enum AttendanceStatus {
   Late = 4
 }
 
+export function normalizeAttendanceStatus(status: any): AttendanceStatus | null {
+  if (status === null || status === undefined || status === '') return null;
+  if (typeof status === 'number') {
+    if (status >= 1 && status <= 4) return status as AttendanceStatus;
+    return null;
+  }
+  const str = String(status).trim().toLowerCase();
+  switch (str) {
+    case '1':
+    case 'present':
+      return AttendanceStatus.Present;
+    case '2':
+    case 'absent':
+      return AttendanceStatus.Absent;
+    case '3':
+    case 'excused':
+      return AttendanceStatus.Excused;
+    case '4':
+    case 'late':
+      return AttendanceStatus.Late;
+    default:
+      return null;
+  }
+}
+
 export interface SessionRecordDTO {
   attendance?: AttendanceStatus;
   score?: number;

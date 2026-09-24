@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { StudentFeeService } from '../../core/services/student-fee.service';
 import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
+import { normalizeGender, isMale, getGenderLabel } from '../../core/models/student.models';
 
 @Component({
   selector: 'app-student-fee-list',
@@ -68,10 +69,10 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
                 <td class="p-4">
                   <div class="flex items-center gap-2">
                     <p class="text-white font-bold">{{ fee.studentName }}</p>
-                    <span *ngIf="fee.gender"
-                      [class]="fee.gender === 1 ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-pink-400 bg-pink-500/10 border-pink-500/20'"
+                    <span *ngIf="normalizeGender(fee.gender)"
+                      [class]="isMale(fee.gender) ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-pink-400 bg-pink-500/10 border-pink-500/20'"
                       class="px-2 py-0.5 rounded-full border text-[10px] font-bold">
-                      {{ fee.gender === 1 ? 'ذكر' : 'أنثى' }}
+                      {{ getGenderLabel(fee.gender) }}
                     </span>
                   </div>
                   <p class="text-[10px] text-dark-500">{{ fee.month }}/{{ fee.year }}</p>
@@ -221,4 +222,8 @@ export class StudentFeeListComponent implements OnInit {
       }
     });
   }
+
+  normalizeGender = normalizeGender;
+  isMale = isMale;
+  getGenderLabel = getGenderLabel;
 }

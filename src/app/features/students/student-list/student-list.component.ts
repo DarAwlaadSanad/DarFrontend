@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { GroupService } from '../../../core/services/group.service';
-import { StudentAddDTO } from '../../../core/models/student.models';
+import { StudentAddDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { UiService } from '../../../core/services/ui.service';
@@ -63,11 +63,10 @@ export class StudentListComponent implements OnInit {
     };
   }
 
-  getGenderLabel(gender?: number | null): string {
-    if (gender === 1) return 'ذَكَر';
-    if (gender === 2) return 'أُنْثَى';
-    return 'غير محدد';
-  }
+  normalizeGender = normalizeGender;
+  isMale = isMale;
+  isFemale = isFemale;
+  getGenderLabel = getGenderLabel;
 
   ngOnInit() {
     this.loadStudents();

@@ -151,21 +151,11 @@
                   {{ notificationService.unreadCount() }} جديد
                 </span>
               </div>
-              <div class="flex items-center gap-3">
-                <button (click)="notificationService.playNotificationSound(); $event.stopPropagation()"
-                  title="تجربة صوت الإشعار"
-                  class="text-xs text-dark-400 hover:text-primary-400 transition-colors flex items-center gap-1">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                  </svg>
-                  صوت
-                </button>
-                <button *ngIf="notificationService.unreadCount() > 0"
-                  (click)="markAllAsRead()"
-                  class="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium">
-                  تحديد الكل كمقروء
-                </button>
-              </div>
+              <button *ngIf="notificationService.unreadCount() > 0"
+                (click)="markAllAsRead()"
+                class="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium">
+                تحديد الكل كمقروء
+              </button>
             </div>
 
             <!-- Notifications List -->

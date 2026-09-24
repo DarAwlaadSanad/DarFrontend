@@ -2,8 +2,9 @@ import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FinanceService } from '../../../core/services/finance.service';
-import { UserContract, SalaryType } from '../../../core/models/finance.models';
-import { UserService } from '../../../core/services/user.service'; // Assuming this exists
+import { UserContract, SalaryType, normalizeSalaryType, isFixedMonthly, getSalaryTypeName } from '../../../core/models/finance.models';
+import { UserService } from '../../../core/services/user.service';
+import { UiService } from '../../../core/services/ui.service';
 
 @Component({
   selector: 'app-contracts',
@@ -25,14 +26,18 @@ export class ContractsComponent implements OnInit {
     { value: SalaryType.PerGroup, label: 'راتب على كل مجموعة' }
   ];
 
-  successMessage: string = '';
-  errorMessage: string = '';
+  isEditing = false;
   isLoading = false;
+
+  normalizeSalaryType = normalizeSalaryType;
+  isFixedMonthly = isFixedMonthly;
+  getSalaryTypeName = getSalaryTypeName;
 
   constructor(
     private financeService: FinanceService,
     private userService: UserService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ui: UiService
   ) {}
 
   ngOnInit(): void {
@@ -44,7 +49,10 @@ export class ContractsComponent implements OnInit {
     this.isLoading = true;
     this.financeService.getAllContracts().subscribe({
       next: (res) => {
-        this.contracts = res;
+        this.contracts = (res || []).map(c => ({
+          ...c,
+          salaryType: normalizeSalaryType(c.salaryType)
+        }));
         this.isLoading = false;
         this.cdr.detectChanges();
       },
@@ -66,16 +74,40 @@ export class ContractsComponent implements OnInit {
   onUserSelect(): void {
     const existing = this.getContractForUser(this.selectedUserId);
     if (existing) {
-      this.selectedSalaryType = Number(existing.salaryType);
+      this.selectedSalaryType = normalizeSalaryType(existing.salaryType);
       this.contractAmount = existing.amount;
+      this.isEditing = true;
     } else {
       this.selectedSalaryType = SalaryType.PerGroup;
       this.contractAmount = 0;
+      this.isEditing = false;
     }
   }
 
+  editContract(contract: UserContract): void {
+    this.selectedUserId = contract.userId;
+    this.selectedSalaryType = normalizeSalaryType(contract.salaryType);
+    this.contractAmount = contract.amount;
+    this.isEditing = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  resetForm(): void {
+    this.selectedUserId = '';
+    this.selectedSalaryType = SalaryType.PerGroup;
+    this.contractAmount = 0;
+    this.isEditing = false;
+  }
+
   saveContract(): void {
-    if (!this.selectedUserId) return;
+    if (!this.selectedUserId) {
+      this.ui.error('يرجى اختيار الموظف أولاً');
+      return;
+    }
+    if (this.contractAmount <= 0) {
+      this.ui.error('يرجى إدخال مبلغ راتب صحيح أكبر من صفر');
+      return;
+    }
 
     this.isLoading = true;
     this.financeService.setContract({
@@ -84,23 +116,34 @@ export class ContractsComponent implements OnInit {
       amount: Number(this.contractAmount)
     }).subscribe({
       next: () => {
-        this.successMessage = 'تم حفظ العقد بنجاح';
-        this.errorMessage = '';
-        this.isLoading = false;
-        this.cdr.detectChanges();
-        setTimeout(() => this.successMessage = '', 3000);
+        this.ui.success(this.isEditing ? 'تم تحديث الراتب بنجاح' : 'تم إضافة الراتب بنجاح');
+        this.resetForm();
         this.loadContracts();
       },
-      error: (err) => {
-        this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'حدث خطأ أثناء حفظ العقد';
+      error: () => {
         this.isLoading = false;
-        this.cdr.detectChanges();
-        setTimeout(() => this.errorMessage = '', 5000);
+        this.ui.error('حدث خطأ أثناء حفظ الراتب');
       }
     });
   }
 
-  getSalaryTypeName(type: SalaryType): string {
-    return type === SalaryType.FixedMonthly ? 'راتب شهري ثابت' : 'راتب على المجموعة';
+  async deleteContract(contract: UserContract): Promise<void> {
+    const confirmed = await this.ui.confirm(`هل أنت متأكد من حذف راتب الموظف "${contract.userName}"؟`);
+    if (!confirmed) return;
+
+    this.isLoading = true;
+    this.financeService.deleteContract(contract.userId).subscribe({
+      next: () => {
+        this.ui.success('تم حذف الراتب بنجاح');
+        if (this.selectedUserId === contract.userId) {
+          this.resetForm();
+        }
+        this.loadContracts();
+      },
+      error: () => {
+        this.isLoading = false;
+        this.ui.error('حدث خطأ أثناء حذف الراتب');
+      }
+    });
   }
 }

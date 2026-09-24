@@ -9,7 +9,7 @@ export class GroupService {
   private readonly apiUrl = `${environment.apiUrl}/Group`;
   groups = signal<GroupCardDTO[]>([]);
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   getAll(): Observable<GroupCardDTO[]> {
     return this.http.get<GroupCardDTO[]>(this.apiUrl).pipe(
@@ -27,7 +27,7 @@ export class GroupService {
       tap(data => this.detailsCache.set(cacheKey, data))
     );
   }
-  
+
   clearDetailsCache() {
     this.detailsCache.clear();
   }

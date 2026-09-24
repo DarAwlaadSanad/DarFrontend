@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
-import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordDTO } from '../../../core/models/student.models';
+import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
 import { MemorizationService, MemorizationRecordCreateDTO } from '../../../core/services/memorization.service';
 import { GroupService } from '../../../core/services/group.service';
 import { GroupCardDTO } from '../../../core/models/group.models';
@@ -266,17 +266,16 @@ export class StudentDetailComponent implements OnInit {
       fullName: s.fullName,
       ssn: s.ssn || '',
       notes: s.notes || '',
-      gender: s.gender || 1,
+      gender: normalizeGender(s.gender) ?? 1,
       academicYearId: s.academicYear?.id
     };
     this.showEditModal.set(true);
   }
 
-  getGenderLabel(gender?: number | null): string {
-    if (gender === 1) return 'ذَكَر';
-    if (gender === 2) return 'أُنْثَى';
-    return 'غير محدد';
-  }
+  normalizeGender = normalizeGender;
+  isMale = isMale;
+  isFemale = isFemale;
+  getGenderLabel = getGenderLabel;
 
   // ── Phone Management ────────────────────────────────────────────────────────
   onAddPhone() {

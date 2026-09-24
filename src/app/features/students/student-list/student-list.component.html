@@ -140,8 +140,8 @@
             class="px-2 py-0.5 rounded-full text-[10px] border font-medium">
             {{ getSchoolTypeLabel(student.academicYear.typeSchool) }}
           </span>
-          <span *ngIf="student.gender"
-            [ngClass]="student.gender === 1 ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : 'bg-pink-500/10 text-pink-400 border-pink-500/20'"
+          <span *ngIf="normalizeGender(student.gender)"
+            [ngClass]="isMale(student.gender) ? 'bg-sky-500/10 text-sky-400 border-sky-500/20' : 'bg-pink-500/10 text-pink-400 border-pink-500/20'"
             class="px-2 py-0.5 rounded-full text-[10px] border font-medium">
             {{ getGenderLabel(student.gender) }}
           </span>

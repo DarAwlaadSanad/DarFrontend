@@ -28,6 +28,34 @@ export enum Gender {
   Female = 2
 }
 
+export function normalizeGender(gender?: any): Gender | null {
+  if (gender === null || gender === undefined || gender === '') return null;
+  if (typeof gender === 'number') {
+    if (gender === 1) return Gender.Male;
+    if (gender === 2) return Gender.Female;
+    return null;
+  }
+  const str = String(gender).trim().toLowerCase();
+  if (str === '1' || str === 'male' || str === 'ذكر') return Gender.Male;
+  if (str === '2' || str === 'female' || str === 'أنثى' || str === 'انثى') return Gender.Female;
+  return null;
+}
+
+export function isMale(gender?: any): boolean {
+  return normalizeGender(gender) === Gender.Male;
+}
+
+export function isFemale(gender?: any): boolean {
+  return normalizeGender(gender) === Gender.Female;
+}
+
+export function getGenderLabel(gender?: any): string {
+  const g = normalizeGender(gender);
+  if (g === Gender.Male) return 'ذكر';
+  if (g === Gender.Female) return 'أنثى';
+  return 'غير محدد';
+}
+
 export interface StudentDetailsDTO {
   id: number;
   fullName: string;

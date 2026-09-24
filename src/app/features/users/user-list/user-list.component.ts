@@ -6,6 +6,7 @@ import { RoleService } from '../../../core/services/role.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UserViewDTO } from '../../../core/models/user.models';
 import { Role } from '../../../core/models/role.models';
+import { normalizeGender, isMale, getGenderLabel } from '../../../core/models/student.models';
 
 // System roles — fixed, not assigned via UI
 const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
@@ -73,11 +74,11 @@ const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
                 <td class="px-4 py-3.5 text-dark-400 text-sm hidden md:table-cell">{{ user.email }}</td>
                 <!-- Gender badge -->
                 <td class="px-4 py-3.5">
-                  <span *ngIf="user.gender"
-                        [class]="user.gender === 1 ? 'px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-sky-500/10 text-sky-400 border-sky-500/20' : 'px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-pink-500/10 text-pink-400 border-pink-500/20'">
+                  <span *ngIf="normalizeGender(user.gender)"
+                        [class]="isMale(user.gender) ? 'px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-sky-500/10 text-sky-400 border-sky-500/20' : 'px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-pink-500/10 text-pink-400 border-pink-500/20'">
                     {{ getGenderLabel(user.gender) }}
                   </span>
-                  <span *ngIf="!user.gender" class="text-dark-600 text-xs italic">—</span>
+                  <span *ngIf="!normalizeGender(user.gender)" class="text-dark-600 text-xs italic">—</span>
                 </td>
                 <!-- System role badge -->
                 <td class="px-4 py-3.5">
@@ -250,11 +251,9 @@ export class UserListComponent implements OnInit {
     return user.roles.includes('Admin') || user.roles.includes('SuperAdmin');
   }
 
-  getGenderLabel(gender?: number | null): string {
-    if (gender === 1) return 'ذَكَر';
-    if (gender === 2) return 'أُنْثَى';
-    return 'غير محدد';
-  }
+  normalizeGender = normalizeGender;
+  isMale = isMale;
+  getGenderLabel = getGenderLabel;
 
   getCustomRoles(user: UserViewDTO): string[] {
     return user.roles.filter(r => !SYSTEM_ROLES.includes(r));

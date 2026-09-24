@@ -41,6 +41,10 @@ export class FinanceService {
     return this.http.post(`${this.apiUrl}/contracts`, contract);
   }
 
+  deleteContract(userId: string): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/contracts/${userId}`);
+  }
+
   // Transactions
   getTransactions(userId: string, month: number, year: number): Observable<FinancialTransaction[]> {
     return this.http.get<FinancialTransaction[]>(`${this.apiUrl}/transactions?userId=${userId}&month=${month}&year=${year}`);

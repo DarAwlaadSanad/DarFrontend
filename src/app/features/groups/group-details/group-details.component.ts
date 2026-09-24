@@ -9,8 +9,8 @@ import { ScheduleService } from '../../../core/services/schedule.service';
 import { AttendanceBatchService } from '../../../core/services/attendance-batch.service';
 import { EvaluationService } from '../../../core/services/evaluation.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { GroupDetailsDTO, AttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
-import { StudentAddDTO } from '../../../core/models/student.models';
+import { GroupDetailsDTO, AttendanceStatus, normalizeAttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
+import { StudentAddDTO, getGenderLabel } from '../../../core/models/student.models';
 import { GroupScheduleViewDTO, CreateGroupScheduleDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
 import { FeePlanService } from '../../../core/services/fee-plan.service';
 import { FeePlanViewDTO, FeePlanAddDTO } from '../../../core/models/fee-plan.models';
@@ -190,7 +190,7 @@ export class GroupDetailsComponent implements OnInit {
         studentId: s.studentId,
         studentName: s.studentName,
         gender: s.gender,
-        status: rec?.attendance ?? AttendanceStatus.Present,
+        status: normalizeAttendanceStatus(rec?.attendance) ?? AttendanceStatus.Present,
         notes: '',
         score: rec?.score ?? null,
         comment: rec?.comment ?? '',
@@ -219,7 +219,7 @@ export class GroupDetailsComponent implements OnInit {
       sessionId: session.sessionId,
       entries: this.editorRows().map(r => ({
         studentId: r.studentId,
-        status: r.status,
+        status: normalizeAttendanceStatus(r.status) ?? AttendanceStatus.Present,
         notes: r.notes || undefined
       }))
     };
@@ -502,8 +502,9 @@ export class GroupDetailsComponent implements OnInit {
   }
 
   // ── UI Helpers ───────────────────────────────────────────────────────────────
-  getStatusClass(status?: AttendanceStatus): string {
-    switch (+status!) {
+  getStatusClass(status?: any): string {
+    const s = normalizeAttendanceStatus(status);
+    switch (s) {
       case AttendanceStatus.Present: return 'text-green-400 bg-green-500/10';
       case AttendanceStatus.Absent: return 'text-red-400 bg-red-500/10';
       case AttendanceStatus.Late: return 'text-yellow-400 bg-yellow-500/10';
@@ -511,8 +512,9 @@ export class GroupDetailsComponent implements OnInit {
       default: return 'text-dark-500 bg-dark-800';
     }
   }
-  getStatusIcon(status?: AttendanceStatus): string {
-    switch (+status!) {
+  getStatusIcon(status?: any): string {
+    const s = normalizeAttendanceStatus(status);
+    switch (s) {
       case AttendanceStatus.Present: return '✓';
       case AttendanceStatus.Absent: return '✕';
       case AttendanceStatus.Late: return '⏰';
@@ -520,8 +522,9 @@ export class GroupDetailsComponent implements OnInit {
       default: return '-';
     }
   }
-  getStatusBg(status: AttendanceStatus): string {
-    return this.statusOptions.find(s => s.value === +status)?.cls ?? 'bg-dark-700';
+  getStatusBg(status?: any): string {
+    const s = normalizeAttendanceStatus(status);
+    return this.statusOptions.find(opt => opt.value === s)?.cls ?? 'bg-dark-700';
   }
 
   getSchoolTypeLabel(type: number | undefined): string {
@@ -534,9 +537,7 @@ export class GroupDetailsComponent implements OnInit {
     }
   }
 
-  getGenderLabel(gender?: number | null): string {
-    if (gender === 1) return 'ذكر';
-    if (gender === 2) return 'أنثى';
-    return 'غير محدد';
+  getGenderLabel(gender?: any): string {
+    return getGenderLabel(gender);
   }
 }

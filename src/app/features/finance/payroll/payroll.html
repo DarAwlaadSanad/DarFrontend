@@ -15,6 +15,13 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-3">
+      <button (click)="openAddSalaryModal()" class="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+        <span>إضافة / تحديد راتب موظف</span>
+      </button>
+
       <div class="flex items-center gap-1 rounded-xl overflow-hidden"
            style="background: rgba(30,41,59,0.7); border: 1px solid rgba(51,65,85,0.6);">
         <select [(ngModel)]="selectedMonth" (ngModelChange)="loadPayroll()"
@@ -61,7 +68,7 @@
             <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">يدوي</th>
             <th class="px-4 py-3.5 text-right text-xs font-semibold text-blue-400">الصافي</th>
             <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">حالة التسليم</th>
-            <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">إجراء</th>
+            <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">الإجراءات</th>
           </tr>
         </thead>
         <tbody>
@@ -123,21 +130,31 @@
               </button>
             </td>
             <td class="px-4 py-3.5 text-center">
-              <button (click)="openTransactionModal(rep.userId)"
-                      class="px-3 py-1.5 rounded-lg text-xs font-semibold text-dark-300 hover:text-white hover:bg-dark-700 border border-dark-700 transition-all">
-                + معاملة
-              </button>
+              <div class="flex items-center justify-center gap-1.5">
+                <button (click)="openTransactionModal(rep)"
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-dark-300 hover:text-white hover:bg-dark-700 border border-dark-700 transition-all flex items-center gap-1"
+                        title="إضافة مكافأة أو خصم">
+                  <span>+ معاملة</span>
+                </button>
+                <button (click)="deleteSalary(rep)"
+                        class="p-1.5 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/10 border border-dark-700 transition-all"
+                        title="حذف راتب هذا الموظف">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
             </td>
           </tr>
           <tr *ngIf="reports.length === 0">
-            <td colspan="8" class="px-4 py-14 text-center">
+            <td colspan="9" class="px-4 py-14 text-center">
               <div class="w-12 h-12 rounded-2xl bg-dark-800 flex items-center justify-center mx-auto mb-3">
                 <svg class="w-6 h-6 text-dark-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 11h.01M12 11h.01M15 11h.01M12 7h.01M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                 </svg>
               </div>
               <p class="text-dark-400 text-sm">لا توجد بيانات رواتب لهذا الشهر</p>
-              <p class="text-dark-600 text-xs mt-1">تأكد من تحديد عقود للموظفين في صفحة العقود</p>
+              <p class="text-dark-600 text-xs mt-1">يمكنك إضافة رواتب للموظفين باستخدام زر "إضافة / تحديد راتب موظف"</p>
             </td>
           </tr>
         </tbody>
@@ -145,11 +162,56 @@
     </div>
   </div>
 
+  <!-- Add / Set Salary Modal -->
+  <div *ngIf="showAddSalaryModal" class="modal-overlay" (click.self)="closeAddSalaryModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="modal-title">إضافة / تحديد راتب موظف</h2>
+        <button (click)="closeAddSalaryModal()"
+                class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 flex items-center justify-center text-dark-400 hover:text-white transition-all">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="label">الموظف / المعلم <span class="text-red-400">*</span></label>
+          <select [(ngModel)]="newSalaryUserId" class="input-field">
+            <option value="">— اختر الموظف —</option>
+            <option *ngFor="let u of users" [value]="u.id">
+              {{ u.fullName || u.userName }} ({{ u.role }})
+            </option>
+          </select>
+        </div>
+        <div>
+          <label class="label">نوع الراتب</label>
+          <select [(ngModel)]="newSalaryType" class="input-field">
+            <option *ngFor="let t of salaryTypes" [ngValue]="t.value">{{ t.label }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">قيمة الراتب (جنيه) <span class="text-red-400">*</span></label>
+          <input type="number" [(ngModel)]="newSalaryAmount" class="input-field" placeholder="أدخل المبلغ..."/>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button (click)="saveSalary()" [disabled]="!newSalaryUserId || newSalaryAmount <= 0" class="btn-primary flex-1 py-3">
+          حفظ الراتب
+        </button>
+        <button (click)="closeAddSalaryModal()" class="btn-secondary px-6">إلغاء</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Transaction Modal -->
   <div *ngIf="showTransactionModal" class="modal-overlay" (click.self)="closeTransactionModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
       <div class="flex items-center justify-between mb-6">
-        <h2 class="modal-title">إضافة معاملة يدوية</h2>
+        <div>
+          <h2 class="modal-title">المعاملات المالية للراتب</h2>
+          <p class="text-xs text-dark-400 mt-1">الموظف: <span class="text-primary-400 font-bold">{{ selectedUserName }}</span></p>
+        </div>
         <button (click)="closeTransactionModal()"
                 class="w-8 h-8 rounded-lg bg-dark-800 hover:bg-dark-700 flex items-center justify-center text-dark-400 hover:text-white transition-all">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -174,8 +236,29 @@
         </div>
       </div>
       <div class="flex gap-3 mt-6">
-        <button (click)="saveTransaction()" class="btn-primary flex-1 py-3">حفظ المعاملة</button>
+        <button (click)="saveTransaction()" class="btn-primary flex-1 py-3">إضافة المعاملة</button>
         <button (click)="closeTransactionModal()" class="btn-secondary px-6">إلغاء</button>
+      </div>
+
+      <!-- Previous transactions list if any -->
+      <div *ngIf="userTransactions.length > 0" class="mt-6 pt-5 border-t border-dark-800">
+        <h4 class="text-xs font-bold text-dark-300 mb-3">المعاملات المسجلة لهذا الشهر:</h4>
+        <div class="space-y-2 max-h-48 overflow-y-auto">
+          <div *ngFor="let tx of userTransactions" class="flex items-center justify-between p-2.5 rounded-xl bg-dark-800/50 border border-dark-800 text-xs">
+            <div class="flex items-center gap-2">
+              <span [class]="tx.type === 1 || tx.type === 4 ? 'text-primary-400 bg-primary-500/10' : 'text-red-400 bg-red-500/10'" class="px-2 py-0.5 rounded-full font-bold">
+                {{ getTransactionTypeName(tx.type) }}
+              </span>
+              <span class="font-bold text-white">{{ tx.amount | number }} ج.م</span>
+              <span *ngIf="tx.reason" class="text-dark-400">({{ tx.reason }})</span>
+            </div>
+            <button (click)="removeTransaction(tx.id)" class="text-dark-500 hover:text-red-400 p-1 transition-colors" title="حذف المعاملة">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
