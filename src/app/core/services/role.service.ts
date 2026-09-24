@@ -1,6 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { Observable, tap, finalize } from 'rxjs';
 import { Role, RoleAddDTO } from '../models/role.models';
 import { environment } from '../../../environments/environment';
 
@@ -17,10 +17,8 @@ export class RoleService {
   loadRoles(): Observable<Role[]> {
     this.isLoading.set(true);
     return this.http.get<Role[]>(this.apiUrl).pipe(
-      tap(roles => {
-        this.roles.set(roles);
-        this.isLoading.set(false);
-      })
+      tap(roles => this.roles.set(roles)),
+      finalize(() => this.isLoading.set(false))
     );
   }
 

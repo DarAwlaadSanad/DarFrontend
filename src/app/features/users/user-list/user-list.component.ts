@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { RoleService } from '../../../core/services/role.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { UserViewDTO } from '../../../core/models/user.models';
 import { Role } from '../../../core/models/role.models';
 
 // System roles — fixed, not assigned via UI
-const SYSTEM_ROLES = ['Admin', 'User'];
+const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
 
 @Component({
   selector: 'app-user-list',
@@ -47,6 +48,7 @@ const SYSTEM_ROLES = ['Admin', 'User'];
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">المستخدم</th>
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400 hidden md:table-cell">البريد الإلكتروني</th>
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">النوع</th>
+                <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">نوع الحساب</th>
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">الأدوار المخصصة</th>
                 <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">إجراء</th>
               </tr>
@@ -101,7 +103,7 @@ const SYSTEM_ROLES = ['Admin', 'User'];
                 </td>
                 <td class="px-4 py-3.5 text-center">
                   <!-- Only Users can receive custom roles -->
-                  <button *ngIf="!isAdmin(user)"
+                  <button *ngIf="!isAdmin(user) && canManageUsers()"
                           (click)="openRoleModal(user)"
                           class="px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-400 border border-primary-500/20 hover:bg-primary-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1.5 mx-auto">
                     <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -110,6 +112,7 @@ const SYSTEM_ROLES = ['Admin', 'User'];
                     تعيين أدوار
                   </button>
                   <span *ngIf="isAdmin(user)" class="text-dark-600 text-xs italic">محمي</span>
+                  <span *ngIf="!isAdmin(user) && !canManageUsers()" class="text-dark-600 text-xs italic">—</span>
                 </td>
               </tr>
             </tbody>
@@ -210,6 +213,7 @@ const SYSTEM_ROLES = ['Admin', 'User'];
 export class UserListComponent implements OnInit {
   private userService = inject(UserService);
   private roleService = inject(RoleService);
+  private authService = inject(AuthService);
 
   users = signal<UserViewDTO[]>([]);
   isLoading = signal(false);
@@ -220,14 +224,18 @@ export class UserListComponent implements OnInit {
   selectedRoles = signal<string[]>([]);
   successMsg = signal<string | null>(null);
 
-  // Custom roles (everything except Admin and User)
+  canManageUsers = computed(() => this.authService.hasPermission('Permissions.Users.Manage'));
+
+  // Custom roles (everything except Admin, SuperAdmin, and User)
   customRoles = computed(() =>
     this.roleService.roles().filter(r => !SYSTEM_ROLES.includes(r.name))
   );
 
   ngOnInit() {
     this.loadUsers();
-    this.roleService.loadRoles().subscribe();
+    this.roleService.loadRoles().subscribe({
+      error: (err) => console.warn('Could not load roles', err)
+    });
   }
 
   loadUsers() {
@@ -239,7 +247,7 @@ export class UserListComponent implements OnInit {
   }
 
   isAdmin(user: UserViewDTO): boolean {
-    return user.roles.includes('Admin');
+    return user.roles.includes('Admin') || user.roles.includes('SuperAdmin');
   }
 
   getGenderLabel(gender?: number | null): string {

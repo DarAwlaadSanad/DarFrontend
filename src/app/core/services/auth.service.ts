@@ -17,7 +17,19 @@ export class AuthService {
   currentUser = computed(() => this.authState());
   isAuthenticated = computed(() => !!this.authState()?.token);
   isLoggedIn = computed(() => !!this.authState()?.token); // Alias for backward compatibility
-  userRoles = computed(() => this.authState()?.roles || []);
+  userRoles = computed<string[]>(() => {
+    const fromAuth = this.authState()?.roles;
+    if (fromAuth && fromAuth.length > 0) return fromAuth;
+    const token = this.authState()?.token;
+    if (!token) return [];
+    const decoded = this.decodeToken(token);
+    if (!decoded) return [];
+    let roles = decoded['role'] || decoded['roles'] || decoded['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || [];
+    if (!Array.isArray(roles)) {
+      roles = [roles];
+    }
+    return roles as string[];
+  });
   isStudent = computed(() => this.userRoles().includes('Student'));
   isTeacher = computed(() => this.userRoles().includes('Teacher'));
   studentId = computed(() => this.authState()?.studentId);
@@ -28,7 +40,7 @@ export class AuthService {
     const decoded = this.decodeToken(token);
     if (!decoded) return [];
     
-    let permissions = decoded['Permission'] || [];
+    let permissions = decoded['Permission'] || decoded['permission'] || [];
     if (!Array.isArray(permissions)) {
       permissions = [permissions];
     }
@@ -39,8 +51,21 @@ export class AuthService {
 
   private decodeToken(token: string): any {
     try {
-      return JSON.parse(atob(token.split('.')[1]));
+      const parts = token.split('.');
+      if (parts.length < 2) return null;
+      let base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+      while (base64.length % 4) {
+        base64 += '=';
+      }
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload);
     } catch (e) {
+      console.error('Error decoding token', e);
       return null;
     }
   }
@@ -122,11 +147,25 @@ export class AuthService {
   }
 
   hasRole(role: string): boolean {
-    return this.userRoles().includes(role);
+    const roles = this.userRoles();
+    return roles.some((r: string) => {
+      if (!r) return false;
+      if (r.toLowerCase() === role.toLowerCase()) return true;
+      if ((role.toLowerCase() === 'supervisor' || role === 'مشرف') && (r === 'مشرف' || r.toLowerCase() === 'supervisor')) return true;
+      return false;
+    });
   }
 
   hasPermission(permission: string): boolean {
-    // Admin always has all permissions or we just check the array
-    return this.userPermissions().includes(permission) || this.hasRole('Admin');
+    if (this.hasRole('Admin') || this.hasRole('SuperAdmin')) return true;
+    const perms = this.userPermissions();
+    if (perms.includes(permission)) return true;
+
+    // Manage permission automatically grants View permission
+    if (permission.endsWith('.View')) {
+      const managePerm = permission.slice(0, -5) + '.Manage';
+      if (perms.includes(managePerm)) return true;
+    }
+    return false;
   }
 }

@@ -46,10 +46,15 @@
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div *ngFor="let group of groupedPermissions | keyvalue"
              class="p-4 rounded-xl" style="background: rgba(30,41,59,0.5); border: 1px solid rgba(51,65,85,0.5);">
-          <h4 class="font-semibold text-primary-400 text-sm mb-3 pb-2"
-              style="border-bottom: 1px solid rgba(51,65,85,0.5);">
-            {{ getGroupLabel(group.key) }}
-          </h4>
+          <div class="flex items-center justify-between pb-2 mb-3" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
+            <h4 class="font-semibold text-primary-400 text-sm">
+              {{ getGroupLabel(group.key) }}
+            </h4>
+            <button type="button" (click)="toggleGroupAll(group.value)"
+                    class="text-[11px] text-dark-400 hover:text-primary-300 font-bold transition-colors">
+              {{ isGroupAllSelected(group.value) ? 'إلغاء تحديد الكل' : 'تحديد الكل' }}
+            </button>
+          </div>
           <div class="space-y-2.5">
             <label *ngFor="let perm of group.value"
                    class="flex items-center gap-3 cursor-pointer p-2 rounded-lg hover:bg-dark-800/50 transition-colors">

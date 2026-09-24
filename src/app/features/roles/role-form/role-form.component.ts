@@ -80,36 +80,50 @@ export class RoleFormComponent implements OnInit {
   getGroupLabel(group: string): string {
     const labels: { [key: string]: string } = {
       'Students': 'الطلاب',
-      'Groups': 'المجموعات',
-      'Users': 'المستخدمين',
+      'Groups': 'المجموعات والحلقات',
+      'Users': 'المستخدمين والحسابات',
       'Roles': 'الأدوار والصلاحيات',
       'AcademicYears': 'السنوات الدراسية',
-      'Fees': 'الشهريات',
-      'GroupFees': 'تحصيل الرسوم',
-      'Finance': 'المالية',
-      'FeePlans': 'خطط الدفع',
-      'Attendance': 'الحضور والجلسات',
-      'Sessions': 'الجلسات',
+      'Fees': 'الشهريات والرسوم العامة',
+      'GroupFees': 'تحصيل رسوم الحلقات',
+      'Finance': 'المالية والرواتب والمصروفات',
+      'FeePlans': 'خطط الدفع والاشتراكات',
+      'Attendance': 'الحضور والغياب',
+      'Sessions': 'الجلسات والحصص',
       'TeacherDashboard': 'لوحة تحكم المعلم',
-      'Exams': 'الاختبارات',
-      'Competitions': 'المسابقات',
+      'Exams': 'الاختبارات والنتائج',
+      'Competitions': 'المسابقات القرآنية',
       'Memorization': 'الحفظ والمراجعة',
-      'Schedules': 'الجداول والمواعيد',
-      'TeacherAttendance': 'حضور المعلمين',
-      'Reports': 'التقارير'
+      'Schedules': 'الجداول ومواعيد الحصص',
+      'TeacherAttendance': 'حضور وغياب المعلمين',
+      'Reports': 'التقارير والاستيراد والتصدير',
+      'Rooms': 'الغرف والقاعات'
     };
     return labels[group] || group;
   }
 
   getPermissionLabel(perm: string): string {
     const action = perm.split('.')[2]; // View or Manage or Delete etc
-    if (action === 'View') return 'عرض';
-    if (action === 'Manage') return 'إدارة كاملة';
-    if (action === 'Delete') return 'حذف';
-    if (action === 'Exempt') return 'إعفاء';
-    if (action === 'Export') return 'تصدير';
-    if (action === 'BypassSessionRequirement') return 'تسجيل الحضور دون اشتراط وجود حصص (مثل المشرف)';
+    if (action === 'View') return 'عرض وتصفح';
+    if (action === 'Manage') return 'إدارة كاملة (إضافة وتعديل)';
+    if (action === 'Delete') return 'حذف نهائي';
+    if (action === 'Exempt') return 'إعفاء من الرسوم الشهرية';
+    if (action === 'Export') return 'تصدير البيانات (Excel / PDF)';
+    if (action === 'Import') return 'استيراد البيانات من ملفات Excel';
+    if (action === 'BypassSessionRequirement') return 'تسجيل الحضور دون اشتراط وجود حصص اليوم (مثل المشرف)';
     return action;
+  }
+
+  isGroupAllSelected(perms: string[]): boolean {
+    return perms.length > 0 && perms.every(p => this.selectedPermissions.has(p));
+  }
+
+  toggleGroupAll(perms: string[]) {
+    if (this.isGroupAllSelected(perms)) {
+      perms.forEach(p => this.selectedPermissions.delete(p));
+    } else {
+      perms.forEach(p => this.selectedPermissions.add(p));
+    }
   }
 
   onSubmit() {
