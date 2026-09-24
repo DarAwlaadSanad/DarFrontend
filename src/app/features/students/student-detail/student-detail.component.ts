@@ -12,6 +12,8 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
 import { UiService } from '../../../core/services/ui.service';
 import { StudentFeeService } from '../../../core/services/student-fee.service';
 import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
+import { AcademicYearService } from '../../../core/services/academic-year.service';
+import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 
 @Component({
   selector: 'app-student-detail',
@@ -28,6 +30,7 @@ export class StudentDetailComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private ui = inject(UiService);
+  private academicYearService = inject(AcademicYearService);
 
   surahs = this.memorizationService.surahs;
   isAddingMemorization = signal(false);
@@ -53,6 +56,7 @@ export class StudentDetailComponent implements OnInit {
   // Edit Modal
   showEditModal = signal(false);
   editData: StudentUpdateDTO = { fullName: '', ssn: '', notes: '' };
+  academicYears = signal<AcademicYearViewDTO[]>([]);
 
   // Phone Management
   isAddingPhone = signal(false);
@@ -77,6 +81,7 @@ export class StudentDetailComponent implements OnInit {
   ngOnInit() {
     this.loadStudent();
     this.loadAllGroups();
+    this.loadAcademicYears();
   }
 
   loadStudent() {
@@ -127,6 +132,12 @@ export class StudentDetailComponent implements OnInit {
   loadAllGroups() {
     this.groupService.getAll().subscribe({
       next: (data) => this.allGroups.set(data)
+    });
+  }
+
+  loadAcademicYears() {
+    this.academicYearService.getAll().subscribe({
+      next: (data) => this.academicYears.set(data)
     });
   }
 
@@ -255,8 +266,16 @@ export class StudentDetailComponent implements OnInit {
       fullName: s.fullName,
       ssn: s.ssn || '',
       notes: s.notes || '',
+      gender: s.gender || 1,
+      academicYearId: s.academicYear?.id
     };
     this.showEditModal.set(true);
+  }
+
+  getGenderLabel(gender?: number | null): string {
+    if (gender === 1) return 'ذَكَر';
+    if (gender === 2) return 'أُنْثَى';
+    return 'غير محدد';
   }
 
   // ── Phone Management ────────────────────────────────────────────────────────

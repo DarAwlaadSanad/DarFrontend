@@ -79,6 +79,11 @@
                 class="text-[10px] font-bold px-2 py-0.5 rounded-full">
                 {{ s.isActive ? 'نشط' : 'متوقف' }}
               </span>
+              <span *ngIf="s.gender"
+                [class]="s.gender === 1 ? 'text-sky-400 bg-sky-500/10 border border-sky-500/30' : 'text-pink-400 bg-pink-500/10 border border-pink-500/30'"
+                class="text-[10px] font-bold px-2 py-0.5 rounded-full">
+                {{ getGenderLabel(s.gender) }}
+              </span>
               <!-- Fee Exemption Badge -->
               <span *ngIf="isExemptedThisMonth() === true"
                 class="text-blue-400 bg-blue-500/10 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
@@ -112,6 +117,24 @@
               السنة الدراسية (الصف)
             </span>
             <span class="text-white font-bold">{{ s.academicYear ? s.academicYear.name : 'غير محدد' }}</span>
+          </div>
+          <div class="flex items-center justify-between text-xs">
+            <span class="text-dark-500 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              النوع
+            </span>
+            <span
+              [ngClass]="{
+                'bg-sky-500/10 text-sky-400 border-sky-500/20': s.gender === 1,
+                'bg-pink-500/10 text-pink-400 border-pink-500/20': s.gender === 2,
+                'bg-dark-800 text-dark-400 border-dark-700': !s.gender
+              }"
+              class="px-2 py-0.5 rounded-full border text-[11px] font-bold">
+              {{ getGenderLabel(s.gender) }}
+            </span>
           </div>
           <div class="flex items-center justify-between text-xs">
             <span class="text-dark-500 flex items-center gap-1.5">
@@ -545,6 +568,20 @@
         placeholder="الاسم الكامل">
       <input type="text" name="ssn" [(ngModel)]="editData.ssn" class="input-field" placeholder="الرقم القومي"
         pattern="[0-9]{14}" minlength="14" maxlength="14">
+      <div>
+        <label class="block text-xs font-bold text-dark-300 mb-1">النوع</label>
+        <select name="gender" [(ngModel)]="editData.gender" class="input-field">
+          <option [ngValue]="1">ذَكَر</option>
+          <option [ngValue]="2">أُنْثَى</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-bold text-dark-300 mb-1">السنة الدراسية</label>
+        <select name="academicYearId" [(ngModel)]="editData.academicYearId" class="input-field">
+          <option [ngValue]="undefined" disabled>-- اختر السنة الدراسية --</option>
+          <option *ngFor="let year of academicYears()" [ngValue]="year.id">{{ year.name }}</option>
+        </select>
+      </div>
       <textarea name="notes" [(ngModel)]="editData.notes" class="input-field min-h-[80px]"
         placeholder="ملاحظات"></textarea>
       <div class="flex gap-3 pt-4">

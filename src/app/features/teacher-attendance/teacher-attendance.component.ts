@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, OnDestroy, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TeacherAttendanceService } from '../../core/services/teacher-attendance.service';
@@ -15,13 +15,18 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   currentTime = signal<Date>(new Date());
   isLoading = signal<boolean>(false);
   private timer: any;
-  private authService = inject(AuthService);
+  public authService = inject(AuthService);
+  public attendanceService = inject(TeacherAttendanceService);
+  private uiService = inject(UiService);
   private router = inject(Router);
 
-  constructor(
-    public attendanceService: TeacherAttendanceService,
-    private uiService: UiService
-  ) {}
+  todayStatus = this.attendanceService.todayStatus;
+  hasNoSessions = computed(() => {
+    const s = this.todayStatus();
+    return s ? (!s.canCheckIn && s.requiresSessions && !s.hasSessionsToday) : false;
+  });
+
+  constructor() {}
 
   ngOnInit(): void {
     if (this.authService.hasRole('Admin') || this.authService.hasRole('SuperAdmin')) {
@@ -33,7 +38,7 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
       this.currentTime.set(new Date());
     }, 1000);
 
-    this.fetchTodayRecord();
+    this.fetchTodayStatus();
   }
 
   ngOnDestroy(): void {
@@ -42,11 +47,14 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     }
   }
 
-  fetchTodayRecord(): void {
+  fetchTodayStatus(): void {
     this.isLoading.set(true);
-    this.attendanceService.getTodayRecord().subscribe({
+    this.attendanceService.getTodayStatus().subscribe({
       next: () => this.isLoading.set(false),
-      error: () => this.isLoading.set(false)
+      error: () => {
+        this.isLoading.set(false);
+        this.attendanceService.getTodayRecord().subscribe();
+      }
     });
   }
 
@@ -62,23 +70,14 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
         if (response.success) {
           this.uiService.success('تم تسجيل الحضور بنجاح');
+          this.fetchTodayStatus();
         } else {
           this.uiService.error(response.message || 'فشل في تسجيل الحضور');
         }
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
-        this.uiService.error('حدث خطأ أثناء الاتصال بالخادم. سيتم محاكاة الحضور محلياً للتمثيل المرئي.');
-        
-        // Mocking data for visual demonstration until backend is ready
-        this.attendanceService.todayRecord.set({
-          teacherId: 'mock-teacher-id',
-          date: new Date().toISOString(),
-          checkInTime: new Date().toISOString(),
-          checkOutTime: null,
-          delayMinutes: Math.floor(Math.random() * 30), // Random delay 0-29 mins
-          isAbsent: false
-        });
+        this.uiService.error(err.error?.message || 'حدث خطأ أثناء تسجيل الحضور');
       }
     });
   }
@@ -90,23 +89,16 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
         this.isLoading.set(false);
         if (response.success) {
           this.uiService.success('تم تسجيل الانصراف بنجاح');
+          this.fetchTodayStatus();
         } else {
           this.uiService.error(response.message || 'فشل في تسجيل الانصراف');
         }
       },
-      error: () => {
+      error: (err) => {
         this.isLoading.set(false);
-        this.uiService.error('حدث خطأ أثناء الاتصال بالخادم. سيتم محاكاة الانصراف محلياً للتمثيل المرئي.');
-        
-        // Mocking checkout
-        const currentRecord = this.attendanceService.todayRecord();
-        if (currentRecord) {
-           this.attendanceService.todayRecord.set({
-             ...currentRecord,
-             checkOutTime: new Date().toISOString()
-           });
-        }
+        this.uiService.error(err.error?.message || 'حدث خطأ أثناء تسجيل الانصراف');
       }
     });
   }
 }
+

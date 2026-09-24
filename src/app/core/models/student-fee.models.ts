@@ -2,6 +2,7 @@ export interface StudentFeeViewDTO {
   id: number;
   studentId: number;
   studentName: string;
+  gender?: number | null;
   requiredAmount: number;
   amountPaid: number;
   month: number;

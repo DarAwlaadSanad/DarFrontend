@@ -26,6 +26,7 @@ import { GroupExamsComponent } from '../../exams/group-exams.component';
 interface SessionEditorRow {
   studentId: number;
   studentName: string;
+  gender?: number | null;
   status: AttendanceStatus;
   notes: string;
   score: number | null;
@@ -107,7 +108,7 @@ export class GroupDetailsComponent implements OnInit {
   academicYears = signal<AcademicYearViewDTO[]>([]);
   imagePreviews = signal<string[]>([]);
   newStudent: StudentAddDTO = {
-    fullName: '', ssn: '', notes: '', academicYearId: 0, groupIds: [], phoneNumbers: [''], imageFiles: []
+    fullName: '', ssn: '', notes: '', academicYearId: 0, gender: 1, groupIds: [], phoneNumbers: [''], imageFiles: []
   };
 
   months = [
@@ -188,6 +189,7 @@ export class GroupDetailsComponent implements OnInit {
       return {
         studentId: s.studentId,
         studentName: s.studentName,
+        gender: s.gender,
         status: rec?.attendance ?? AttendanceStatus.Present,
         notes: '',
         score: rec?.score ?? null,
@@ -420,7 +422,7 @@ export class GroupDetailsComponent implements OnInit {
 
   // ── Add Student ─────────────────────────────────────────────────────────────
   openAddStudentModal() {
-    this.newStudent = { fullName: '', ssn: '', notes: '', academicYearId: this.academicYears()[0]?.id || 0, groupIds: [this.details()!.groupId], phoneNumbers: [''], imageFiles: [] };
+    this.newStudent = { fullName: '', ssn: '', notes: '', academicYearId: this.academicYears()[0]?.id || 0, gender: 1, groupIds: [this.details()!.groupId], phoneNumbers: [''], imageFiles: [] };
     this.imagePreviews.set([]);
     this.showAddStudentModal.set(true);
   }
@@ -530,5 +532,11 @@ export class GroupDetailsComponent implements OnInit {
       case 2: return 'أخرى';
       default: return 'غير محدد';
     }
+  }
+
+  getGenderLabel(gender?: number | null): string {
+    if (gender === 1) return 'ذكر';
+    if (gender === 2) return 'أنثى';
+    return 'غير محدد';
   }
 }

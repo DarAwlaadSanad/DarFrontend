@@ -33,9 +33,38 @@
       </p>
     </div>
 
-    <!-- Action Card -->
-    <div class="card p-6">
-      <h3 class="font-bold text-white text-base mb-5">سجل اليوم</h3>
+    <!-- No Sessions Today Card -->
+    <div *ngIf="hasNoSessions()" class="card p-8 flex flex-col items-center justify-center text-center relative overflow-hidden border border-amber-500/20 bg-dark-900/60 shadow-xl">
+      <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center mb-4 text-amber-400 shadow-inner">
+        <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-2">ليس لديك حصص لليوم</h3>
+      <p class="text-dark-400 text-sm max-w-sm leading-relaxed mb-4">
+        لا توجد أي حصص مجدولة لك اليوم (سواء كمعلم أساسي أو كمعلم بديل)، ولذلك لا يتطلب منك تسجيل الحضور لهذا اليوم.
+      </p>
+      <div class="px-3.5 py-1.5 rounded-full bg-dark-800/80 border border-dark-700 text-xs text-dark-400 font-medium flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>في حال تم تكليفك كمعلم بديل سيتاح لك تسجيل الحضور فوراً</span>
+      </div>
+    </div>
+
+    <!-- Action Card (When user can attend or is supervisor/staff) -->
+    <div *ngIf="!hasNoSessions()" class="card p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="font-bold text-white text-base">سجل اليوم</h3>
+        <span *ngIf="todayStatus()?.sessionsCount && todayStatus()!.sessionsCount > 0"
+              class="text-xs px-2.5 py-0.5 rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20 font-bold">
+          {{ todayStatus()?.sessionsCount }} حصص مجدولة اليوم
+        </span>
+        <span *ngIf="!todayStatus()?.requiresSessions"
+              class="text-xs px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20 font-bold">
+          حضور إداري / إشرافي
+        </span>
+      </div>
 
       <!-- Loading -->
       <div *ngIf="isLoading()" class="flex justify-center items-center py-12">

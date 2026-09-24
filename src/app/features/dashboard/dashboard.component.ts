@@ -1,7 +1,9 @@
-import { Component, signal, HostListener } from '@angular/core';
+import { Component, signal, HostListener, OnInit, OnDestroy, inject, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { NotificationDTO } from '../../core/models/notification.models';
 
 @Component({
   selector: 'app-dashboard',
@@ -9,14 +11,20 @@ import { AuthService } from '../../core/services/auth.service';
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
   templateUrl: './dashboard.component.html',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit, OnDestroy {
+  public authService = inject(AuthService);
+  public notificationService = inject(NotificationService);
+  private router = inject(Router);
+  private elementRef = inject(ElementRef);
+
   isSidebarOpen = signal(window.innerWidth >= 1024);
   isProfileOpen = signal(false);
+  isNotificationOpen = signal(false);
   isMobile = signal(window.innerWidth < 1024);
 
   navItems: Array<{ label: string, icon: string, route: string }> = [];
 
-  constructor(public authService: AuthService, private router: Router) {
+  constructor() {
     // Redirect students to student portal
     if (this.authService.isStudent()) {
       this.router.navigate(['/student']);
@@ -48,7 +56,13 @@ export class DashboardComponent {
     if (this.authService.hasPermission('Permissions.Roles.View') || this.authService.hasPermission('Permissions.Roles.Manage')) {
       this.navItems.push({ label: 'إدارة الصلاحيات', icon: 'shield-lock', route: '/dashboard/roles' });
     }
-    if (!this.authService.hasRole('Admin') && !this.authService.hasRole('SuperAdmin') && (this.authService.userPermissions().includes('Permissions.TeacherDashboard.View') || this.authService.hasRole('Teacher'))) {
+    if (!this.authService.hasRole('Admin') && !this.authService.hasRole('SuperAdmin') && (
+      this.authService.userPermissions().includes('Permissions.TeacherDashboard.View') ||
+      this.authService.userPermissions().includes('Permissions.TeacherAttendance.View') ||
+      this.authService.hasRole('Teacher') ||
+      this.authService.hasRole('مشرف') ||
+      this.authService.hasRole('Supervisor')
+    )) {
       this.navItems.push({ label: 'تسجيل الحضور', icon: 'check-square', route: '/dashboard/attendance' });
     }
     if (this.authService.hasPermission('Permissions.Competitions.View')) {
@@ -79,6 +93,14 @@ export class DashboardComponent {
     });
   }
 
+  ngOnInit() {
+    this.notificationService.startPolling(30000);
+  }
+
+  ngOnDestroy() {
+    this.notificationService.stopPolling();
+  }
+
   @HostListener('window:resize')
   onResize() {
     const mobile = window.innerWidth < 1024;
@@ -86,11 +108,45 @@ export class DashboardComponent {
     if (!mobile) this.isSidebarOpen.set(true);
   }
 
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent) {
+    const target = event.target as HTMLElement;
+    if (!target.closest('.notification-container')) {
+      this.isNotificationOpen.set(false);
+    }
+    if (!target.closest('.profile-container')) {
+      this.isProfileOpen.set(false);
+    }
+  }
+
   toggleSidebar() { this.isSidebarOpen.update(v => !v); }
-  toggleProfile() { this.isProfileOpen.update(v => !v); }
+  toggleProfile() {
+    this.isProfileOpen.update(v => !v);
+    if (this.isProfileOpen()) this.isNotificationOpen.set(false);
+  }
+
+  toggleNotification() {
+    this.isNotificationOpen.update(v => !v);
+    if (this.isNotificationOpen()) {
+      this.isProfileOpen.set(false);
+      this.notificationService.loadNotifications();
+    }
+  }
+
+  markAsRead(item: NotificationDTO, event?: Event) {
+    if (event) event.stopPropagation();
+    if (item.isRead) return;
+    this.notificationService.markAsRead(item.id).subscribe();
+  }
+
+  markAllAsRead() {
+    this.notificationService.markAllAsRead().subscribe();
+  }
 
   logout() {
+    this.notificationService.stopPolling();
     this.authService.logout();
     this.router.navigate(['/login']);
   }
 }
+

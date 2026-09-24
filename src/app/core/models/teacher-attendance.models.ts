@@ -32,3 +32,12 @@ export interface CheckOutResponseDTO {
   message?: string;
   record: TeacherAttendanceRecordDTO;
 }
+
+export interface TodayAttendanceStatusDTO {
+  hasSessionsToday: boolean;
+  requiresSessions: boolean;
+  canCheckIn: boolean;
+  message?: string | null;
+  record?: TeacherAttendanceRecordDTO | null;
+  sessionsCount: number;
+}

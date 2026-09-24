@@ -108,6 +108,7 @@ export class RoleFormComponent implements OnInit {
     if (action === 'Delete') return 'حذف';
     if (action === 'Exempt') return 'إعفاء';
     if (action === 'Export') return 'تصدير';
+    if (action === 'BypassSessionRequirement') return 'تسجيل الحضور دون اشتراط وجود حصص (مثل المشرف)';
     return action;
   }
 

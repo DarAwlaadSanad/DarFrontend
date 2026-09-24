@@ -120,17 +120,107 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <!-- Notifications button -->
-        <button class="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-800 transition-all relative">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
-          <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-primary-400 rounded-full animate-pulse"></span>
-        </button>
+        <!-- Notifications Container -->
+        <div class="relative notification-container">
+          <button (click)="toggleNotification()"
+            class="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-800 transition-all relative"
+            [class.text-white]="isNotificationOpen()"
+            [class.bg-dark-800]="isNotificationOpen()"
+            title="الإشعارات">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span *ngIf="notificationService.unreadCount() > 0"
+              class="absolute -top-1 -right-1 px-1.5 py-0.2 text-[10px] font-bold bg-primary-500 text-white rounded-full min-w-[18px] text-center shadow-lg shadow-primary-500/40 animate-pulse">
+              {{ notificationService.unreadCount() }}
+            </span>
+          </button>
+
+          <!-- Notifications Dropdown -->
+          <div *ngIf="isNotificationOpen()"
+            class="absolute left-0 mt-2 w-80 sm:w-96 rounded-2xl shadow-2xl py-2 animate-scale-in z-50 border border-dark-700/80"
+            style="background: #0f172a;"
+            dir="rtl">
+            <!-- Header -->
+            <div class="px-4 py-2.5 flex items-center justify-between border-b border-dark-800">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white">الإشعارات</span>
+                <span *ngIf="notificationService.unreadCount() > 0"
+                  class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-400 border border-primary-500/20">
+                  {{ notificationService.unreadCount() }} جديد
+                </span>
+              </div>
+              <button *ngIf="notificationService.unreadCount() > 0"
+                (click)="markAllAsRead()"
+                class="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium">
+                تحديد الكل كمقروء
+              </button>
+            </div>
+
+            <!-- Notifications List -->
+            <div class="max-h-96 overflow-y-auto divide-y divide-dark-800/60">
+              <div *ngFor="let item of notificationService.notifications()"
+                (click)="markAsRead(item, $event)"
+                class="p-3.5 flex items-start gap-3 transition-colors cursor-pointer group"
+                [ngClass]="item.isRead ? 'opacity-70 hover:opacity-100 hover:bg-dark-800/40' : 'bg-primary-500/5 hover:bg-primary-500/10'">
+                <!-- Icon by Type -->
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 shadow-md"
+                  [ngClass]="{
+                    'bg-amber-500/10 text-amber-400 border border-amber-500/20': item.type === 'SessionReminder',
+                    'bg-sky-500/10 text-sky-400 border border-sky-500/20': item.type === 'SubstituteAssignment',
+                    'bg-primary-500/10 text-primary-400 border border-primary-500/20': item.type !== 'SessionReminder' && item.type !== 'SubstituteAssignment'
+                  }">
+                  <!-- Clock for Session Reminder -->
+                  <svg *ngIf="item.type === 'SessionReminder'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <!-- UserCheck for Substitute -->
+                  <svg *ngIf="item.type === 'SubstituteAssignment'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <!-- Bell Default -->
+                  <svg *ngIf="item.type !== 'SessionReminder' && item.type !== 'SubstituteAssignment'" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                </div>
+
+                <!-- Text Content -->
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center justify-between gap-2">
+                    <h4 class="text-xs font-bold text-white truncate group-hover:text-primary-400 transition-colors">
+                      {{ item.title }}
+                    </h4>
+                    <span *ngIf="!item.isRead" class="w-2 h-2 rounded-full bg-primary-400 flex-shrink-0 animate-pulse"></span>
+                  </div>
+                  <p class="text-[11px] text-dark-300 leading-relaxed mt-1 break-words">
+                    {{ item.message }}
+                  </p>
+                  <div class="text-[9px] text-dark-500 font-mono mt-1 flex items-center gap-1">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span>{{ item.createdAt | date:'yyyy/MM/dd - hh:mm a' }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Empty State -->
+              <div *ngIf="notificationService.notifications().length === 0"
+                class="py-12 px-4 text-center">
+                <div class="w-10 h-10 rounded-2xl bg-dark-800 text-dark-500 flex items-center justify-center mx-auto mb-2">
+                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                  </svg>
+                </div>
+                <p class="text-xs text-dark-400">لا توجد إشعارات حتى الآن</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         <!-- Profile -->
-        <div class="relative">
+        <div class="relative profile-container">
           <button (click)="toggleProfile()"
             class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl border transition-all duration-200"
             style="background: rgba(30,41,59,0.6); border-color: rgba(51,65,85,0.6);">

@@ -13,6 +13,8 @@ export class StudentService {
   private authService = inject(AuthService);
   students = signal<StudentDetailsDTO[]>([]);
   totalCount = signal(0);
+  maleCount = signal(0);
+  femaleCount = signal(0);
   isLoading = signal(false);
 
   constructor(private http: HttpClient) { }
@@ -23,7 +25,8 @@ export class StudentService {
     academicYearId?: number,
     groupId?: number,
     search?: string,
-    isActive?: boolean
+    isActive?: boolean,
+    gender?: number
   ): Observable<StudentPagedResultDTO> {
     let params = new HttpParams()
       .set('page', page.toString())
@@ -33,11 +36,14 @@ export class StudentService {
     if (groupId) params = params.set('groupId', groupId.toString());
     if (search) params = params.set('search', search);
     if (isActive !== undefined && isActive !== null) params = params.set('isActive', isActive.toString());
+    if (gender !== undefined && gender !== null) params = params.set('gender', gender.toString());
 
     return this.http.get<StudentPagedResultDTO>(this.apiUrl, { params }).pipe(
       tap(res => {
         this.students.set(res.items);
         this.totalCount.set(res.totalCount);
+        this.maleCount.set(res.maleCount);
+        this.femaleCount.set(res.femaleCount);
       })
     );
   }
@@ -51,6 +57,7 @@ export class StudentService {
     formData.append('FullName', dto.fullName);
     if (dto.ssn) formData.append('SSN', dto.ssn);
     if (dto.notes) formData.append('Notes', dto.notes);
+    if (dto.gender) formData.append('Gender', dto.gender.toString());
     formData.append('AcademicYearId', dto.academicYearId.toString());
 
     dto.groupIds.forEach(id => formData.append('GroupIds', id.toString()));

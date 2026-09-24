@@ -1,6 +1,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, tap, finalize, throwError } from 'rxjs';
+import { Router } from '@angular/router';
+import { Observable, tap, finalize, throwError, catchError } from 'rxjs';
 import { LoginDTO, RegisterDTO, AuthResponse, RefreshTokenRequest } from '../models/auth.models';
 import { environment } from '../../../environments/environment';
 
@@ -34,7 +35,7 @@ export class AuthService {
     return permissions;
   });
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   private decodeToken(token: string): any {
     try {
@@ -62,6 +63,7 @@ export class AuthService {
   logout() {
     localStorage.removeItem('auth_data');
     this.authState.set(null);
+    this.router.navigate(['/login']);
   }
 
   externalLogin(response: AuthResponse) {
@@ -94,6 +96,10 @@ export class AuthService {
         // If it's a student, the response might be StudentLoginResponse, which matches AuthResponse shape enough
         // but let's make sure we preserve the role if not returned properly.
         this.setAuth(response);
+      }),
+      catchError(err => {
+        this.logout();
+        return throwError(() => err);
       })
     );
   }

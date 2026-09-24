@@ -2,7 +2,7 @@ import { Injectable, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TeacherAttendanceRecordDTO, CheckInResponseDTO, CheckOutResponseDTO, MarkTeacherAbsentDTO } from '../models/teacher-attendance.models';
+import { TeacherAttendanceRecordDTO, CheckInResponseDTO, CheckOutResponseDTO, MarkTeacherAbsentDTO, TodayAttendanceStatusDTO } from '../models/teacher-attendance.models';
 
 export interface TeacherMonthlyAttendanceReportDTO {
   teacherId: string;
@@ -17,10 +17,24 @@ export interface TeacherMonthlyAttendanceReportDTO {
 export class TeacherAttendanceService {
   private readonly apiUrl = `${environment.apiUrl}/TeacherAttendance`;
   
-  // State for the current day's record
+  // State for the current day's record & status
   todayRecord = signal<TeacherAttendanceRecordDTO | null>(null);
+  todayStatus = signal<TodayAttendanceStatusDTO | null>(null);
 
   constructor(private http: HttpClient) {}
+
+  getTodayStatus(): Observable<TodayAttendanceStatusDTO> {
+    return this.http.get<TodayAttendanceStatusDTO>(`${this.apiUrl}/status`).pipe(
+      tap(status => {
+        this.todayStatus.set(status);
+        if (status.record) {
+          this.todayRecord.set(status.record);
+        } else {
+          this.todayRecord.set(null);
+        }
+      })
+    );
+  }
 
   getTodayRecord(): Observable<TeacherAttendanceRecordDTO | null> {
     return this.http.get<TeacherAttendanceRecordDTO>(`${this.apiUrl}/today`).pipe(

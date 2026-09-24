@@ -3,5 +3,6 @@ export interface UserViewDTO {
   userName: string;
   email: string;
   fullName: string;
+  gender?: number | null;
   roles: string[];
 }

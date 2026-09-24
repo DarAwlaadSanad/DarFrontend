@@ -44,6 +44,15 @@
           </div>
         </div>
 
+        <!-- Gender -->
+        <div>
+          <label for="gender" class="label">النوع</label>
+          <select id="gender" name="gender" [(ngModel)]="model.gender" class="input-field">
+            <option [ngValue]="1">ذَكَر</option>
+            <option [ngValue]="2">أُنْثَى</option>
+          </select>
+        </div>
+
         <!-- Username -->
         <div>
           <label for="userName" class="label">اسم المستخدم</label>

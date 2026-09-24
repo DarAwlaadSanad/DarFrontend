@@ -20,6 +20,7 @@ export interface SessionViewDTO {
 export interface StudentInGroupDTO {
   studentId: number;
   studentName: string;
+  gender?: number | null;
   records: { [key: number]: SessionRecordDTO };
   totalPresent: number;
   totalEvaluation: number;
@@ -36,6 +37,8 @@ export interface GroupDetailsDTO {
   isOnline: boolean;
   roomId?: number;
   roomName?: string;
+  maleCount?: number;
+  femaleCount?: number;
   sessions: SessionViewDTO[];
   students: StudentInGroupDTO[];
 }
@@ -47,6 +50,8 @@ export interface GroupCardDTO {
   teacherId?: string;
   teacherName?: string;
   studentCount: number;
+  maleCount?: number;
+  femaleCount?: number;
   isOnline: boolean;
   roomId?: number;
   roomName?: string;

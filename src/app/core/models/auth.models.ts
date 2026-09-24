@@ -8,6 +8,7 @@ export interface RegisterDTO {
   userName: string;
   email: string;
   password: string;
+  gender?: number | null;
 }
 
 export interface AuthResponse {

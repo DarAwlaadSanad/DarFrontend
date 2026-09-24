@@ -69,6 +69,14 @@ const SYSTEM_ROLES = ['Admin', 'User'];
                   </div>
                 </td>
                 <td class="px-4 py-3.5 text-dark-400 text-sm hidden md:table-cell">{{ user.email }}</td>
+                <!-- Gender badge -->
+                <td class="px-4 py-3.5">
+                  <span *ngIf="user.gender"
+                        [class]="user.gender === 1 ? 'px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-sky-500/10 text-sky-400 border-sky-500/20' : 'px-2.5 py-0.5 rounded-full text-[10px] font-bold border bg-pink-500/10 text-pink-400 border-pink-500/20'">
+                    {{ getGenderLabel(user.gender) }}
+                  </span>
+                  <span *ngIf="!user.gender" class="text-dark-600 text-xs italic">—</span>
+                </td>
                 <!-- System role badge -->
                 <td class="px-4 py-3.5">
                   <span *ngIf="isAdmin(user)"
@@ -232,6 +240,12 @@ export class UserListComponent implements OnInit {
 
   isAdmin(user: UserViewDTO): boolean {
     return user.roles.includes('Admin');
+  }
+
+  getGenderLabel(gender?: number | null): string {
+    if (gender === 1) return 'ذَكَر';
+    if (gender === 2) return 'أُنْثَى';
+    return 'غير محدد';
   }
 
   getCustomRoles(user: UserViewDTO): string[] {

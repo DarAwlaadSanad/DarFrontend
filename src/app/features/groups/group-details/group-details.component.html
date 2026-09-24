@@ -13,10 +13,16 @@
         <div class="flex items-center gap-2">
           <h1 class="text-lg lg:text-2xl font-bold text-white leading-tight">{{ data.groupName }}</h1>
           <span class="badge-green hidden sm:inline-flex">{{ data.students.length }} طالب</span>
+          <span
+            class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-1">{{
+            data.maleCount || 0 }} ذكر</span>
+          <span
+            class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pink-500/10 text-pink-400 border border-pink-500/20 flex items-center gap-1">
+            {{ data.femaleCount || 0 }} أنثي</span>
           <span *ngIf="data.isOnline"
             class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">أونلاين</span>
           <span *ngIf="!data.isOnline && data.roomName"
-            class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">غرفة:
+            class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
             {{ data.roomName }}</span>
         </div>
         <p class="text-dark-400 text-xs lg:text-sm">{{ data.teacherName }}</p>
@@ -624,7 +630,8 @@
           [(ngModel)]="newStudent.fullName" required class="input-field" placeholder="اسم الطالب..."></div>
       <div><label class="label text-sm">السنة الدراسية</label>
         <select name="academicYearId" [(ngModel)]="newStudent.academicYearId" required class="input-field">
-          <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }} ({{ getSchoolTypeLabel(ay.typeSchool) }})</option>
+          <option *ngFor="let ay of academicYears()" [value]="ay.id">{{ ay.name }} ({{ getSchoolTypeLabel(ay.typeSchool)
+            }})</option>
         </select>
       </div>
       <div><label class="label text-sm">الرقم القومي</label><input type="text" name="ssn" [(ngModel)]="newStudent.ssn"

@@ -66,7 +66,14 @@ import { StudentFeeViewDTO } from '../../core/models/student-fee.models';
             <tbody class="divide-y divide-dark-800/50">
               <tr *ngFor="let fee of filteredFees()" class="hover:bg-dark-800/30 transition-colors group">
                 <td class="p-4">
-                  <p class="text-white font-bold">{{ fee.studentName }}</p>
+                  <div class="flex items-center gap-2">
+                    <p class="text-white font-bold">{{ fee.studentName }}</p>
+                    <span *ngIf="fee.gender"
+                      [class]="fee.gender === 1 ? 'text-sky-400 bg-sky-500/10 border-sky-500/20' : 'text-pink-400 bg-pink-500/10 border-pink-500/20'"
+                      class="px-2 py-0.5 rounded-full border text-[10px] font-bold">
+                      {{ fee.gender === 1 ? 'ذكر' : 'أنثى' }}
+                    </span>
+                  </div>
                   <p class="text-[10px] text-dark-500">{{ fee.month }}/{{ fee.year }}</p>
                 </td>
                 <td class="p-4 text-white font-mono font-bold">{{ fee.requiredAmount }} ج.م</td>

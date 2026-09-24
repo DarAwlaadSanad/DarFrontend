@@ -35,8 +35,11 @@ export class StudentListComponent implements OnInit {
   selectedYearFilter = signal<number | null>(null);
   selectedGroupFilter = signal<number | null>(null);
   statusFilter = signal<boolean | null>(null);
+  genderFilter = signal<number | null>(null);
   
   totalCount = this.studentService.totalCount;
+  maleCount = this.studentService.maleCount;
+  femaleCount = this.studentService.femaleCount;
   students = this.studentService.students;
 
   academicYears = signal<AcademicYearViewDTO[]>([]);
@@ -53,10 +56,17 @@ export class StudentListComponent implements OnInit {
       fullName: '',
       ssn: '',
       notes: '',
+      gender: 1,
       academicYearId: 0,
       groupIds: [],
       phoneNumbers: [''],
     };
+  }
+
+  getGenderLabel(gender?: number | null): string {
+    if (gender === 1) return 'ذَكَر';
+    if (gender === 2) return 'أُنْثَى';
+    return 'غير محدد';
   }
 
   ngOnInit() {
@@ -73,7 +83,8 @@ export class StudentListComponent implements OnInit {
       this.selectedYearFilter() || undefined,
       this.selectedGroupFilter() || undefined,
       this.searchQuery() || undefined,
-      this.statusFilter() === null ? undefined : this.statusFilter()!
+      this.statusFilter() === null ? undefined : this.statusFilter()!,
+      this.genderFilter() === null ? undefined : this.genderFilter()!
     ).subscribe({
       next: () => this.isLoading.set(false),
       error: () => this.isLoading.set(false)

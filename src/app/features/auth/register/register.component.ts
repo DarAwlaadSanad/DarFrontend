@@ -12,7 +12,7 @@ import { RegisterDTO } from '../../../core/models/auth.models';
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
-  model: RegisterDTO = { fullName: '', userName: '', email: '', password: '' };
+  model: RegisterDTO = { fullName: '', userName: '', email: '', password: '', gender: 1 };
   confirmPassword = '';
   showPassword = signal(false);
   showConfirm = signal(false);

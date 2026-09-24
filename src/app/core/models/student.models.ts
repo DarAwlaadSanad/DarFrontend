@@ -23,6 +23,11 @@ export interface MemorizationRecordDTO {
 import { AcademicYearViewDTO } from './academic-year.models';
 import { GroupCardDTO } from './group.models';
 
+export enum Gender {
+  Male = 1,
+  Female = 2
+}
+
 export interface StudentDetailsDTO {
   id: number;
   fullName: string;
@@ -30,6 +35,7 @@ export interface StudentDetailsDTO {
   isActive: boolean;
   code: string;
   notes?: string;
+  gender?: Gender | number | null;
   academicYear: AcademicYearViewDTO;
   memorizationRecords: MemorizationRecordDTO[];
   groups: GroupCardDTO[];
@@ -41,6 +47,7 @@ export interface StudentAddDTO {
   fullName: string;
   ssn: string;
   notes?: string;
+  gender?: Gender | number | null;
   academicYearId: number;
   groupIds: number[];
   imageFiles?: File[];
@@ -51,6 +58,8 @@ export interface StudentUpdateDTO {
   fullName: string;
   ssn: string;
   notes?: string;
+  gender?: Gender | number | null;
+  academicYearId?: number;
 }
 
 export interface AttendanceRecord {
@@ -63,6 +72,8 @@ export interface AttendanceRecord {
 export interface StudentPagedResultDTO {
   items: StudentDetailsDTO[];
   totalCount: number;
+  maleCount: number;
+  femaleCount: number;
   page: number;
   pageSize: number;
 }
