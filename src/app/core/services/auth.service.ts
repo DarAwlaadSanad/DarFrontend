@@ -129,6 +129,13 @@ export class AuthService {
     );
   }
 
+  updateCurrentUser(updates: Partial<AuthResponse>) {
+    const current = this.authState();
+    if (!current) return;
+    const updated: AuthResponse = { ...current, ...updates };
+    this.setAuth(updated);
+  }
+
   private setAuth(data: AuthResponse) {
     localStorage.setItem('auth_data', JSON.stringify(data));
     this.authState.set(data);

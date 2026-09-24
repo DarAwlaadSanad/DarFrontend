@@ -151,11 +151,21 @@
                   {{ notificationService.unreadCount() }} جديد
                 </span>
               </div>
-              <button *ngIf="notificationService.unreadCount() > 0"
-                (click)="markAllAsRead()"
-                class="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium">
-                تحديد الكل كمقروء
-              </button>
+              <div class="flex items-center gap-3">
+                <button (click)="notificationService.playNotificationSound(); $event.stopPropagation()"
+                  title="تجربة صوت الإشعار"
+                  class="text-xs text-dark-400 hover:text-primary-400 transition-colors flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                  </svg>
+                  صوت
+                </button>
+                <button *ngIf="notificationService.unreadCount() > 0"
+                  (click)="markAllAsRead()"
+                  class="text-xs text-primary-400 hover:text-primary-300 transition-colors font-medium">
+                  تحديد الكل كمقروء
+                </button>
+              </div>
             </div>
 
             <!-- Notifications List -->
@@ -225,8 +235,13 @@
             class="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl border transition-all duration-200"
             style="background: rgba(30,41,59,0.6); border-color: rgba(51,65,85,0.6);">
             <div
-              class="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs shadow-lg uppercase">
-              {{ (authService.currentUser()?.userName || 'م').charAt(0) }}
+              class="w-7 h-7 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white font-bold text-xs shadow-lg uppercase overflow-hidden">
+              <img *ngIf="authService.currentUser()?.profilePictureUrl"
+                   [src]="authService.currentUser()?.profilePictureUrl"
+                   class="w-full h-full object-cover">
+              <span *ngIf="!authService.currentUser()?.profilePictureUrl">
+                {{ (authService.currentUser()?.fullName || authService.currentUser()?.userName || 'م').charAt(0) }}
+              </span>
             </div>
             <div class="hidden md:block text-right">
               <div class="text-xs font-semibold text-dark-200 leading-tight">{{ authService.currentUser()?.fullName ||
@@ -240,15 +255,25 @@
           </button>
 
           <div *ngIf="isProfileOpen()"
-            class="absolute left-0 mt-2 w-48 rounded-2xl shadow-2xl py-1 animate-scale-in z-50"
+            class="absolute left-0 mt-2 w-52 rounded-2xl shadow-2xl py-1 animate-scale-in z-50"
             style="background: #111827; border: 1px solid rgba(51,65,85,0.7);">
-            <div class="px-4 py-3 border-b" style="border-color: rgba(51,65,85,0.5);">
-              <div class="text-sm font-semibold text-white">{{ authService.currentUser()?.fullName || 'المستخدم' }}
+            <div class="px-4 py-3 border-b flex items-center gap-2.5" style="border-color: rgba(51,65,85,0.5);">
+              <div class="w-8 h-8 rounded-lg overflow-hidden bg-primary-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+                <img *ngIf="authService.currentUser()?.profilePictureUrl"
+                     [src]="authService.currentUser()?.profilePictureUrl"
+                     class="w-full h-full object-cover">
+                <span *ngIf="!authService.currentUser()?.profilePictureUrl">
+                  {{ (authService.currentUser()?.fullName || 'م').charAt(0) }}
+                </span>
               </div>
-              <div class="text-xs text-dark-500">{{ authService.userRoles().join(', ') || 'User' }}</div>
+              <div class="overflow-hidden text-right">
+                <div class="text-sm font-semibold text-white truncate">{{ authService.currentUser()?.fullName || 'المستخدم' }}</div>
+                <div class="text-xs text-dark-500 truncate">{{ authService.userRoles().join(', ') || 'User' }}</div>
+              </div>
             </div>
-            <a href="#"
-              class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-800 hover:text-white transition-colors">
+            <a routerLink="/dashboard/profile"
+              (click)="isProfileOpen.set(false)"
+              class="flex items-center gap-2.5 px-4 py-2.5 text-sm text-dark-300 hover:bg-dark-800 hover:text-white transition-colors cursor-pointer">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

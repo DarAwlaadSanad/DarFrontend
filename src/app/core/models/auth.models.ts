@@ -16,6 +16,8 @@ export interface AuthResponse {
   refreshToken: string;
   userName?: string;
   fullName?: string;
+  email?: string;
+  profilePictureUrl?: string;
   studentId?: number;
   roles: string[];
 }

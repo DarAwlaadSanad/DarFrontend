@@ -128,6 +128,11 @@ export const routes: Routes = [
           import('./features/finance/payroll/payroll').then(m => m.PayrollComponent),
       },
       {
+        path: 'profile',
+        loadComponent: () =>
+          import('./features/profile/user-profile.component').then(m => m.UserProfileComponent),
+      },
+      {
         path: 'home',
         loadComponent: () =>
           import('./features/dashboard/dashboard-home/dashboard-home.component').then(m => m.DashboardHomeComponent),

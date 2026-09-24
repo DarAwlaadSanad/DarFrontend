@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
+import * as signalR from '@microsoft/signalr';
 import { environment } from '../../../environments/environment';
 import { NotificationDTO, NotificationListResponseDTO } from '../models/notification.models';
 
@@ -13,8 +14,8 @@ export class NotificationService {
 
   notifications = signal<NotificationDTO[]>([]);
   unreadCount = signal<number>(0);
-  private lastCount = 0;
-  private pollingTimer: any = null;
+  private hubConnection: signalR.HubConnection | null = null;
+  private audioContext: AudioContext | null = null;
 
   constructor() {
     this.requestPermission();
@@ -26,36 +27,66 @@ export class NotificationService {
     }
   }
 
-  startPolling(intervalMs = 30000) {
-    this.stopPolling();
+  startSignalR() {
     this.loadNotifications();
-    this.pollingTimer = setInterval(() => {
-      this.loadNotifications();
-    }, intervalMs);
+
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      return;
+    }
+
+    const hubUrl = environment.apiUrl.replace(/\/api\/?$/, '') + '/hubs/notifications';
+
+    this.hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl(hubUrl, {
+        accessTokenFactory: () => localStorage.getItem('token') || ''
+      })
+      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+      .configureLogging(signalR.LogLevel.Warning)
+      .build();
+
+    this.hubConnection.on('ReceiveNotification', (notif: NotificationDTO) => {
+      this.notifications.update((list) => {
+        if (list.some((n) => n.id === notif.id)) return list;
+        return [notif, ...list];
+      });
+      this.unreadCount.update((c) => c + 1);
+
+      // Play notification sound
+      this.playNotificationSound();
+
+      // Show desktop browser notification
+      this.showBrowserNotification(notif.title, notif.message);
+    });
+
+    this.hubConnection.start()
+      .then(() => {
+        console.log('SignalR NotificationHub connected.');
+      })
+      .catch((err) => {
+        console.warn('SignalR NotificationHub connection failed, falling back:', err);
+      });
+  }
+
+  stopSignalR() {
+    if (this.hubConnection) {
+      this.hubConnection.stop().catch(() => {});
+      this.hubConnection = null;
+    }
+  }
+
+  startPolling(intervalMs = 30000) {
+    this.startSignalR();
   }
 
   stopPolling() {
-    if (this.pollingTimer) {
-      clearInterval(this.pollingTimer);
-      this.pollingTimer = null;
-    }
+    this.stopSignalR();
   }
 
   loadNotifications(count = 30) {
     this.http.get<NotificationListResponseDTO>(`${this.apiUrl}/my-notifications?count=${count}`).subscribe({
       next: (res) => {
-        const previousUnread = this.lastCount;
         this.notifications.set(res.notifications);
         this.unreadCount.set(res.unreadCount);
-        this.lastCount = res.unreadCount;
-
-        // If new unread notifications arrived while polling, trigger browser desktop notification
-        if (res.unreadCount > previousUnread && res.notifications.length > 0) {
-          const newest = res.notifications[0];
-          if (!newest.isRead) {
-            this.showBrowserNotification(newest.title, newest.message);
-          }
-        }
       },
       error: () => {}
     });
@@ -81,6 +112,50 @@ export class NotificationService {
         this.unreadCount.set(0);
       })
     );
+  }
+
+  playNotificationSound(): void {
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+
+      if (!this.audioContext || this.audioContext.state === 'closed') {
+        this.audioContext = new AudioCtx();
+      }
+
+      if (this.audioContext.state === 'suspended') {
+        this.audioContext.resume();
+      }
+
+      const ctx = this.audioContext;
+      const now = ctx.currentTime;
+
+      // Tone 1: D5 (587.33 Hz) chime attack
+      const osc1 = ctx.createOscillator();
+      const gain1 = ctx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(587.33, now);
+      gain1.gain.setValueAtTime(0.25, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc1.connect(gain1);
+      gain1.connect(ctx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.35);
+
+      // Tone 2: A5 (880 Hz) harmonic chime
+      const osc2 = ctx.createOscillator();
+      const gain2 = ctx.createGain();
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(880, now + 0.12);
+      gain2.gain.setValueAtTime(0.3, now + 0.12);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+      osc2.connect(gain2);
+      gain2.connect(ctx.destination);
+      osc2.start(now + 0.12);
+      osc2.stop(now + 0.65);
+    } catch (e) {
+      console.warn('Could not play notification sound:', e);
+    }
   }
 
   private showBrowserNotification(title: string, body: string) {

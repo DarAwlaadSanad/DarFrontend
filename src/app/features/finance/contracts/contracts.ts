@@ -26,6 +26,7 @@ export class ContractsComponent implements OnInit {
   ];
 
   successMessage: string = '';
+  errorMessage: string = '';
   isLoading = false;
 
   constructor(
@@ -65,7 +66,7 @@ export class ContractsComponent implements OnInit {
   onUserSelect(): void {
     const existing = this.getContractForUser(this.selectedUserId);
     if (existing) {
-      this.selectedSalaryType = existing.salaryType;
+      this.selectedSalaryType = Number(existing.salaryType);
       this.contractAmount = existing.amount;
     } else {
       this.selectedSalaryType = SalaryType.PerGroup;
@@ -76,14 +77,26 @@ export class ContractsComponent implements OnInit {
   saveContract(): void {
     if (!this.selectedUserId) return;
 
+    this.isLoading = true;
     this.financeService.setContract({
       userId: this.selectedUserId,
-      salaryType: this.selectedSalaryType,
-      amount: this.contractAmount
-    }).subscribe(() => {
-      this.successMessage = 'تم حفظ العقد بنجاح';
-      setTimeout(() => this.successMessage = '', 3000);
-      this.loadContracts();
+      salaryType: Number(this.selectedSalaryType),
+      amount: Number(this.contractAmount)
+    }).subscribe({
+      next: () => {
+        this.successMessage = 'تم حفظ العقد بنجاح';
+        this.errorMessage = '';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        setTimeout(() => this.successMessage = '', 3000);
+        this.loadContracts();
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'حدث خطأ أثناء حفظ العقد';
+        this.isLoading = false;
+        this.cdr.detectChanges();
+        setTimeout(() => this.errorMessage = '', 5000);
+      }
     });
   }
 
