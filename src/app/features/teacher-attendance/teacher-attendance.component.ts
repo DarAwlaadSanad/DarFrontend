@@ -26,7 +26,7 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     return s ? (!s.canCheckIn && s.requiresSessions && !s.hasSessionsToday) : false;
   });
 
-  constructor() {}
+  constructor() { }
 
   ngOnInit(): void {
     if (this.authService.hasRole('Admin') || this.authService.hasRole('SuperAdmin')) {

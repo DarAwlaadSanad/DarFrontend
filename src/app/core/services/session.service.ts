@@ -37,4 +37,8 @@ export class SessionService {
   assignSubstitute(dto: AssignSubstituteDTO): Observable<void> {
     return this.http.post<void>(`${this.apiUrl}/assign-substitute`, dto);
   }
+
+  revertSubstitute(sessionId: number): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/revert-substitute/${sessionId}`, {});
+  }
 }

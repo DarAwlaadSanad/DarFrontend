@@ -71,6 +71,10 @@ export class TeacherAttendanceService {
     return this.http.post<void>(`${this.apiUrl}/mark-absent`, dto);
   }
 
+  cancelAbsent(dto: MarkTeacherAbsentDTO): Observable<void> {
+    return this.http.post<void>(`${this.apiUrl}/cancel-absent`, dto);
+  }
+
   getMonthlyReport(year: number, month: number): Observable<TeacherMonthlyAttendanceReportDTO[]> {
     return this.http.get<TeacherMonthlyAttendanceReportDTO[]>(`${this.apiUrl}/monthly-report?year=${year}&month=${month}`);
   }

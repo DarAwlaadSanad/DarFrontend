@@ -107,9 +107,34 @@ export class AdminAbsencesComponent implements OnInit {
       next: () => {
         this.uiService.success('تم تسجيل الغياب بنجاح');
         this.loadSessions();
+        this.loadMonthlyReport();
       },
       error: () => {
         this.uiService.error('فشل في تسجيل الغياب');
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  cancelAbsent(): void {
+    if (!this.selectedTeacherId() || !this.selectedDate()) {
+      this.uiService.error('الرجاء اختيار المعلم والتاريخ');
+      return;
+    }
+
+    this.isLoading.set(true);
+    this.attendanceService.cancelAbsent({
+      teacherId: this.selectedTeacherId(),
+      date: this.selectedDate(),
+      reason: ''
+    }).subscribe({
+      next: () => {
+        this.uiService.success('تم إلغاء الغياب بنجاح');
+        this.loadSessions();
+        this.loadMonthlyReport();
+      },
+      error: (err) => {
+        this.uiService.error(err.error?.message || 'فشل في إلغاء الغياب');
         this.isLoading.set(false);
       }
     });
@@ -140,12 +165,28 @@ export class AdminAbsencesComponent implements OnInit {
       substituteTeacherId: substituteId
     }).subscribe({
       next: () => {
-        this.uiService.success('تم تعيين المعلم البديل بنجاح');
+        this.uiService.success('تم تعيين المعلم البديل وتسجيل الغياب تلقائياً');
         this.loadSessions();
+        this.loadMonthlyReport();
       },
       error: (err) => {
         const errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'فشل في تعيين المعلم البديل';
         this.uiService.error(errorMsg);
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  revertSubstitute(sessionId: number): void {
+    this.isLoading.set(true);
+    this.sessionService.revertSubstitute(sessionId).subscribe({
+      next: () => {
+        this.uiService.success('تم مسح المعلم البديل وإلغاء الغياب تلقائياً (إن لم يكن هناك بدلاء آخرون)');
+        this.loadSessions();
+        this.loadMonthlyReport();
+      },
+      error: () => {
+        this.uiService.error('فشل في مسح المعلم البديل');
         this.isLoading.set(false);
       }
     });

@@ -1,6 +1,6 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, tap, finalize } from 'rxjs';
+import { Observable, tap, finalize, map } from 'rxjs';
 import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, StudentPagedResultDTO } from '../models/student.models';
 import { GroupCardDTO, GroupDetailsDTO } from '../models/group.models';
 import { AuthResponse, StudentLoginDTO } from '../models/auth.models';
@@ -131,9 +131,21 @@ export class StudentService {
   // ── Student Portal ──────────────────────────────────────────────────────────
   studentLogin(dto: StudentLoginDTO): Observable<AuthResponse> {
     this.isLoading.set(true);
-    return this.http.post<AuthResponse>(`${this.apiUrl}/login`, null, {
-      params: { Code: dto.code, Password: dto.password }
+    const code = (dto.code || '').trim();
+    const password = (dto.password || '').trim();
+    return this.http.post<any>(`${this.apiUrl}/login`, null, {
+      params: { Code: code, Password: password }
     }).pipe(
+      map(res => {
+        const authRes: AuthResponse = {
+          token: res.token,
+          refreshToken: res.refreshToken,
+          fullName: res.fullName,
+          studentId: res.studentId,
+          roles: res.roles?.length ? res.roles : [res.role || 'Student']
+        };
+        return authRes;
+      }),
       tap(res => this.authService.externalLogin(res)),
       finalize(() => this.isLoading.set(false))
     );

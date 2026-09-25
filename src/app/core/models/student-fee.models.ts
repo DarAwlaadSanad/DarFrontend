@@ -3,6 +3,8 @@ export interface StudentFeeViewDTO {
   studentId: number;
   studentName: string;
   gender?: number | null;
+  groupId: number;
+  groupName: string;
   requiredAmount: number;
   amountPaid: number;
   month: number;
@@ -10,6 +12,7 @@ export interface StudentFeeViewDTO {
   paymentDate?: string;
   isExempted?: boolean;
   exemptionReason?: string;
+  isPermanentlyExempted?: boolean;
 }
 
 export interface UpdateStudentFeePaymentDTO {

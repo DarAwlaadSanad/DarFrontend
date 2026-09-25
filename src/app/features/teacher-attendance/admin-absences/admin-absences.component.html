@@ -45,6 +45,15 @@
         </svg>
         تسجيل كغائب
       </button>
+      <!-- Cancel absence button -->
+      <button *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage')" (click)="cancelAbsent()"
+              [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
+              class="btn-secondary flex items-center gap-2">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        إلغاء الغياب
+      </button>
       <button (click)="loadSessions()"
               [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
               class="btn-secondary">
@@ -53,6 +62,13 @@
         </svg>
         عرض الحصص
       </button>
+    </div>
+    <!-- Note: assigning substitute auto-marks teacher absent -->
+    <div class="mt-3 flex items-start gap-2 text-xs text-dark-400 bg-dark-800/40 rounded-xl px-4 py-2.5">
+      <svg class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <span>عند تعيين معلم بديل لحصة، يتم تسجيل غياب المعلم الأصلي <strong class="text-amber-400">تلقائياً</strong>. وعند مسح البديل، يُلغى الغياب تلقائياً إن لم يكن هناك بدلاء آخرون في نفس اليوم.</span>
     </div>
 
     <!-- Monthly Report Section -->
@@ -138,7 +154,7 @@
               <span *ngIf="!s.substituteTeacherName" class="badge-yellow">بدون بديل</span>
             </td>
             <td class="text-left" *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')">
-              <div class="flex items-center gap-2">
+              <div class="flex items-center gap-2 flex-wrap">
                 <select #subSelect (change)="0" [value]="s.substituteTeacherId || ''" class="input-field text-xs py-2 w-36">
                   <option value="">— اختر بديل —</option>
                   <option *ngFor="let t of users()" [value]="t.id" [disabled]="t.id === selectedTeacherId()">
@@ -149,6 +165,17 @@
                         [disabled]="isLoading() || !subSelect.value || subSelect.value === s.substituteTeacherId"
                         class="btn-primary py-2 px-3 text-xs">
                   تعيين
+                </button>
+                <!-- Remove substitute button (only visible if there's a substitute) -->
+                <button *ngIf="s.substituteTeacherId"
+                        (click)="revertSubstitute(s.id)"
+                        [disabled]="isLoading()"
+                        class="btn-danger py-2 px-3 text-xs flex items-center gap-1"
+                        title="مسح المعلم البديل وإلغاء الغياب">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  مسح البديل
                 </button>
               </div>
             </td>

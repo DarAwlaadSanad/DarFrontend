@@ -27,6 +27,10 @@ export class StudentFeeService {
     return this.http.put<void>(`${this.apiUrl}/${id}/exempt`, dto);
   }
 
+  cancelExemption(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/cancel-exempt`, {});
+  }
+
   getAll(groupId: number, month: number, year: number): Observable<StudentFeeViewDTO[]> {
     const params = new HttpParams()
       .set('groupId', groupId.toString())

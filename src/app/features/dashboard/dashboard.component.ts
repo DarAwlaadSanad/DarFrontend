@@ -94,11 +94,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.notificationService.startPolling(30000);
+    this.notificationService.startConnection();
   }
 
   ngOnDestroy() {
-    this.notificationService.stopPolling();
+    this.notificationService.stopConnection();
   }
 
   @HostListener('window:resize')
@@ -144,7 +144,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   logout() {
-    this.notificationService.stopPolling();
+    this.notificationService.stopConnection();
     this.authService.logout();
     this.router.navigate(['/login']);
   }
