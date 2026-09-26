@@ -9,6 +9,42 @@ export interface TeacherAttendanceRecordDTO {
   absenceReason?: string | null;
 }
 
+export interface TeacherAttendanceHistoryItemDTO {
+  id: number;
+  teacherId: string;
+  teacherName: string;
+  phoneNumber?: string | null;
+  date: string;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  delayMinutes: number;
+  isAbsent: boolean;
+  absenceReason?: string | null;
+  sessionsCount: number;
+  substituteTeacherNames?: string | null;
+}
+
+export interface TeacherAttendancePagedResultDTO {
+  items: TeacherAttendanceHistoryItemDTO[];
+  totalCount: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+  totalAbsences: number;
+  totalLateMinutes: number;
+}
+
+export interface TeacherAttendanceFilterParams {
+  page?: number;
+  pageSize?: number;
+  teacherId?: string;
+  fromDate?: string;
+  toDate?: string;
+  isAbsent?: boolean | null;
+  hasDelay?: boolean | null;
+  search?: string;
+}
+
 export interface MarkTeacherAbsentDTO {
   teacherId: string;
   date: string;
@@ -41,3 +77,4 @@ export interface TodayAttendanceStatusDTO {
   record?: TeacherAttendanceRecordDTO | null;
   sessionsCount: number;
 }
+

@@ -458,9 +458,28 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   paymentDto: UpdateStudentFeePaymentDTO = { amountPaid: 0, paymentDate: '' };
 
   loadStudentFees(groupId: number) {
+    const key = `group_${groupId}_${this.currentMonth()}_${this.currentYear()}`;
+    if (!this.offlineSync.isOnline()) {
+      const cached = this.offlineSync.getCachedStudentFees(key);
+      if (cached) {
+        this.studentFees.set(cached);
+      }
+      return;
+    }
+
     this.studentFeeService.getAll(groupId, this.currentMonth(), this.currentYear()).subscribe({
-      next: (data) => this.studentFees.set(data),
-      error: () => this.studentFees.set([])
+      next: (data) => {
+        this.studentFees.set(data);
+        this.offlineSync.cacheStudentFees(key, data);
+      },
+      error: () => {
+        const cached = this.offlineSync.getCachedStudentFees(key);
+        if (cached) {
+          this.studentFees.set(cached);
+        } else {
+          this.studentFees.set([]);
+        }
+      }
     });
   }
 
@@ -500,6 +519,30 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     const fee = this.editingFee();
     if (!fee) return;
 
+    const key = `group_${this.details()!.groupId}_${this.currentMonth()}_${this.currentYear()}`;
+    const applyLocalPayment = () => {
+      this.studentFees.update(list => list.map(f => {
+        if (f.id === fee.id) {
+          return {
+            ...f,
+            amountPaid: this.paymentDto.amountPaid,
+            paymentDate: this.paymentDto.paymentDate
+          };
+        }
+        return f;
+      }));
+      this.offlineSync.cacheStudentFees(key, this.studentFees());
+      this.isSaving.set(false);
+      this.showPaymentModal.set(false);
+      this.ui.info('تم حفظ الدفعة محلياً، وستتم المزامنة تلقائياً عند عودة الاتصال.');
+    };
+
+    if (!this.offlineSync.isOnline()) {
+      this.offlineSync.enqueueFeePayment(fee.id, this.paymentDto, fee.studentName);
+      applyLocalPayment();
+      return;
+    }
+
     this.isSaving.set(true);
     this.studentFeeService.updatePayment(fee.id, this.paymentDto).subscribe({
       next: () => {
@@ -507,7 +550,12 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
         this.showPaymentModal.set(false);
         this.loadStudentFees(this.details()!.groupId);
       },
-      error: () => {
+      error: (err) => {
+        if (!navigator.onLine || err?.status === 0) {
+          this.offlineSync.enqueueFeePayment(fee.id, this.paymentDto, fee.studentName);
+          applyLocalPayment();
+          return;
+        }
         this.isSaving.set(false);
         this.ui.error('حدث خطأ أثناء تحديث الدفع');
       }

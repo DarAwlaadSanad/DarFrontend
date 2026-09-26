@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import { NotificationDTO, NotificationListResponseDTO } from '../models/notification.models';
 import * as signalR from '@microsoft/signalr';
 import { AuthService } from './auth.service';
+import { normalizeUtcString } from '../utils/date-time.util';
 
 @Injectable({
   providedIn: 'root'
@@ -56,17 +57,21 @@ export class NotificationService {
 
       // Listen for real-time notifications
       this.hubConnection.on('ReceiveNotification', (notification: NotificationDTO) => {
+        const normalized: NotificationDTO = {
+          ...notification,
+          createdAt: normalizeUtcString(notification.createdAt)
+        };
         // Check if already in list to avoid duplicates
-        const exists = this.notifications().some(n => n.id === notification.id);
+        const exists = this.notifications().some(n => n.id === normalized.id);
         if (!exists) {
-          this.notifications.update(list => [notification, ...list]);
+          this.notifications.update(list => [normalized, ...list]);
           this.unreadCount.update(c => c + 1);
 
           // Play sound
           this.playNotificationSound();
 
           // Show browser desktop notification
-          this.showBrowserNotification(notification.title, notification.message);
+          this.showBrowserNotification(normalized.title, normalized.message);
         }
       });
 
@@ -148,12 +153,17 @@ export class NotificationService {
         const prevCount = this.unreadCount();
         const prevFirstId = this.notifications()[0]?.id;
 
-        this.notifications.set(res.notifications || []);
+        const normalizedList = (res.notifications || []).map(n => ({
+          ...n,
+          createdAt: normalizeUtcString(n.createdAt)
+        }));
+
+        this.notifications.set(normalizedList);
         this.unreadCount.set(res.unreadCount || 0);
 
         // If unread count increased or new notification arrived
-        if (res.unreadCount > prevCount && res.notifications && res.notifications.length > 0) {
-          const newest = res.notifications[0];
+        if (res.unreadCount > prevCount && normalizedList.length > 0) {
+          const newest = normalizedList[0];
           if (newest && newest.id !== prevFirstId) {
             this.playNotificationSound();
             this.showBrowserNotification(newest.title, newest.message);
@@ -169,7 +179,11 @@ export class NotificationService {
   loadNotifications(count = 30) {
     this.http.get<NotificationListResponseDTO>(`${this.apiUrl}/my-notifications?count=${count}`).subscribe({
       next: (res) => {
-        this.notifications.set(res.notifications);
+        const normalizedList = (res.notifications || []).map(n => ({
+          ...n,
+          createdAt: normalizeUtcString(n.createdAt)
+        }));
+        this.notifications.set(normalizedList);
         this.unreadCount.set(res.unreadCount);
       },
       error: () => { }

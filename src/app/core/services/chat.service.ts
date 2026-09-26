@@ -5,6 +5,8 @@ import { environment } from '../../../environments/environment';
 import { ChatMessageDTO, ChatRoomDTO, SendMessageDTO } from '../models/chat.models';
 import * as signalR from '@microsoft/signalr';
 import { AuthService } from './auth.service';
+import { OfflineSyncService } from './offline-sync.service';
+import { normalizeUtcString, parseServerDate } from '../utils/date-time.util';
 
 @Injectable({
   providedIn: 'root'
@@ -12,6 +14,7 @@ import { AuthService } from './auth.service';
 export class ChatService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private offlineSync = inject(OfflineSyncService);
   private apiUrl = `${environment.apiUrl}/Chat`;
   private hubUrl = environment.apiUrl.replace('/api', '') + '/hubs/chat';
 
@@ -34,6 +37,26 @@ export class ChatService {
 
   constructor() {
     this.startAutoPolling();
+
+    // Listen for background sync of offline chat messages to replace temporary IDs with real ones
+    this.offlineSync.chatMessageSynced$.subscribe(({ tempId, confirmedMessage }) => {
+      this.messages.update(list =>
+        list.map(m => m.id === tempId ? {
+          id: (confirmedMessage as any).id ?? (confirmedMessage as any).Id,
+          roomId: confirmedMessage.roomId,
+          senderName: confirmedMessage.senderName,
+          senderId: confirmedMessage.senderId,
+          studentSenderId: confirmedMessage.studentSenderId,
+          isStudent: confirmedMessage.isStudent,
+          content: confirmedMessage.content,
+          sentAt: confirmedMessage.sentAt,
+          isRead: confirmedMessage.isRead
+        } : m)
+      );
+      if (this.activeRoom()) {
+        this.offlineSync.cacheRoomMessages(this.activeRoom()!.id, this.messages());
+      }
+    });
   }
 
   // ─── SignalR Connection ───────────────────────────────────────────────────
@@ -168,7 +191,7 @@ export class ChatService {
           studentSenderId: (m as any).studentSenderId ?? (m as any).StudentSenderId,
           isStudent: (m as any).isStudent ?? (m as any).IsStudent ?? false,
           content: (m as any).content ?? (m as any).Content ?? '',
-          sentAt: (m as any).sentAt ?? (m as any).SentAt,
+          sentAt: normalizeUtcString((m as any).sentAt ?? (m as any).SentAt),
           isRead: (m as any).isRead ?? (m as any).IsRead ?? false
         }));
 
@@ -193,22 +216,68 @@ export class ChatService {
     });
   }
 
+  sortRoomsByLatest(rooms: ChatRoomDTO[]): ChatRoomDTO[] {
+    return [...rooms].sort((a, b) => {
+      const timeA = a.lastMessage?.sentAt ? parseServerDate(a.lastMessage.sentAt).getTime() : 0;
+      const timeB = b.lastMessage?.sentAt ? parseServerDate(b.lastMessage.sentAt).getTime() : 0;
+      if (timeB !== timeA) {
+        return timeB - timeA; // Newest first
+      }
+      return (a.studentName || a.name || '').localeCompare(b.studentName || b.name || '', 'ar');
+    });
+  }
+
+  private updateRoomLastMessage(roomId: number, message: ChatMessageDTO) {
+    this.studentRooms.update(rooms => {
+      const roomIndex = rooms.findIndex(r => r.id === roomId);
+      if (roomIndex === -1) return rooms;
+
+      const targetRoom = rooms[roomIndex];
+      const isCurrentActive = this.activeRoom()?.id === roomId;
+      const updatedRoom: ChatRoomDTO = {
+        ...targetRoom,
+        lastMessage: {
+          ...message,
+          sentAt: normalizeUtcString(message.sentAt)
+        },
+        unreadCount: isCurrentActive ? 0 : (targetRoom.unreadCount || 0) + (message.isStudent ? 1 : 0)
+      };
+
+      const updated = [...rooms];
+      updated[roomIndex] = updatedRoom;
+      return this.sortRoomsByLatest(updated);
+    });
+  }
+
   private silentSyncStudentRooms() {
     if (!this.auth.getToken()) return;
 
     this.http.get<ChatRoomDTO[]>(`${this.apiUrl}/student-rooms`).subscribe({
       next: (rooms) => {
         if (!rooms) return;
-        const mapped = rooms.map(r => ({
-          id: (r as any).id ?? (r as any).Id,
-          name: (r as any).name ?? (r as any).Name,
-          type: (r as any).type ?? (r as any).Type,
-          studentId: (r as any).studentId ?? (r as any).StudentId,
-          studentName: (r as any).studentName ?? (r as any).StudentName,
-          unreadCount: (r as any).unreadCount ?? (r as any).UnreadCount ?? 0,
-          lastMessage: (r as any).lastMessage ?? (r as any).LastMessage
-        }));
-        this.studentRooms.set(mapped);
+        const mapped = rooms.map(r => {
+          const rawLast = (r as any).lastMessage ?? (r as any).LastMessage;
+          return {
+            id: (r as any).id ?? (r as any).Id,
+            name: (r as any).name ?? (r as any).Name,
+            type: (r as any).type ?? (r as any).Type,
+            studentId: (r as any).studentId ?? (r as any).StudentId,
+            studentName: (r as any).studentName ?? (r as any).StudentName,
+            unreadCount: (r as any).unreadCount ?? (r as any).UnreadCount ?? 0,
+            lastMessage: rawLast ? {
+              id: rawLast.id ?? rawLast.Id,
+              roomId: rawLast.roomId ?? rawLast.RoomId,
+              senderName: rawLast.senderName ?? rawLast.SenderName,
+              senderId: rawLast.senderId ?? rawLast.SenderId,
+              studentSenderId: rawLast.studentSenderId ?? rawLast.StudentSenderId,
+              isStudent: rawLast.isStudent ?? rawLast.IsStudent ?? false,
+              content: rawLast.content ?? rawLast.Content,
+              sentAt: normalizeUtcString(rawLast.sentAt ?? rawLast.SentAt),
+              isRead: rawLast.isRead ?? rawLast.IsRead ?? false
+            } : undefined
+          };
+        });
+        this.studentRooms.set(this.sortRoomsByLatest(mapped));
       },
       error: () => {}
     });
@@ -251,6 +320,9 @@ export class ChatService {
         this.playMessageSound();
       }
     }
+
+    // Always update room's last message and sort to top immediately
+    this.updateRoomLastMessage(message.roomId, message);
   }
 
   // ─── HTTP API ─────────────────────────────────────────────────────────────
@@ -274,6 +346,18 @@ export class ChatService {
   }
 
   loadMessages(roomId: number, page: number = 1): Observable<ChatMessageDTO[]> {
+    // 1. Immediately display any locally cached messages for instant responsiveness & offline viewing
+    const cached = this.offlineSync.getCachedRoomMessages(roomId);
+    if (cached && cached.length > 0 && page === 1) {
+      this.messages.set(cached);
+    }
+
+    // 2. If completely offline, don't attempt network call
+    if (!this.offlineSync.isOnline()) {
+      this.isLoadingMessages.set(false);
+      return of(cached || []);
+    }
+
     this.isLoadingMessages.set(true);
     return this.http.get<ChatMessageDTO[]>(`${this.apiUrl}/${roomId}/messages?page=${page}`).pipe(
       tap(msgs => {
@@ -286,24 +370,35 @@ export class ChatService {
           studentSenderId: (m as any).studentSenderId ?? (m as any).StudentSenderId,
           isStudent: (m as any).isStudent ?? (m as any).IsStudent ?? false,
           content: (m as any).content ?? (m as any).Content ?? '',
-          sentAt: (m as any).sentAt ?? (m as any).SentAt,
+          sentAt: normalizeUtcString((m as any).sentAt ?? (m as any).SentAt),
           isRead: (m as any).isRead ?? (m as any).IsRead ?? false
         }));
-        this.messages.set(mapped);
+
+        // Preserve any pending offline messages (negative IDs) currently waiting to sync
+        const pendingOnes = this.messages().filter(m => m.id < 0 && m.roomId === roomId);
+        const combined = [...mapped, ...pendingOnes];
+
+        this.messages.set(combined);
+        this.offlineSync.cacheRoomMessages(roomId, mapped);
         this.isLoadingMessages.set(false);
       }),
       catchError(err => {
         this.isLoadingMessages.set(false);
-        return of([]);
+        return of(cached || []);
       })
     );
   }
 
   async sendMessage(roomId: number, content: string): Promise<ChatMessageDTO | null> {
     if (!content || !content.trim()) return null;
-    this.isSending.set(true);
-
     const trimmed = content.trim();
+
+    // 0. If completely offline, enqueue message locally and display immediately
+    if (!this.offlineSync.isOnline()) {
+      return this.enqueueOfflineMessage(roomId, trimmed);
+    }
+
+    this.isSending.set(true);
 
     // 1. Try sending via SignalR if connected
     if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
@@ -331,20 +426,55 @@ export class ChatService {
           studentSenderId: (result as any).studentSenderId ?? (result as any).StudentSenderId,
           isStudent: (result as any).isStudent ?? (result as any).IsStudent ?? false,
           content: (result as any).content ?? (result as any).Content ?? trimmed,
-          sentAt: (result as any).sentAt ?? (result as any).SentAt ?? new Date().toISOString(),
+          sentAt: normalizeUtcString((result as any).sentAt ?? (result as any).SentAt ?? new Date().toISOString()),
           isRead: (result as any).isRead ?? (result as any).IsRead ?? false
         };
         // Add if not already in list
         if (!this.messages().some(m => m.id === normalized.id)) {
           this.messages.update(list => [...list, normalized]);
         }
+        this.offlineSync.cacheRoomMessages(roomId, this.messages());
+        this.updateRoomLastMessage(roomId, normalized);
         return normalized;
       }
       return null;
-    } catch (err) {
+    } catch (err: any) {
       this.isSending.set(false);
+      // If network disconnect occurred, fallback to offline queue gracefully!
+      if (!navigator.onLine || err.status === 0) {
+        return this.enqueueOfflineMessage(roomId, trimmed);
+      }
       throw err;
     }
+  }
+
+  private enqueueOfflineMessage(roomId: number, content: string): ChatMessageDTO {
+    const myName = this.auth.currentUser()?.fullName || this.auth.currentUser()?.userName || 'أنا';
+    const myId = this.auth.userId();
+    const isStudent = this.auth.isStudent();
+    const tempMsg: ChatMessageDTO = {
+      id: -Date.now(),
+      roomId,
+      senderName: myName,
+      senderId: myId,
+      studentSenderId: isStudent ? (this.auth.currentUser() as any)?.studentId : undefined,
+      isStudent,
+      content,
+      sentAt: new Date().toISOString(),
+      isRead: false
+    };
+
+    this.messages.update(list => [...list, tempMsg]);
+    this.offlineSync.cacheRoomMessages(roomId, this.messages());
+    this.updateRoomLastMessage(roomId, tempMsg);
+    this.offlineSync.enqueueChatMessage({
+      tempId: tempMsg.id,
+      roomId,
+      content,
+      sentAt: tempMsg.sentAt
+    });
+    this.isSending.set(false);
+    return tempMsg;
   }
 
   markAsRead(roomId: number): Observable<any> {
@@ -357,16 +487,29 @@ export class ChatService {
     this.isLoadingRooms.set(true);
     return this.http.get<ChatRoomDTO[]>(`${this.apiUrl}/student-rooms`).pipe(
       tap(rooms => {
-        const mapped = rooms.map(r => ({
-          id: (r as any).id ?? (r as any).Id,
-          name: (r as any).name ?? (r as any).Name,
-          type: (r as any).type ?? (r as any).Type,
-          studentId: (r as any).studentId ?? (r as any).StudentId,
-          studentName: (r as any).studentName ?? (r as any).StudentName,
-          unreadCount: (r as any).unreadCount ?? (r as any).UnreadCount ?? 0,
-          lastMessage: (r as any).lastMessage ?? (r as any).LastMessage
-        }));
-        this.studentRooms.set(mapped);
+        const mapped = rooms.map(r => {
+          const rawLast = (r as any).lastMessage ?? (r as any).LastMessage;
+          return {
+            id: (r as any).id ?? (r as any).Id,
+            name: (r as any).name ?? (r as any).Name,
+            type: (r as any).type ?? (r as any).Type,
+            studentId: (r as any).studentId ?? (r as any).StudentId,
+            studentName: (r as any).studentName ?? (r as any).StudentName,
+            unreadCount: (r as any).unreadCount ?? (r as any).UnreadCount ?? 0,
+            lastMessage: rawLast ? {
+              id: rawLast.id ?? rawLast.Id,
+              roomId: rawLast.roomId ?? rawLast.RoomId,
+              senderName: rawLast.senderName ?? rawLast.SenderName,
+              senderId: rawLast.senderId ?? rawLast.SenderId,
+              studentSenderId: rawLast.studentSenderId ?? rawLast.StudentSenderId,
+              isStudent: rawLast.isStudent ?? rawLast.IsStudent ?? false,
+              content: rawLast.content ?? rawLast.Content,
+              sentAt: normalizeUtcString(rawLast.sentAt ?? rawLast.SentAt),
+              isRead: rawLast.isRead ?? rawLast.IsRead ?? false
+            } : undefined
+          };
+        });
+        this.studentRooms.set(this.sortRoomsByLatest(mapped));
         this.isLoadingRooms.set(false);
       }),
       catchError(err => {
@@ -379,6 +522,7 @@ export class ChatService {
   getStudentRoom(studentId: number): Observable<ChatRoomDTO> {
     return this.http.get<ChatRoomDTO>(`${this.apiUrl}/student-room/${studentId}`).pipe(
       tap(room => {
+        const rawLast = (room as any).lastMessage ?? (room as any).LastMessage;
         const normalized: ChatRoomDTO = {
           id: (room as any).id ?? (room as any).Id,
           name: (room as any).name ?? (room as any).Name,
@@ -386,7 +530,10 @@ export class ChatService {
           studentId: (room as any).studentId ?? (room as any).StudentId,
           studentName: (room as any).studentName ?? (room as any).StudentName,
           unreadCount: (room as any).unreadCount ?? (room as any).UnreadCount ?? 0,
-          lastMessage: (room as any).lastMessage ?? (room as any).LastMessage
+          lastMessage: rawLast ? {
+            ...rawLast,
+            sentAt: normalizeUtcString(rawLast.sentAt ?? rawLast.SentAt)
+          } : undefined
         };
         this.activeRoom.set(normalized);
       })
@@ -396,6 +543,7 @@ export class ChatService {
   getMyStudentRoom(): Observable<ChatRoomDTO> {
     return this.http.get<ChatRoomDTO>(`${this.apiUrl}/my-room`).pipe(
       tap(room => {
+        const rawLast = (room as any).lastMessage ?? (room as any).LastMessage;
         const normalized: ChatRoomDTO = {
           id: (room as any).id ?? (room as any).Id,
           name: (room as any).name ?? (room as any).Name,
@@ -403,7 +551,10 @@ export class ChatService {
           studentId: (room as any).studentId ?? (room as any).StudentId,
           studentName: (room as any).studentName ?? (room as any).StudentName,
           unreadCount: (room as any).unreadCount ?? (room as any).UnreadCount ?? 0,
-          lastMessage: (room as any).lastMessage ?? (room as any).LastMessage
+          lastMessage: rawLast ? {
+            ...rawLast,
+            sentAt: normalizeUtcString(rawLast.sentAt ?? rawLast.SentAt)
+          } : undefined
         };
         this.activeRoom.set(normalized);
       })
@@ -412,9 +563,16 @@ export class ChatService {
 
   async sendStudentMessage(content: string): Promise<ChatMessageDTO | null> {
     if (!content || !content.trim()) return null;
-    this.isSending.set(true);
     const trimmed = content.trim();
     const room = this.activeRoom();
+    const targetRoomId = room?.id || 0;
+
+    // 0. Offline immediate local enqueue
+    if (!this.offlineSync.isOnline()) {
+      return this.enqueueOfflineMessage(targetRoomId, trimmed);
+    }
+
+    this.isSending.set(true);
 
     if (room && this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
       try {
@@ -440,17 +598,21 @@ export class ChatService {
           studentSenderId: (result as any).studentSenderId ?? (result as any).StudentSenderId,
           isStudent: (result as any).isStudent ?? (result as any).IsStudent ?? true,
           content: (result as any).content ?? (result as any).Content ?? trimmed,
-          sentAt: (result as any).sentAt ?? (result as any).SentAt ?? new Date().toISOString(),
+          sentAt: normalizeUtcString((result as any).sentAt ?? (result as any).SentAt ?? new Date().toISOString()),
           isRead: (result as any).isRead ?? (result as any).IsRead ?? false
         };
         if (!this.messages().some(m => m.id === normalized.id)) {
           this.messages.update(list => [...list, normalized]);
         }
+        this.offlineSync.cacheRoomMessages(targetRoomId, this.messages());
         return normalized;
       }
       return null;
-    } catch (err) {
+    } catch (err: any) {
       this.isSending.set(false);
+      if (!navigator.onLine || err.status === 0) {
+        return this.enqueueOfflineMessage(targetRoomId, trimmed);
+      }
       throw err;
     }
   }

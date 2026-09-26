@@ -9,16 +9,16 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ThemeToggleComponent],
   template: `
-    <div class="min-h-screen bg-dark-950 flex" dir="rtl">
+    <div class="h-screen w-full bg-dark-950 flex overflow-hidden" dir="rtl">
       <!-- Mobile Overlay -->
       <div *ngIf="isSidebarOpen() && isMobile()"
            (click)="toggleSidebar()"
-           class="fixed inset-0 bg-black/60 z-20 lg:hidden backdrop-blur-sm">
+           class="fixed inset-0 bg-black/60 z-30 lg:hidden backdrop-blur-sm">
       </div>
 
       <!-- Sidebar -->
       <aside
-        class="lg:sticky fixed top-0 bottom-0 right-0 z-30 bg-dark-900 border-l border-dark-800 flex flex-col h-screen transition-all duration-300 flex-shrink-0"
+        class="fixed lg:static top-0 bottom-0 right-0 z-40 lg:z-20 bg-dark-900 border-l border-dark-800 flex flex-col h-screen lg:h-full transition-all duration-300 flex-shrink-0"
         [class.w-72]="isSidebarOpen()"
         [class.w-20]="!isSidebarOpen() && !isMobile()"
         [class.w-72]="isSidebarOpen() && isMobile()"
@@ -40,7 +40,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         </div>
 
         <!-- Nav -->
-        <nav class="p-3 space-y-1 flex-1 overflow-y-auto">
+        <nav class="p-3 space-y-1 flex-1 overflow-y-auto sidebar-nav">
           <a
             *ngFor="let item of navItems"
             [routerLink]="item.route"
@@ -68,11 +68,11 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         </div>
       </aside>
 
-      <!-- Main Content -->
-      <main class="flex-1 min-w-0 w-full transition-all duration-300">
+      <!-- Main Content Area -->
+      <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
 
         <!-- Top Navbar -->
-        <header class="h-16 lg:h-20 bg-dark-900 border-b border-dark-800 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20">
+        <header class="h-16 lg:h-20 bg-dark-900 border-b border-dark-800 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-20">
           <div class="flex items-center gap-3">
             <button (click)="toggleSidebar()" class="p-2 rounded-xl bg-dark-800 border border-dark-700/60 text-dark-300 hover:text-white transition-colors">
               <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/></svg>
@@ -113,10 +113,10 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         </header>
 
         <!-- Page Content -->
-        <div class="p-2 sm:p-4 lg:p-8 pb-6">
+        <main class="flex-1 p-2 sm:p-4 lg:p-8 pb-6 overflow-y-auto overflow-x-hidden">
           <router-outlet></router-outlet>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   `,
 })

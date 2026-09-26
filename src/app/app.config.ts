@@ -4,6 +4,7 @@ import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideServiceWorker } from '@angular/service-worker';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { offlineCacheInterceptor } from './core/interceptors/offline-cache.interceptor';
 import { GlobalErrorHandler } from './core/handlers/global-error.handler';
 import { registerLocaleData } from '@angular/common';
 import localeArEg from '@angular/common/locales/ar-EG';
@@ -13,7 +14,7 @@ registerLocaleData(localeArEg);
 export const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, offlineCacheInterceptor])),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: LOCALE_ID, useValue: 'ar-EG' },
     provideServiceWorker('ngsw-worker.js', {

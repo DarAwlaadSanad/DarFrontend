@@ -1,199 +1,854 @@
-<div class="space-y-7 animate-fade-in" dir="rtl">
+<div class="space-y-6 animate-fade-in" dir="rtl">
 
-  <!-- Header -->
-  <div class="flex flex-wrap items-start justify-between gap-4">
+  <!-- Page Header -->
+  <div class="flex flex-wrap items-center justify-between gap-4">
     <div>
-      <div class="flex items-center gap-2 mb-1">
-        <div class="w-8 h-8 rounded-lg bg-red-500/15 flex items-center justify-center">
-          <svg class="w-4 h-4 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <div class="flex items-center gap-2.5 mb-1.5">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-500/20 flex items-center justify-center shadow-lg shadow-red-950/20">
+          <svg class="w-5 h-5 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
           </svg>
         </div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-white">إدارة غياب المستخدمين</h1>
+        <div>
+          <h1 class="text-2xl lg:text-3xl font-black text-white tracking-tight">إدارة غياب وحضور المدرسين</h1>
+          <p class="text-dark-400 text-xs sm:text-sm">متابعة السجلات السابقة، تسجيل الغياب اليومي، تعيين البدلاء، والتقارير</p>
+        </div>
       </div>
-      <p class="text-dark-400 text-sm mr-10">تسجيل الغياب وتعيين البدلاء وتصدير التقارير</p>
+    </div>
+
+    <!-- Export Action (Top) -->
+    <div class="flex items-center gap-2">
+      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')"
+              (click)="exportAttendance()" 
+              class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs sm:text-sm flex items-center gap-2 shadow-lg shadow-emerald-950/30 hover:brightness-110 active:scale-95 transition-all">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+        </svg>
+        <span>تصدير إكسيل الغياب</span>
+      </button>
     </div>
   </div>
 
-  <!-- Filter Card -->
-  <div class="card p-5">
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-      <div>
-        <label class="label">المستخدم/المعلم <span class="text-red-400">*</span></label>
-        <select [ngModel]="selectedTeacherId()" (ngModelChange)="selectedTeacherId.set($event)" class="input-field">
-          <option value="">— اختر المستخدم —</option>
-          <option *ngFor="let t of users()" [value]="t.id">{{ t.fullName }}</option>
-        </select>
-      </div>
-      <div>
-        <label class="label">التاريخ <span class="text-red-400">*</span></label>
-        <input type="date" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)" class="input-field"/>
-      </div>
-      <div>
-        <label class="label">السبب (اختياري)</label>
-        <input type="text" [ngModel]="absenceReason()" (ngModelChange)="absenceReason.set($event)"
-               placeholder="سبب الغياب" class="input-field"/>
-      </div>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-3">
-      <button *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage')" (click)="markAbsent()"
-              [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
-              class="btn-danger">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
-        </svg>
-        تسجيل كغائب
-      </button>
-      <!-- Cancel absence button -->
-      <button *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage')" (click)="cancelAbsent()"
-              [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
-              class="btn-secondary flex items-center gap-2">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-        </svg>
-        إلغاء الغياب
-      </button>
-      <button (click)="loadSessions()"
-              [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
-              class="btn-secondary">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-        </svg>
-        عرض الحصص
-      </button>
-    </div>
-    <!-- Note: assigning substitute auto-marks teacher absent -->
-    <div class="mt-3 flex items-start gap-2 text-xs text-dark-400 bg-dark-800/40 rounded-xl px-4 py-2.5">
-      <svg class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+  <!-- Modern Navigation Tabs -->
+  <div class="flex items-center gap-2 border-b border-dark-800/80 pb-1 overflow-x-auto scrollbar-none">
+    <button (click)="activeTab.set('history')"
+            type="button"
+            class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+            [class]="activeTab() === 'history' 
+              ? 'bg-primary-500/15 text-primary-400 border border-primary-500/30 shadow-sm' 
+              : 'text-dark-400 hover:text-white hover:bg-dark-800/50'">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
       </svg>
-      <span>عند تعيين معلم بديل لحصة، يتم تسجيل غياب المعلم الأصلي <strong class="text-amber-400">تلقائياً</strong>. وعند مسح البديل، يُلغى الغياب تلقائياً إن لم يكن هناك بدلاء آخرون في نفس اليوم.</span>
+      <span>سجلات الغياب والحضور السابقة</span>
+      <span *ngIf="totalCount() > 0" class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-primary-500/20 text-primary-300">
+        {{ totalCount() }}
+      </span>
+    </button>
+
+    <button (click)="activeTab.set('actions')"
+            type="button"
+            class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+            [class]="activeTab() === 'actions' 
+              ? 'bg-primary-500/15 text-primary-400 border border-primary-500/30 shadow-sm' 
+              : 'text-dark-400 hover:text-white hover:bg-dark-800/50'">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
+      </svg>
+      <span>تسجيل غياب وتعيين بدلاء</span>
+    </button>
+
+    <button (click)="activeTab.set('report')"
+            type="button"
+            class="px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm transition-all flex items-center gap-2 whitespace-nowrap"
+            [class]="activeTab() === 'report' 
+              ? 'bg-primary-500/15 text-primary-400 border border-primary-500/30 shadow-sm' 
+              : 'text-dark-400 hover:text-white hover:bg-dark-800/50'">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+      </svg>
+      <span>ملخص التقرير الشهري</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: PREVIOUS ABSENCE & ATTENDANCE RECORDS (سجلات الغياب السابقة) -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab() === 'history'" class="space-y-6">
+
+    <!-- KPI / Statistics Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <!-- Total Absences -->
+      <div class="card p-4 relative overflow-hidden bg-gradient-to-br from-red-500/10 via-dark-900 to-dark-900 border-red-500/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-red-400/90 font-medium mb-1">إجمالي أيام الغياب</p>
+            <h3 class="text-2xl font-black text-white font-mono">{{ totalAbsences() }}</h3>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/25 flex items-center justify-center text-red-400">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-[11px] text-dark-400 mt-2">في النطاق الزمني المحدد حالياً</p>
+      </div>
+
+      <!-- Total Late Minutes -->
+      <div class="card p-4 relative overflow-hidden bg-gradient-to-br from-amber-500/10 via-dark-900 to-dark-900 border-amber-500/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-amber-400/90 font-medium mb-1">إجمالي دقائق التأخير</p>
+            <h3 class="text-2xl font-black text-white font-mono">{{ totalLateMinutes() }} <span class="text-xs font-normal text-amber-400/80">دقيقة</span></h3>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-[11px] text-dark-400 mt-2">مجموع تأخير المعلمين الحاضرين</p>
+      </div>
+
+      <!-- Total Records -->
+      <div class="card p-4 relative overflow-hidden bg-gradient-to-br from-primary-500/10 via-dark-900 to-dark-900 border-primary-500/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-primary-400/90 font-medium mb-1">إجمالي السجلات</p>
+            <h3 class="text-2xl font-black text-white font-mono">{{ totalCount() }}</h3>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-primary-500/15 border border-primary-500/25 flex items-center justify-center text-primary-400">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-[11px] text-dark-400 mt-2">سجلات مطابقة لمعايير الفلترة</p>
+      </div>
+
+      <!-- Current Page Info -->
+      <div class="card p-4 relative overflow-hidden bg-gradient-to-br from-blue-500/10 via-dark-900 to-dark-900 border-blue-500/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-blue-400/90 font-medium mb-1">الصفحة الحالية</p>
+            <h3 class="text-2xl font-black text-white font-mono">{{ page() }} <span class="text-xs text-dark-400">/ {{ totalPages() }}</span></h3>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-blue-500/15 border border-blue-500/25 flex items-center justify-center text-blue-400">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+            </svg>
+          </div>
+        </div>
+        <p class="text-[11px] text-dark-400 mt-2">عرض {{ pageSize() }} عنصر بالصفحة</p>
+      </div>
     </div>
 
-    <!-- Monthly Report Section -->
-    <div class="flex flex-wrap items-center gap-3 mt-6 pt-5 border-t border-dark-800">
+    <!-- Filters Section -->
+    <div class="card p-5 space-y-4">
+
+      <!-- Date Presets & Status Filters Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-dark-800/80 pb-4">
+        <!-- Date Presets -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="text-xs font-bold text-dark-400 ml-1">الفترة الزمنية:</span>
+          <button (click)="applyDatePreset('today')"
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  [class]="activeDatePreset() === 'today' ? 'bg-primary-500 text-white shadow-sm' : 'bg-dark-800 text-dark-300 hover:bg-dark-700'">
+            اليوم
+          </button>
+          <button (click)="applyDatePreset('week')"
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  [class]="activeDatePreset() === 'week' ? 'bg-primary-500 text-white shadow-sm' : 'bg-dark-800 text-dark-300 hover:bg-dark-700'">
+            آخر 7 أيام
+          </button>
+          <button (click)="applyDatePreset('month')"
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  [class]="activeDatePreset() === 'month' ? 'bg-primary-500 text-white shadow-sm' : 'bg-dark-800 text-dark-300 hover:bg-dark-700'">
+            هذا الشهر
+          </button>
+          <button (click)="applyDatePreset('last-month')"
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  [class]="activeDatePreset() === 'last-month' ? 'bg-primary-500 text-white shadow-sm' : 'bg-dark-800 text-dark-300 hover:bg-dark-700'">
+            الشهر السابق
+          </button>
+          <button (click)="applyDatePreset('all')"
+                  type="button"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                  [class]="activeDatePreset() === 'all' ? 'bg-primary-500 text-white shadow-sm' : 'bg-dark-800 text-dark-300 hover:bg-dark-700'">
+            كل الفترات
+          </button>
+        </div>
+
+        <!-- Status Filter Tabs -->
+        <div class="flex items-center gap-1 bg-dark-950/60 p-1 rounded-xl border border-dark-800">
+          <button (click)="onStatusFilter('absent')"
+                  type="button"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                  [class]="filterStatus() === 'absent' ? 'bg-red-500 text-white shadow' : 'text-dark-400 hover:text-white'">
+            <span class="w-2 h-2 rounded-full bg-red-400"></span>
+            <span>الغياب فقط</span>
+          </button>
+          <button (click)="onStatusFilter('delayed')"
+                  type="button"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                  [class]="filterStatus() === 'delayed' ? 'bg-amber-500 text-dark-950 shadow' : 'text-dark-400 hover:text-white'">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            <span>المتأخرين فقط</span>
+          </button>
+          <button (click)="onStatusFilter('present')"
+                  type="button"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5"
+                  [class]="filterStatus() === 'present' ? 'bg-emerald-600 text-white shadow' : 'text-dark-400 hover:text-white'">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            <span>الحاضرين</span>
+          </button>
+          <button (click)="onStatusFilter('all')"
+                  type="button"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all"
+                  [class]="filterStatus() === 'all' ? 'bg-dark-700 text-white shadow' : 'text-dark-400 hover:text-white'">
+            الكل
+          </button>
+        </div>
+      </div>
+
+      <!-- Detail Filters Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Teacher Filter -->
+        <div>
+          <label class="label text-xs">المعلم / المستخدم</label>
+          <select [ngModel]="filterTeacherId()" 
+                  (ngModelChange)="filterTeacherId.set($event); onFilterChange()" 
+                  class="input-field text-xs py-2">
+            <option value="">— جميع المعلمين والمستخدمين —</option>
+            <option *ngFor="let u of users()" [value]="u.id">{{ u.fullName }}</option>
+          </select>
+        </div>
+
+        <!-- From Date -->
+        <div>
+          <label class="label text-xs">من تاريخ</label>
+          <input type="date" 
+                 [ngModel]="filterFromDate()" 
+                 (ngModelChange)="filterFromDate.set($event); onFilterChange()" 
+                 class="input-field text-xs py-2"/>
+        </div>
+
+        <!-- To Date -->
+        <div>
+          <label class="label text-xs">إلى تاريخ</label>
+          <input type="date" 
+                 [ngModel]="filterToDate()" 
+                 (ngModelChange)="filterToDate.set($event); onFilterChange()" 
+                 class="input-field text-xs py-2"/>
+        </div>
+
+        <!-- Search Input -->
+        <div>
+          <label class="label text-xs">بحث سريع (اسم، هاتف، سبب)</label>
+          <div class="relative">
+            <input type="text" 
+                   [ngModel]="filterSearch()" 
+                   (ngModelChange)="filterSearch.set($event); onSearchChange()" 
+                   placeholder="اكتب للبحث..." 
+                   class="input-field text-xs py-2 pr-8"/>
+            <svg class="w-4 h-4 text-dark-400 absolute right-2.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="flex items-center justify-between gap-3 pt-2">
+        <div class="flex items-center gap-2">
+          <button (click)="resetFilters()" 
+                  type="button" 
+                  class="px-3 py-1.5 rounded-lg bg-dark-800 text-dark-300 hover:text-white hover:bg-dark-700 text-xs font-bold transition-all flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>إعادة ضبط الفلاتر</span>
+          </button>
+
+          <button (click)="loadHistory()" 
+                  type="button" 
+                  [disabled]="isHistoryLoading()"
+                  class="px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-400 hover:bg-primary-500/20 text-xs font-bold transition-all flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5" [class.animate-spin]="isHistoryLoading()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+            <span>تحديث البيانات</span>
+          </button>
+        </div>
+
+        <!-- Page Size Selector -->
+        <div class="flex items-center gap-2 text-xs text-dark-400">
+          <span>عدد العناصر:</span>
+          <select [ngModel]="pageSize()" 
+                  (ngModelChange)="changePageSize($event)"
+                  class="bg-dark-800 border border-dark-700 text-white rounded-lg px-2 py-1 text-xs">
+            <option [value]="10">10</option>
+            <option [value]="20">20</option>
+            <option [value]="50">50</option>
+            <option [value]="100">100</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- History Table Card -->
+    <div class="card overflow-hidden shadow-2xl border border-dark-800">
+      
+      <!-- Table Header Bar -->
+      <div class="px-5 py-4 flex items-center justify-between border-b border-dark-800 bg-dark-900/40">
+        <div class="flex items-center gap-2">
+          <h3 class="font-bold text-white text-sm">قائمة السجلات السابقة</h3>
+          <span class="px-2 py-0.5 rounded-full text-xs font-bold font-mono bg-dark-800 text-dark-300">
+            {{ totalCount() }} سجل
+          </span>
+        </div>
+
+        <div *ngIf="isHistoryLoading()" class="flex items-center gap-2 text-xs text-primary-400">
+          <div class="w-3.5 h-3.5 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+          <span>جاري التحديث...</span>
+        </div>
+      </div>
+
+      <!-- Table Body -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-dark-950/60 border-b border-dark-800 text-dark-400 text-xs font-bold">
+              <th class="px-4 py-3.5 text-right">المعلم / المستخدم</th>
+              <th class="px-4 py-3.5 text-right">التاريخ واليوم</th>
+              <th class="px-4 py-3.5 text-center">الحالة</th>
+              <th class="px-4 py-3.5 text-center">الحضور / الانصراف</th>
+              <th class="px-4 py-3.5 text-right">سبب الغياب / الملاحظات</th>
+              <th class="px-4 py-3.5 text-right">الحصص والبدلاء</th>
+              <th class="px-4 py-3.5 text-center">الإجراءات</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-dark-800/60">
+
+            <!-- Loading Skeleton -->
+            <tr *ngIf="isHistoryLoading() && historyItems().length === 0">
+              <td colspan="7" class="px-4 py-12 text-center">
+                <div class="flex flex-col items-center justify-center gap-3">
+                  <div class="w-8 h-8 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+                  <span class="text-dark-400 text-xs font-medium">جاري تحميل سجلات الغياب...</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Empty State -->
+            <tr *ngIf="!isHistoryLoading() && historyItems().length === 0">
+              <td colspan="7" class="px-4 py-16 text-center">
+                <div class="max-w-xs mx-auto flex flex-col items-center">
+                  <div class="w-14 h-14 rounded-2xl bg-dark-800/80 border border-dark-700/60 flex items-center justify-center text-dark-400 mb-3 shadow-inner">
+                    <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <h4 class="text-white font-bold text-sm mb-1">لا توجد سجلات مطابقة</h4>
+                  <p class="text-dark-400 text-xs">لم يتم العثور على أي سجلات غياب أو حضور تطابق الفلاتر المحددة حالياً.</p>
+                  <button (click)="resetFilters()" class="mt-4 px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-primary-400 text-xs font-bold transition-all">
+                    عرض جميع السجلات
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Data Rows -->
+            <tr *ngFor="let item of historyItems()" 
+                class="hover:bg-dark-800/30 transition-colors group">
+              
+              <!-- Teacher Info -->
+              <td class="px-4 py-3.5 whitespace-nowrap">
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-xl flex items-center justify-center text-xs font-bold font-mono shadow-sm flex-shrink-0"
+                       [class]="item.isAbsent ? 'bg-red-500/15 text-red-400 border border-red-500/30' : 'bg-primary-500/15 text-primary-400 border border-primary-500/30'">
+                    {{ item.teacherName.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="font-bold text-white text-xs sm:text-sm">{{ item.teacherName }}</div>
+                    <div *ngIf="item.phoneNumber" class="text-[11px] text-dark-400 font-mono" dir="ltr">
+                      {{ item.phoneNumber }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+
+              <!-- Date -->
+              <td class="px-4 py-3.5 whitespace-nowrap">
+                <div class="text-xs font-bold text-dark-100">
+                  {{ formatDisplayDate(item.date) }}
+                </div>
+                <div class="text-[10px] text-dark-500 font-mono mt-0.5">
+                  {{ item.date.split('T')[0] }}
+                </div>
+              </td>
+
+              <!-- Status Badge -->
+              <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                <!-- Absent -->
+                <span *ngIf="item.isAbsent" 
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-red-500/15 text-red-400 border border-red-500/30">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  <span>غائب</span>
+                </span>
+
+                <!-- Present with Delay -->
+                <span *ngIf="!item.isAbsent && item.delayMinutes > 0"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <span>متأخر {{ item.delayMinutes }} دقيقة</span>
+                </span>
+
+                <!-- Present on Time -->
+                <span *ngIf="!item.isAbsent && item.delayMinutes === 0"
+                      class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  <span>حاضر في الموعد</span>
+                </span>
+              </td>
+
+              <!-- Attendance Times -->
+              <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                <div *ngIf="!item.isAbsent && item.checkInTime" class="text-xs font-mono font-medium">
+                  <span class="text-emerald-400 font-bold">{{ formatTimeSpan(item.checkInTime) }}</span>
+                  <span *ngIf="item.checkOutTime" class="text-dark-400 mx-1">←</span>
+                  <span *ngIf="item.checkOutTime" class="text-blue-400">{{ formatTimeSpan(item.checkOutTime) }}</span>
+                </div>
+                <div *ngIf="item.isAbsent || !item.checkInTime" class="text-xs text-dark-500">
+                  —
+                </div>
+              </td>
+
+              <!-- Reason / Notes -->
+              <td class="px-4 py-3.5">
+                <div *ngIf="item.absenceReason" class="text-xs text-amber-300/90 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20 inline-block max-w-xs break-words">
+                  {{ item.absenceReason }}
+                </div>
+                <div *ngIf="!item.absenceReason" class="text-xs text-dark-500">
+                  لا يوجد سبب مسجل
+                </div>
+              </td>
+
+              <!-- Sessions & Substitute -->
+              <td class="px-4 py-3.5 whitespace-nowrap">
+                <div *ngIf="item.substituteTeacherNames" class="flex items-center gap-1.5 text-xs text-emerald-300">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>بديل: <strong>{{ item.substituteTeacherNames }}</strong></span>
+                </div>
+                <div *ngIf="!item.substituteTeacherNames && item.sessionsCount > 0" class="text-xs text-dark-400">
+                  {{ item.sessionsCount }} حصص مجدولة
+                </div>
+                <div *ngIf="!item.substituteTeacherNames && item.sessionsCount === 0" class="text-xs text-dark-500">
+                  —
+                </div>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                <div class="flex items-center justify-center gap-1.5">
+                  <!-- View Sessions -->
+                  <button (click)="viewTeacherSessions(item)"
+                          type="button"
+                          class="p-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-dark-300 hover:text-white transition-all"
+                          title="عرض حصص هذا اليوم">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                    </svg>
+                  </button>
+
+                  <!-- Cancel Absence (if absent) -->
+                  <button *ngIf="item.isAbsent && (authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin'))"
+                          (click)="openCancelModal(item)"
+                          type="button"
+                          class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 transition-all"
+                          title="إلغاء الغياب">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div *ngIf="totalPages() > 1 || totalCount() > 0" 
+           class="px-5 py-4 border-t border-dark-800 bg-dark-900/60 flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Info -->
+        <div class="text-xs text-dark-400">
+          عرض من 
+          <span class="font-bold text-white">{{ (page() - 1) * pageSize() + (historyItems().length > 0 ? 1 : 0) }}</span>
+          إلى 
+          <span class="font-bold text-white">{{ (page() - 1) * pageSize() + historyItems().length }}</span>
+          من أصل 
+          <span class="font-bold text-primary-400">{{ totalCount() }}</span>
+          سجل
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="flex items-center gap-1">
+          <!-- First Page -->
+          <button (click)="goToPage(1)"
+                  [disabled]="page() === 1 || isHistoryLoading()"
+                  class="p-1.5 rounded-lg bg-dark-800 text-dark-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title="الصفحة الأولى">
+            <svg class="w-4 h-4 rotate-180 transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+          </button>
+
+          <!-- Prev Page -->
+          <button (click)="goToPage(page() - 1)"
+                  [disabled]="page() === 1 || isHistoryLoading()"
+                  class="px-3 py-1.5 rounded-lg bg-dark-800 text-dark-300 hover:text-white hover:bg-dark-700 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold transition-all flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 rotate-180 transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+            <span>السابق</span>
+          </button>
+
+          <!-- Page Numbers -->
+          <div class="flex items-center gap-1 mx-1">
+            <ng-container *ngFor="let p of visiblePages()">
+              <span *ngIf="p === '...'" class="px-2 text-dark-500 font-mono text-xs">...</span>
+              <button *ngIf="p !== '...'"
+                      (click)="goToPage(p)"
+                      [disabled]="isHistoryLoading()"
+                      class="w-8 h-8 rounded-lg text-xs font-mono font-bold transition-all flex items-center justify-center"
+                      [class]="p === page() ? 'bg-primary-500 text-white shadow-md shadow-primary-900/40' : 'bg-dark-800 text-dark-300 hover:bg-dark-700 hover:text-white'">
+                {{ p }}
+              </button>
+            </ng-container>
+          </div>
+
+          <!-- Next Page -->
+          <button (click)="goToPage(page() + 1)"
+                  [disabled]="page() === totalPages() || isHistoryLoading()"
+                  class="px-3 py-1.5 rounded-lg bg-dark-800 text-dark-300 hover:text-white hover:bg-dark-700 disabled:opacity-40 disabled:cursor-not-allowed text-xs font-bold transition-all flex items-center gap-1">
+            <span>التالي</span>
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </button>
+
+          <!-- Last Page -->
+          <button (click)="goToPage(totalPages())"
+                  [disabled]="page() === totalPages() || isHistoryLoading()"
+                  class="p-1.5 rounded-lg bg-dark-800 text-dark-400 hover:text-white disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                  title="الصفحة الأخيرة">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: REGISTER ABSENCE & ASSIGN SUBSTITUTES (تسجيل غياب وتعيين بدلاء)-->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab() === 'actions'" class="space-y-6">
+
+    <!-- Action Card -->
+    <div class="card p-5">
+      <h3 class="text-base font-bold text-white mb-4 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-red-400"></span>
+        <span>تسجيل غياب أو تعيين بديل لمستخدم</span>
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div>
+          <label class="label">المستخدم/المعلم <span class="text-red-400">*</span></label>
+          <select [ngModel]="selectedTeacherId()" (ngModelChange)="selectedTeacherId.set($event)" class="input-field">
+            <option value="">— اختر المستخدم —</option>
+            <option *ngFor="let t of users()" [value]="t.id">{{ t.fullName }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="label">التاريخ <span class="text-red-400">*</span></label>
+          <input type="date" [ngModel]="selectedDate()" (ngModelChange)="selectedDate.set($event)" class="input-field"/>
+        </div>
+        <div>
+          <label class="label">السبب (اختياري)</label>
+          <input type="text" [ngModel]="absenceReason()" (ngModelChange)="absenceReason.set($event)"
+                 placeholder="سبب الغياب" class="input-field"/>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')" 
+                (click)="markAbsent()"
+                [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
+                class="btn-danger">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+          </svg>
+          تسجيل كغائب
+        </button>
+
+        <!-- Cancel absence button -->
+        <button *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')" 
+                (click)="openCancelModalFromForm()"
+                [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
+                class="btn-secondary flex items-center gap-2">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          إلغاء الغياب
+        </button>
+
+        <button (click)="loadSessions()"
+                [disabled]="isLoading() || !selectedTeacherId() || !selectedDate()"
+                class="btn-secondary">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+          </svg>
+          عرض الحصص
+        </button>
+      </div>
+
+      <div class="mt-4 flex items-start gap-2 text-xs text-dark-400 bg-dark-800/40 rounded-xl px-4 py-2.5 border border-dark-800">
+        <svg class="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>عند تعيين معلم بديل لحصة، يتم تسجيل غياب المعلم الأصلي <strong class="text-amber-400">تلقائياً</strong>، وتظهر في سجلات الغياب السابقة.</span>
+      </div>
+    </div>
+
+    <!-- Sessions Table -->
+    <div *ngIf="sessions().length > 0" class="card overflow-hidden">
+      <div class="px-5 py-4 flex items-center justify-between border-b border-dark-800">
+        <h3 class="font-bold text-white text-sm">حصص المستخدم لليوم المحدد</h3>
+        <span class="badge-yellow">{{ sessions().length }} حصة</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-dark-950/60 border-b border-dark-800 text-dark-400 text-xs font-bold">
+              <th class="px-4 py-3.5 text-right">المجموعة</th>
+              <th class="px-4 py-3.5 text-right">الوقت</th>
+              <th class="px-4 py-3.5 text-right">المعلم البديل</th>
+              <th class="px-4 py-3.5 text-right" *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')">تعيين بديل</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-dark-800/60">
+            <tr *ngFor="let s of sessions()" class="hover:bg-dark-800/30 transition-colors">
+              <td class="px-4 py-3.5 font-medium text-dark-100">{{ s.groupName }}</td>
+              <td class="px-4 py-3.5 text-dark-400 text-xs font-mono">{{ s.startTime }} – {{ s.endTime }}</td>
+              <td class="px-4 py-3.5">
+                <span *ngIf="s.substituteTeacherName" class="badge-green font-bold">{{ s.substituteTeacherName }}</span>
+                <span *ngIf="!s.substituteTeacherName" class="badge-yellow">بدون بديل</span>
+              </td>
+              <td class="text-left" *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <select #subSelect [value]="s.substituteTeacherId || ''" class="input-field text-xs py-2 w-36">
+                    <option value="">— اختر بديل —</option>
+                    <option *ngFor="let t of users()" [value]="t.id" [disabled]="t.id === selectedTeacherId()">
+                      {{ t.fullName }}
+                    </option>
+                  </select>
+                  <button (click)="assignSubstitute(s.id, subSelect.value)" 
+                          [disabled]="isLoading() || !subSelect.value || subSelect.value === s.substituteTeacherId"
+                          class="btn-primary py-2 px-3 text-xs">
+                    تعيين
+                  </button>
+                  <button *ngIf="s.substituteTeacherId"
+                          (click)="revertSubstitute(s.id)"
+                          [disabled]="isLoading()"
+                          class="btn-danger py-2 px-3 text-xs flex items-center gap-1"
+                          title="مسح المعلم البديل وإلغاء الغياب">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    مسح البديل
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: MONTHLY SUMMARY & EXCEL (ملخص التقرير الشهري)                 -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="activeTab() === 'report'" class="space-y-6">
+
+    <!-- Month & Year Controls -->
+    <div class="card p-5 flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <label class="text-sm text-dark-300">تقرير شهر:</label>
+        <label class="text-sm font-bold text-dark-300">تقرير شهر:</label>
         <select [(ngModel)]="currentMonth" (change)="onMonthYearChange()" class="input-field py-1.5 px-3 text-sm w-auto">
           <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
         </select>
         <select [(ngModel)]="currentYear" (change)="onMonthYearChange()" class="input-field py-1.5 px-3 text-sm w-auto">
           <option [value]="2025">2025</option>
           <option [value]="2026">2026</option>
+          <option [value]="2027">2027</option>
         </select>
       </div>
-      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportAttendance()" class="btn-primary py-2 px-4 text-sm flex items-center gap-1.5 mr-auto">
+
+      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" 
+              (click)="exportAttendance()" 
+              class="btn-primary py-2 px-4 text-sm flex items-center gap-1.5">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
         </svg>
-        تصدير إكسيل الغياب
+        <span>تصدير إكسيل لشهر {{ months[currentMonth()-1].label }} {{ currentYear() }}</span>
       </button>
     </div>
+
+    <!-- Monthly Summary Table -->
+    <div class="card overflow-hidden">
+      <div class="px-5 py-4 flex items-center justify-between border-b border-dark-800">
+        <h3 class="font-bold text-white text-sm">غيابات المستخدمين لشهر {{ months[currentMonth()-1].label }} {{ currentYear() }}</h3>
+        <span class="badge-blue">{{ monthlyReports().length }} مستخدم</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-dark-950/60 border-b border-dark-800 text-dark-400 text-xs font-bold">
+              <th class="px-4 py-3.5 text-right">المستخدم</th>
+              <th class="px-4 py-3.5 text-center">أيام الغياب</th>
+              <th class="px-4 py-3.5 text-center">دقائق التأخير</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-dark-800/60">
+            <tr *ngFor="let r of monthlyReports()" class="hover:bg-dark-800/30 transition-colors">
+              <td class="px-4 py-3.5 font-medium text-white">{{ r.teacherName }}</td>
+              <td class="px-4 py-3.5 text-center">
+                <span [class]="r.absentDays > 0 ? 'text-red-400 font-bold' : 'text-dark-400'">{{ r.absentDays }}</span>
+              </td>
+              <td class="px-4 py-3.5 text-center">
+                <span [class]="r.totalLateMinutes > 0 ? 'text-amber-400 font-bold' : 'text-dark-400'">{{ r.totalLateMinutes }}</span>
+              </td>
+            </tr>
+            <tr *ngIf="monthlyReports().length === 0 && !isLoading()">
+              <td colspan="3" class="px-4 py-8 text-center text-dark-500">لا توجد بيانات لهذا الشهر</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
   </div>
 
-  <!-- Monthly Report Table -->
-  <div class="card overflow-hidden mt-6">
-    <div class="px-5 py-4 flex items-center justify-between" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
-      <h3 class="font-bold text-white text-sm">غيابات المستخدمين لشهر {{ months[currentMonth()-1].label }} {{ currentYear() }}</h3>
-      <span class="badge-blue">{{ monthlyReports().length }} مستخدم</span>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr style="background: rgba(30,41,59,0.5);">
-            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">المستخدم</th>
-            <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">أيام الغياب</th>
-            <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">دقائق التأخير</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let r of monthlyReports()"
-              class="border-t transition-colors hover:bg-dark-800/30"
-              style="border-color: rgba(51,65,85,0.3);">
-            <td class="px-4 py-3.5 font-medium text-white">{{ r.teacherName }}</td>
-            <td class="px-4 py-3.5 text-center">
-              <span [class]="r.absentDays > 0 ? 'text-red-400 font-bold' : 'text-dark-400'">{{ r.absentDays }}</span>
-            </td>
-            <td class="px-4 py-3.5 text-center">
-              <span [class]="r.totalLateMinutes > 0 ? 'text-yellow-400 font-bold' : 'text-dark-400'">{{ r.totalLateMinutes }}</span>
-            </td>
-          </tr>
-          <tr *ngIf="monthlyReports().length === 0 && !isLoading()">
-            <td colspan="3" class="px-4 py-8 text-center text-dark-500">لا يوجد بيانات لهذا الشهر</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <!-- CANCEL ABSENCE CONFIRMATION POPUP MODAL                            -->
+  <!-- ════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="showCancelModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <!-- Backdrop Blur -->
+    <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in"
+         (click)="closeCancelModal()"></div>
 
-  <!-- Sessions Table -->
-  <div *ngIf="sessions().length > 0" class="card overflow-hidden">
-    <div class="px-5 py-4 flex items-center justify-between" style="border-bottom: 1px solid rgba(51,65,85,0.5);">
-      <h3 class="font-bold text-white text-sm">حصص المستخدم لليوم المحدد</h3>
-      <span class="badge-yellow">{{ sessions().length }} حصة</span>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr style="background: rgba(30,41,59,0.5);">
-            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">المجموعة</th>
-            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">الوقت</th>
-            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">المعلم البديل</th>
-            <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400" *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')">تعيين بديل</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let s of sessions()"
-              class="border-t transition-colors hover:bg-dark-800/30"
-              style="border-color: rgba(51,65,85,0.3);">
-            <td class="px-4 py-3.5 font-medium text-dark-100">{{ s.groupName }}</td>
-            <td class="px-4 py-3.5 text-dark-400 text-xs font-mono">{{ s.startTime }} – {{ s.endTime }}</td>
-            <td class="px-4 py-3.5">
-              <span *ngIf="s.substituteTeacherName" class="badge-green font-bold">{{ s.substituteTeacherName }}</span>
-              <span *ngIf="!s.substituteTeacherName" class="badge-yellow">بدون بديل</span>
-            </td>
-            <td class="text-left" *ngIf="authService.hasPermission('Permissions.TeacherAttendance.Manage') || authService.hasRole('Admin') || authService.hasRole('SuperAdmin')">
-              <div class="flex items-center gap-2 flex-wrap">
-                <select #subSelect (change)="0" [value]="s.substituteTeacherId || ''" class="input-field text-xs py-2 w-36">
-                  <option value="">— اختر بديل —</option>
-                  <option *ngFor="let t of users()" [value]="t.id" [disabled]="t.id === selectedTeacherId()">
-                    {{ t.fullName }}
-                  </option>
-                </select>
-                <button (click)="assignSubstitute(s.id, subSelect.value)" 
-                        [disabled]="isLoading() || !subSelect.value || subSelect.value === s.substituteTeacherId"
-                        class="btn-primary py-2 px-3 text-xs">
-                  تعيين
-                </button>
-                <!-- Remove substitute button (only visible if there's a substitute) -->
-                <button *ngIf="s.substituteTeacherId"
-                        (click)="revertSubstitute(s.id)"
-                        [disabled]="isLoading()"
-                        class="btn-danger py-2 px-3 text-xs flex items-center gap-1"
-                        title="مسح المعلم البديل وإلغاء الغياب">
-                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                  </svg>
-                  مسح البديل
-                </button>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+    <!-- Modal Content -->
+    <div class="relative w-full max-w-md bg-dark-900 border border-dark-800 rounded-3xl p-6 sm:p-7 shadow-2xl animate-scale-up space-y-5 text-right z-10 overflow-hidden"
+         dir="rtl">
+      
+      <!-- Top Glow Accent -->
+      <div class="absolute -top-12 -right-12 w-36 h-36 bg-amber-500/10 rounded-full blur-2xl pointer-events-none"></div>
 
-  <!-- Empty state when searched but no sessions -->
-  <div *ngIf="sessions().length === 0 && !isLoading() && selectedTeacherId()"
-       class="card p-12 text-center">
-    <div class="w-12 h-12 rounded-2xl bg-dark-800 flex items-center justify-center mx-auto mb-3">
-      <svg class="w-6 h-6 text-dark-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-      </svg>
+      <!-- Icon & Title -->
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/25 flex items-center justify-center text-amber-400 flex-shrink-0 shadow-inner">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+
+        <div class="flex-1">
+          <h3 class="text-lg font-black text-white">تأكيد إلغاء الغياب</h3>
+          <p class="text-xs text-dark-400 mt-1">يرجى تأكيد رغبتك في إلغاء تسجيل الغياب للمستخدم التالي</p>
+        </div>
+
+        <!-- Close Button -->
+        <button (click)="closeCancelModal()" 
+                [disabled]="isCancelling()"
+                class="p-1.5 rounded-xl text-dark-400 hover:text-white hover:bg-dark-800 transition-colors">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Details Card -->
+      <div *ngIf="itemToCancel() as target" 
+           class="p-4 rounded-2xl bg-dark-800/60 border border-dark-700/60 space-y-2.5 text-xs">
+        
+        <div class="flex items-center justify-between">
+          <span class="text-dark-400 font-medium">المعلم / المستخدم:</span>
+          <span class="text-white font-bold text-sm">{{ target.teacherName }}</span>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-dark-700/40 pt-2">
+          <span class="text-dark-400 font-medium">تاريخ الغياب:</span>
+          <span class="text-primary-300 font-bold font-mono">{{ formatDisplayDate(target.date) }}</span>
+        </div>
+
+        <div *ngIf="target.reason" class="flex items-start justify-between border-t border-dark-700/40 pt-2 gap-2">
+          <span class="text-dark-400 font-medium flex-shrink-0">سبب الغياب:</span>
+          <span class="text-amber-300 font-medium text-left">{{ target.reason }}</span>
+        </div>
+
+      </div>
+
+      <!-- Warning Note -->
+      <div class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-300/90 text-xs">
+        <svg class="w-4 h-4 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>سيتم حذف سجل الغياب وإعادة حالة المعلم للوضع الافتراضي، وإلغاء أي بديل تم تكليفه تلقائياً.</span>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-3 pt-2">
+        <button (click)="confirmCancelAbsence()" 
+                [disabled]="isCancelling()"
+                class="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-red-950/40 active:scale-95 transition-all">
+          <div *ngIf="isCancelling()" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <svg *ngIf="!isCancelling()" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+          </svg>
+          <span>{{ isCancelling() ? 'جاري الإلغاء...' : 'نعم، قم بإلغاء الغياب' }}</span>
+        </button>
+
+        <button (click)="closeCancelModal()" 
+                [disabled]="isCancelling()"
+                type="button"
+                class="py-3 px-5 rounded-xl bg-dark-800 hover:bg-dark-700 text-dark-300 hover:text-white font-bold text-xs sm:text-sm transition-all">
+          تراجع
+        </button>
+      </div>
+
     </div>
-    <p class="text-dark-400 text-sm">لا توجد حصص مسجلة لهذا المستخدم في اليوم المحدد</p>
   </div>
 
 </div>

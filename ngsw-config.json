@@ -31,14 +31,13 @@
     {
       "name": "api-fresh",
       "urls": [
-        "/api/**",
-        "/hubs/**"
+        "/api/**"
       ],
       "cacheConfig": {
-        "maxSize": 0,
-        "maxAge": "0u",
+        "maxSize": 150,
+        "maxAge": "7d",
         "strategy": "freshness",
-        "timeout": "5s"
+        "timeout": "3s"
       }
     }
   ]

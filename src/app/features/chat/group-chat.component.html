@@ -308,7 +308,13 @@
                   </p>
                   <div class="flex items-center justify-end gap-1.5 mt-1.5 text-[10px] text-emerald-100/80">
                     <span>{{ formatTime(msg.sentAt) }}</span>
-                    <svg class="w-3.5 h-3.5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <!-- Pending offline indicator -->
+                    <span *ngIf="msg.id < 0" class="inline-flex items-center gap-1 text-amber-200" title="تم الحفظ محلياً - قيد الإرسال عند عودة الاتصال">
+                      <span class="animate-pulse">⏳</span>
+                      <span class="text-[9px]">قيد الإرسال</span>
+                    </span>
+                    <!-- Sent checkmark -->
+                    <svg *ngIf="msg.id >= 0" class="w-3.5 h-3.5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                     </svg>
                   </div>

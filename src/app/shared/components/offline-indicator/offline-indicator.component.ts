@@ -1,19 +1,21 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { OfflineSyncService } from '../../../core/services/offline-sync.service';
+import { OfflineCacheService } from '../../../core/services/offline-cache.service';
 
 @Component({
   selector: 'app-offline-indicator',
   standalone: true,
   imports: [CommonModule],
   template: `
-    <!-- Offline or Pending Sync Floating Bar -->
-    <div *ngIf="!offlineSync.isOnline() || offlineSync.pendingCount() > 0 || offlineSync.isSyncing()"
+    <!-- Offline, Cache Serving, or Pending Sync Floating Bar -->
+    <div *ngIf="!offlineSync.isOnline() || offlineSync.pendingCount() > 0 || offlineSync.isSyncing() || offlineCache.isServingFromCache()"
       class="fixed top-3 left-1/2 -translate-x-1/2 z-[120] flex items-center gap-2.5 px-4 py-2 rounded-full shadow-2xl backdrop-blur-xl border text-xs font-bold transition-all duration-300 animate-slide-up"
       [ngClass]="{
         'bg-amber-500/15 border-amber-500/40 text-amber-300 shadow-amber-950/40': !offlineSync.isOnline(),
         'bg-blue-500/15 border-blue-500/40 text-blue-300 shadow-blue-950/40': offlineSync.isOnline() && offlineSync.isSyncing(),
-        'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-emerald-950/40': offlineSync.isOnline() && !offlineSync.isSyncing() && offlineSync.pendingCount() > 0
+        'bg-purple-500/15 border-purple-500/40 text-purple-300 shadow-purple-950/40': offlineSync.isOnline() && !offlineSync.isSyncing() && offlineCache.isServingFromCache(),
+        'bg-emerald-500/15 border-emerald-500/40 text-emerald-300 shadow-emerald-950/40': offlineSync.isOnline() && !offlineSync.isSyncing() && !offlineCache.isServingFromCache() && offlineSync.pendingCount() > 0
       }"
       dir="rtl">
 
@@ -25,19 +27,23 @@ import { OfflineSyncService } from '../../../core/services/offline-sync.service'
           [ngClass]="{
             'bg-amber-400': !offlineSync.isOnline(),
             'bg-blue-400': offlineSync.isSyncing(),
-            'bg-emerald-400': offlineSync.isOnline() && !offlineSync.isSyncing()
+            'bg-purple-400': offlineSync.isOnline() && offlineCache.isServingFromCache(),
+            'bg-emerald-400': offlineSync.isOnline() && !offlineSync.isSyncing() && !offlineCache.isServingFromCache()
           }"></span>
       </span>
 
       <!-- Text Message -->
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-1.5 flex-wrap">
         <span *ngIf="!offlineSync.isOnline()">
-          أنت تعمل دون اتصال
+          أنت تعمل دون اتصال (البيانات معروضة من الذاكرة المحلية)
         </span>
         <span *ngIf="offlineSync.isOnline() && offlineSync.isSyncing()">
           جاري مزامنة البيانات مع الخادم...
         </span>
-        <span *ngIf="offlineSync.isOnline() && !offlineSync.isSyncing() && offlineSync.pendingCount() > 0">
+        <span *ngIf="offlineSync.isOnline() && !offlineSync.isSyncing() && offlineCache.isServingFromCache()">
+          💾 تم استرجاع البيانات من الذاكرة المحلية (Cache)
+        </span>
+        <span *ngIf="offlineSync.isOnline() && !offlineSync.isSyncing() && !offlineCache.isServingFromCache() && offlineSync.pendingCount() > 0">
           متصل بالإنترنت
         </span>
 
@@ -46,6 +52,12 @@ import { OfflineSyncService } from '../../../core/services/offline-sync.service'
           class="px-2 py-0.5 rounded-full text-[10px] font-black"
           [ngClass]="!offlineSync.isOnline() ? 'bg-amber-500/25 text-amber-200' : 'bg-emerald-500/25 text-emerald-200'">
           {{ offlineSync.pendingCount() }} في انتظار المزامنة
+        </span>
+
+        <!-- Cached Items Count Badge (when offline) -->
+        <span *ngIf="!offlineSync.isOnline() && offlineCache.cachedEntriesCount() > 0"
+          class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-200 border border-amber-500/30">
+          {{ offlineCache.cachedEntriesCount() }} صفحة مخزنة محلياً
         </span>
       </div>
 
@@ -70,8 +82,10 @@ import { OfflineSyncService } from '../../../core/services/offline-sync.service'
 })
 export class OfflineIndicatorComponent {
   offlineSync = inject(OfflineSyncService);
+  offlineCache = inject(OfflineCacheService);
 
   manualSync() {
     this.offlineSync.syncAllPending();
   }
 }
+

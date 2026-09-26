@@ -11,8 +11,12 @@
         </div>
         <h1 class="text-2xl lg:text-3xl font-bold text-white">قائمة الطلاب</h1>
         <span class="badge-green">{{ studentCount() }} طالب</span>
-        <span class="px-2.5 py-1 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20 text-xs font-bold flex items-center gap-1">♂ {{ maleCount() }} ذَكَر</span>
-        <span class="px-2.5 py-1 rounded-xl bg-pink-500/15 text-pink-400 border border-pink-500/20 text-xs font-bold flex items-center gap-1">♀ {{ femaleCount() }} أُنْثَى</span>
+        <span
+          class="px-2.5 py-1 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20 text-xs font-bold flex items-center gap-1">♂
+          {{ maleCount() }} ذَكَر</span>
+        <span
+          class="px-2.5 py-1 rounded-xl bg-pink-500/15 text-pink-400 border border-pink-500/20 text-xs font-bold flex items-center gap-1">♀
+          {{ femaleCount() }} أُنْثَى</span>
       </div>
       <p class="text-dark-400 text-sm mr-10">إدارة بيانات طلاب المركز وحلقاتهم</p>
     </div>
@@ -57,7 +61,8 @@
         <select [ngModel]="selectedYearFilter()" (ngModelChange)="selectedYearFilter.set($event); onFilterChange()"
           class="input-field py-2 text-sm">
           <option [ngValue]="null">الكل</option>
-          <option *ngFor="let year of academicYears()" [ngValue]="year.id">{{ year.name }} ({{ getSchoolTypeLabel(year.typeSchool) }})</option>
+          <option *ngFor="let year of academicYears()" [ngValue]="year.id">{{ year.name }} ({{
+            getSchoolTypeLabel(year.typeSchool) }})</option>
         </select>
       </div>
 
@@ -131,13 +136,11 @@
         <h3 class="text-white font-bold text-base mb-2">{{ student.fullName }}</h3>
         <div class="flex items-center gap-2 flex-wrap">
           <span class="text-dark-400 text-xs">{{ student.academicYear ? student.academicYear.name : 'غير محدد' }}</span>
-          <span *ngIf="student.academicYear"
-            [ngClass]="{
+          <span *ngIf="student.academicYear" [ngClass]="{
               'bg-blue-500/10 text-blue-400 border-blue-500/20': student.academicYear.typeSchool === 0,
               'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': student.academicYear.typeSchool === 1,
               'bg-purple-500/10 text-purple-400 border-purple-500/20': student.academicYear.typeSchool === 2
-            }"
-            class="px-2 py-0.5 rounded-full text-[10px] border font-medium">
+            }" class="px-2 py-0.5 rounded-full text-[10px] border font-medium">
             {{ getSchoolTypeLabel(student.academicYear.typeSchool) }}
           </span>
           <span *ngIf="normalizeGender(student.gender)"
@@ -251,14 +254,14 @@
                 class="text-red-500">*</span></label>
             <select [(ngModel)]="newStudent.academicYearId" class="input-field">
               <option [value]="0" disabled>اختر السنة الدراسية...</option>
-              <option *ngFor="let year of academicYears()" [value]="year.id">{{ year.name }} ({{ getSchoolTypeLabel(year.typeSchool) }})</option>
+              <option *ngFor="let year of academicYears()" [value]="year.id">{{ year.name }} ({{
+                getSchoolTypeLabel(year.typeSchool) }})</option>
             </select>
           </div>
 
           <!-- Gender -->
           <div>
-            <label class="block text-sm font-bold text-dark-300 mb-2">النوع <span
-                class="text-red-500">*</span></label>
+            <label class="block text-sm font-bold text-dark-300 mb-2">النوع <span class="text-red-500">*</span></label>
             <select [(ngModel)]="newStudent.gender" class="input-field">
               <option [ngValue]="1">ذَكَر</option>
               <option [ngValue]="2">أُنْثَى</option>

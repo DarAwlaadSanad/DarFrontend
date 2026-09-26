@@ -1,11 +1,13 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { StudentFeeService } from '../../core/services/student-fee.service';
 import { GroupService } from '../../core/services/group.service';
 import { StudentFeeViewDTO, UpdateStudentFeePaymentDTO } from '../../core/models/student-fee.models';
 import { normalizeGender, isMale, getGenderLabel } from '../../core/models/student.models';
 import { AuthService } from '../../core/services/auth.service';
+import { OfflineSyncService } from '../../core/services/offline-sync.service';
 
 const PAGE_SIZE = 10;
 
@@ -32,6 +34,17 @@ const PAGE_SIZE = 10;
             <p class="text-xl font-black text-red-400">{{ totalRemaining() }} <span class="text-xs font-normal">ج.م</span></p>
           </div>
         </div>
+      </div>
+
+      <!-- Offline Notice Banner -->
+      <div *ngIf="!offlineSync.isOnline()" class="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-amber-300 animate-fade-in">
+        <div class="flex items-center gap-2.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0"></span>
+          <span><strong>وضع عدم الاتصال (Offline Mode):</strong> يمكنك متابعة تسجيل الدفعات والإعفاءات بحرية، وستُحفظ محلياً وتُرفع تلقائياً عند عودة الإنترنت.</span>
+        </div>
+        <span *ngIf="offlineSync.pendingCount() > 0" class="px-3 py-1 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-200 font-bold whitespace-nowrap self-start sm:self-auto">
+          {{ offlineSync.pendingCount() }} عمليات قيد المزامنة
+        </span>
       </div>
 
       <!-- Filters Row -->
@@ -142,6 +155,12 @@ const PAGE_SIZE = 10;
                   <div class="flex flex-col items-center gap-1">
                     <span [class]="getStatusClass(fee)" class="px-3 py-1 rounded-full text-[10px] font-bold whitespace-nowrap">
                       {{ getStatusLabel(fee) }}
+                    </span>
+                    <span *ngIf="offlineSync.isFeePending(fee.id)"
+                          class="text-[9px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center gap-1 font-bold animate-pulse"
+                          title="تم الحفظ محلياً - قيد المزامنة فور عودة الاتصال">
+                      <span>⏳</span>
+                      <span>قيد المزامنة</span>
                     </span>
                     <span *ngIf="fee.isExempted && fee.exemptionReason" class="text-[9px] text-blue-300 text-center max-w-[80px] truncate" [title]="fee.exemptionReason">
                       {{ fee.exemptionReason }}
@@ -305,10 +324,13 @@ const PAGE_SIZE = 10;
     </div>
   `,
 })
-export class StudentFeeListComponent implements OnInit {
+export class StudentFeeListComponent implements OnInit, OnDestroy {
   private feeService = inject(StudentFeeService);
   private groupService = inject(GroupService);
-  protected authService = inject(AuthService);
+  public authService = inject(AuthService);
+  public offlineSync = inject(OfflineSyncService);
+
+  private syncSub?: Subscription;
 
   // ─── Data ───────────────────────────────────────────────
   fees = signal<StudentFeeViewDTO[]>([]);
@@ -404,13 +426,42 @@ export class StudentFeeListComponent implements OnInit {
   );
 
   // ─── Lifecycle ──────────────────────────────────────────
-  ngOnInit() { this.loadFees(); }
+  ngOnInit() {
+    this.loadFees();
+    this.syncSub = this.offlineSync.syncCompleted$.subscribe(() => {
+      this.loadFees();
+    });
+  }
+
+  ngOnDestroy() {
+    this.syncSub?.unsubscribe();
+  }
 
   loadFees() {
     this.isLoading.set(true);
+
+    if (!this.offlineSync.isOnline()) {
+      const cached = this.offlineSync.getCachedStudentFees(this.currentMonth(), this.currentYear());
+      if (cached && cached.length > 0) {
+        this.fees.set(cached);
+      }
+      this.isLoading.set(false);
+      return;
+    }
+
     this.feeService.getAllWithoutFilter(this.currentMonth(), this.currentYear()).subscribe({
-      next: (data) => { this.fees.set(data); this.isLoading.set(false); },
-      error: () => this.isLoading.set(false)
+      next: (data) => {
+        this.fees.set(data);
+        this.offlineSync.cacheStudentFees(this.currentMonth(), this.currentYear(), data);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        const cached = this.offlineSync.getCachedStudentFees(this.currentMonth(), this.currentYear());
+        if (cached && cached.length > 0) {
+          this.fees.set(cached);
+        }
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -447,16 +498,73 @@ export class StudentFeeListComponent implements OnInit {
 
   submitExempt() {
     const fee = this.selectedFeeForExempt();
-    if (!fee || !this.exemptionReason()) return;
-    this.feeService.exemptStudent(fee.id, { reason: this.exemptionReason() }).subscribe({
-      next: () => { this.selectedFeeForExempt.set(null); this.loadFees(); }
+    const reason = this.exemptionReason();
+    if (!fee || !reason) return;
+
+    const applyLocalExempt = () => {
+      this.fees.update(list => list.map(f => {
+        if (f.id === fee.id) {
+          return {
+            ...f,
+            isExempted: true,
+            exemptionReason: reason
+          };
+        }
+        return f;
+      }));
+      this.offlineSync.cacheStudentFees(this.currentMonth(), this.currentYear(), this.fees());
+      this.selectedFeeForExempt.set(null);
+    };
+
+    if (!this.offlineSync.isOnline()) {
+      this.offlineSync.enqueueFeeExemption(fee.id, { reason }, fee.studentName);
+      applyLocalExempt();
+      return;
+    }
+
+    this.feeService.exemptStudent(fee.id, { reason }).subscribe({
+      next: () => {
+        this.selectedFeeForExempt.set(null);
+        this.loadFees();
+      },
+      error: (err) => {
+        if (!navigator.onLine || err.status === 0) {
+          this.offlineSync.enqueueFeeExemption(fee.id, { reason }, fee.studentName);
+          applyLocalExempt();
+        }
+      }
     });
   }
 
   cancelExemption(fee: StudentFeeViewDTO) {
+    const applyLocalCancel = () => {
+      this.fees.update(list => list.map(f => {
+        if (f.id === fee.id) {
+          return {
+            ...f,
+            isExempted: false,
+            exemptionReason: undefined
+          };
+        }
+        return f;
+      }));
+      this.offlineSync.cacheStudentFees(this.currentMonth(), this.currentYear(), this.fees());
+    };
+
+    if (!this.offlineSync.isOnline()) {
+      this.offlineSync.enqueueCancelExemption(fee.id, fee.studentName);
+      applyLocalCancel();
+      return;
+    }
+
     this.feeService.cancelExemption(fee.id).subscribe({
       next: () => this.loadFees(),
-      error: () => {}
+      error: (err) => {
+        if (!navigator.onLine || err.status === 0) {
+          this.offlineSync.enqueueCancelExemption(fee.id, fee.studentName);
+          applyLocalCancel();
+        }
+      }
     });
   }
 
@@ -484,9 +592,38 @@ export class StudentFeeListComponent implements OnInit {
       paymentDate: this.paymentDateStr() || undefined
     };
 
+    const applyLocalPayment = () => {
+      this.fees.update(list => list.map(f => {
+        if (f.id === fee.id) {
+          return {
+            ...f,
+            amountPaid: amount,
+            paymentDate: dto.paymentDate || new Date().toISOString()
+          };
+        }
+        return f;
+      }));
+      this.offlineSync.cacheStudentFees(this.currentMonth(), this.currentYear(), this.fees());
+      this.closePaymentModal();
+    };
+
+    if (!this.offlineSync.isOnline()) {
+      this.offlineSync.enqueueFeePayment(fee.id, dto, fee.studentName);
+      applyLocalPayment();
+      return;
+    }
+
     this.feeService.updatePayment(fee.id, dto).subscribe({
-      next: () => { this.closePaymentModal(); this.loadFees(); },
-      error: () => {}
+      next: () => {
+        this.closePaymentModal();
+        this.loadFees();
+      },
+      error: (err) => {
+        if (!navigator.onLine || err.status === 0) {
+          this.offlineSync.enqueueFeePayment(fee.id, dto, fee.studentName);
+          applyLocalPayment();
+        }
+      }
     });
   }
 

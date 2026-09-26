@@ -17,6 +17,7 @@ import { AuthService } from '../../core/services/auth.service';
 import { StudentService } from '../../core/services/student.service';
 import { ChatMessageDTO, ChatRoomDTO } from '../../core/models/chat.models';
 import { StudentDetailsDTO } from '../../core/models/student.models';
+import { formatEgyptTime, formatEgyptDateKey, parseServerDate } from '../../core/utils/date-time.util';
 import { firstValueFrom } from 'rxjs';
 
 interface MessageGroup {
@@ -117,15 +118,23 @@ export class GroupChatComponent implements OnInit, OnDestroy {
     );
   });
 
-  // Filtered student rooms
+  // Filtered student rooms: always sorted with the most recent communication at the top
   filteredStudentRooms = computed(() => {
     const list = this.chatService.studentRooms();
     const query = this.studentSearchQuery().trim().toLowerCase();
-    if (!query) return list;
-    return list.filter(r =>
+    const filtered = !query ? list : list.filter(r =>
       (r.name && r.name.toLowerCase().includes(query)) ||
       (r.studentName && r.studentName.toLowerCase().includes(query))
     );
+
+    return [...filtered].sort((a, b) => {
+      const timeA = a.lastMessage?.sentAt ? parseServerDate(a.lastMessage.sentAt).getTime() : 0;
+      const timeB = b.lastMessage?.sentAt ? parseServerDate(b.lastMessage.sentAt).getTime() : 0;
+      if (timeB !== timeA) {
+        return timeB - timeA; // Latest communicated chat at the top
+      }
+      return (a.studentName || a.name || '').localeCompare(b.studentName || b.name || '', 'ar');
+    });
   });
 
   // Total unread count across all student chats
@@ -444,41 +453,10 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   }
 
   formatTime(dateStr: string): string {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('ar-EG', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    return formatEgyptTime(dateStr);
   }
 
   private formatDateKey(dateStr: string): string {
-    if (!dateStr) return 'غير محدد';
-    const date = new Date(dateStr);
-    const now = new Date();
-
-    const isToday =
-      date.getDate() === now.getDate() &&
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear();
-
-    if (isToday) return 'اليوم';
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday =
-      date.getDate() === yesterday.getDate() &&
-      date.getMonth() === yesterday.getMonth() &&
-      date.getFullYear() === yesterday.getFullYear();
-
-    if (isYesterday) return 'أمس';
-
-    return date.toLocaleDateString('ar-EG', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    return formatEgyptDateKey(dateStr);
   }
 }

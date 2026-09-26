@@ -7,6 +7,7 @@ import { NotificationDTO } from '../../core/models/notification.models';
 import { ThemeService } from '../../core/services/theme.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { ChatService } from '../../core/services/chat.service';
+import { formatEgyptDateTime } from '../../core/utils/date-time.util';
 
 export interface NavItem {
   label: string;
@@ -34,6 +35,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isNotificationOpen = signal(false);
   isMobile = signal(window.innerWidth < 1024);
   openSubmenus = signal<{ [key: string]: boolean }>({});
+
+  formatEgyptDateTime = formatEgyptDateTime;
 
   navItems: NavItem[] = [];
 

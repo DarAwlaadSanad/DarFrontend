@@ -49,7 +49,7 @@ import { UserProfileDTO, UpdateProfileDTO, ChangePasswordDTO } from '../../core/
                 <img *ngIf="profile()?.profilePictureUrl"
                      [src]="profile()?.profilePictureUrl"
                      [alt]="profile()?.fullName"
-                     class="w-full h-full object-cover">
+                     class="w-full h-full object-contain">
 
                 <div *ngIf="!profile()?.profilePictureUrl"
                      class="w-full h-full bg-gradient-to-br from-primary-700 via-primary-800 to-dark-900 flex items-center justify-center text-white text-4xl font-bold uppercase select-none">

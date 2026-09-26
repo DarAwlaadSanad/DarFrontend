@@ -5,6 +5,7 @@ import { catchError } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { StudentWarningService } from '../../../core/services/student-warning.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { formatEgyptTime } from '../../../core/utils/date-time.util';
 import {
   StudentWarningViewDTO,
   WarningType,
@@ -233,7 +234,7 @@ import {
               </div>
 
               <div class="text-[11px] text-dark-500 font-mono">
-                {{ w.createdAt | date:'HH:mm' }}
+                {{ formatEgyptTime(w.createdAt) }}
               </div>
             </div>
 
@@ -248,6 +249,8 @@ import {
 export class StudentWarningsComponent implements OnInit {
   private warningService = inject(StudentWarningService);
   private authService = inject(AuthService);
+
+  formatEgyptTime = formatEgyptTime;
 
   warnings = signal<StudentWarningViewDTO[]>([]);
   isLoading = signal(true);

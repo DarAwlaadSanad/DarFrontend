@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../../core/services/chat.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ChatMessageDTO } from '../../../core/models/chat.models';
+import { formatEgyptTime, formatEgyptDateKey } from '../../../core/utils/date-time.util';
 import { firstValueFrom } from 'rxjs';
 
 interface MessageGroup {
@@ -210,41 +211,10 @@ export class StudentChatComponent implements OnInit, OnDestroy {
   }
 
   formatTime(dateStr: string): string {
-    if (!dateStr) return '';
-    const date = new Date(dateStr);
-    return date.toLocaleTimeString('ar-EG', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
+    return formatEgyptTime(dateStr);
   }
 
   private formatDateKey(dateStr: string): string {
-    if (!dateStr) return 'غير محدد';
-    const date = new Date(dateStr);
-    const now = new Date();
-
-    const isToday =
-      date.getDate() === now.getDate() &&
-      date.getMonth() === now.getMonth() &&
-      date.getFullYear() === now.getFullYear();
-
-    if (isToday) return 'اليوم';
-
-    const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    const isYesterday =
-      date.getDate() === yesterday.getDate() &&
-      date.getMonth() === yesterday.getMonth() &&
-      date.getFullYear() === yesterday.getFullYear();
-
-    if (isYesterday) return 'أمس';
-
-    return date.toLocaleDateString('ar-EG', {
-      weekday: 'long',
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric'
-    });
+    return formatEgyptDateKey(dateStr);
   }
 }

@@ -1,8 +1,16 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, catchError, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { TeacherAttendanceRecordDTO, CheckInResponseDTO, CheckOutResponseDTO, MarkTeacherAbsentDTO, TodayAttendanceStatusDTO } from '../models/teacher-attendance.models';
+import { 
+  TeacherAttendanceRecordDTO, 
+  CheckInResponseDTO, 
+  CheckOutResponseDTO, 
+  MarkTeacherAbsentDTO, 
+  TodayAttendanceStatusDTO,
+  TeacherAttendancePagedResultDTO,
+  TeacherAttendanceFilterParams
+} from '../models/teacher-attendance.models';
 
 export interface TeacherMonthlyAttendanceReportDTO {
   teacherId: string;
@@ -77,5 +85,35 @@ export class TeacherAttendanceService {
 
   getMonthlyReport(year: number, month: number): Observable<TeacherMonthlyAttendanceReportDTO[]> {
     return this.http.get<TeacherMonthlyAttendanceReportDTO[]>(`${this.apiUrl}/monthly-report?year=${year}&month=${month}`);
+  }
+
+  getAttendanceHistory(params: TeacherAttendanceFilterParams = {}): Observable<TeacherAttendancePagedResultDTO> {
+    let httpParams = new HttpParams();
+    if (params.page !== undefined && params.page !== null) {
+      httpParams = httpParams.set('page', params.page.toString());
+    }
+    if (params.pageSize !== undefined && params.pageSize !== null) {
+      httpParams = httpParams.set('pageSize', params.pageSize.toString());
+    }
+    if (params.teacherId) {
+      httpParams = httpParams.set('teacherId', params.teacherId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('fromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('toDate', params.toDate);
+    }
+    if (params.isAbsent !== undefined && params.isAbsent !== null) {
+      httpParams = httpParams.set('isAbsent', params.isAbsent.toString());
+    }
+    if (params.hasDelay !== undefined && params.hasDelay !== null) {
+      httpParams = httpParams.set('hasDelay', params.hasDelay.toString());
+    }
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('search', params.search.trim());
+    }
+
+    return this.http.get<TeacherAttendancePagedResultDTO>(`${this.apiUrl}/history`, { params: httpParams });
   }
 }
