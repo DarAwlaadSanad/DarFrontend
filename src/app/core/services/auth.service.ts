@@ -32,7 +32,24 @@ export class AuthService {
   });
   isStudent = computed(() => this.userRoles().includes('Student'));
   isTeacher = computed(() => this.userRoles().includes('Teacher'));
-  studentId = computed(() => this.authState()?.studentId);
+  userId = computed<string | undefined>(() => {
+    const token = this.authState()?.token;
+    if (!token) return undefined;
+    const decoded = this.decodeToken(token);
+    return decoded?.['sub'] ||
+           decoded?.['nameid'] ||
+           decoded?.['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] ||
+           undefined;
+  });
+  studentId = computed(() => {
+    const directId = this.authState()?.studentId;
+    if (directId) return Number(directId);
+    const token = this.authState()?.token;
+    if (!token) return undefined;
+    const decoded = this.decodeToken(token);
+    const sId = decoded?.['studentId'];
+    return sId ? Number(sId) : undefined;
+  });
 
   userPermissions = computed(() => {
     const token = this.authState()?.token;

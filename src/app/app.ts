@@ -2,6 +2,7 @@ import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UiService } from './core/services/ui.service';
+import { ThemeService } from './core/services/theme.service';
 
 @Component({
   selector: 'app-root',
@@ -50,5 +51,6 @@ import { UiService } from './core/services/ui.service';
 })
 export class App {
   ui = inject(UiService);
+  theme = inject(ThemeService);
 }
 

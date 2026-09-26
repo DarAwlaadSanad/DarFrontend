@@ -52,6 +52,16 @@ export const routes: Routes = [
           import('./features/students/student-detail/student-detail.component').then(m => m.StudentDetailComponent),
       },
       {
+        path: 'warnings',
+        loadComponent: () =>
+          import('./features/warnings/warning-list.component').then(m => m.WarningListComponent),
+      },
+      {
+        path: 'chat',
+        loadComponent: () =>
+          import('./features/chat/group-chat.component').then(m => m.GroupChatComponent),
+      },
+      {
         path: 'users',
         loadComponent: () =>
           import('./features/users/user-list/user-list.component').then(m => m.UserListComponent),
@@ -161,9 +171,19 @@ export const routes: Routes = [
           import('./features/student-portal/group-details/student-group-details.component').then(m => m.StudentGroupDetailsComponent),
       },
       {
+        path: 'chat',
+        loadComponent: () =>
+          import('./features/student-portal/chat/student-chat.component').then(m => m.StudentChatComponent),
+      },
+      {
         path: 'profile',
         loadComponent: () =>
           import('./features/student-portal/profile/student-profile.component').then(m => m.StudentProfileComponent),
+      },
+      {
+        path: 'warnings',
+        loadComponent: () =>
+          import('./features/student-portal/warnings/student-warnings.component').then(m => m.StudentWarningsComponent),
       },
       {
         path: 'change-password',

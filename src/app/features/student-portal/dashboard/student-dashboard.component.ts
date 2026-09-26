@@ -11,6 +11,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { ExamResultDTO } from '../../../core/models/exam.models';
 import { GroupScheduleViewDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
+import { StudentWarningService } from '../../../core/services/student-warning.service';
+import { StudentWarningViewDTO } from '../../../core/models/student-warning.models';
 
 interface TodaySession {
   groupId: number;
@@ -27,75 +29,128 @@ interface TodaySession {
     <div class="space-y-8 animate-fade-in" dir="rtl">
 
       <!-- Welcome Banner -->
-      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-900 p-8 lg:p-12 shadow-2xl">
-        <div class="relative z-10 flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <p class="text-primary-200 text-sm font-semibold mb-1 tracking-wider uppercase">بوابة الطالب</p>
-            <h1 class="text-3xl lg:text-4xl font-black text-white mb-2">مرحباً، {{ authService.currentUser()?.fullName || 'طالبنا العزيز' }} 👋</h1>
-            <p class="text-primary-100 text-base opacity-80 max-w-xl">
-              إليك ملخص أدائك ومواعيد حلقاتك. استمر في التقدم والتميز في رحلتك مع القرآن الكريم.
+      <div class="relative overflow-hidden rounded-3xl bg-gradient-to-l from-dark-900 via-dark-850 to-emerald-950/70 border border-emerald-500/20 p-6 lg:p-10 shadow-2xl backdrop-blur-xl">
+        <!-- Ambient background glows -->
+        <div class="absolute -top-24 -left-20 w-80 h-80 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-24 -right-16 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute top-1/2 left-1/3 w-60 h-60 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
+        
+        <div class="relative z-10 flex items-center justify-between flex-wrap gap-6">
+          <div class="space-y-3">
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold tracking-wide">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              بوابة الطالب القرآنية
+            </div>
+            
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black text-white tracking-tight flex items-center gap-2.5">
+              مرحباً، {{ authService.currentUser()?.fullName || 'طالبنا العزيز' }}
+              <span class="inline-block hover:rotate-12 transition-transform cursor-default">👋</span>
+            </h1>
+            
+            <p class="text-dark-300 text-sm sm:text-base leading-relaxed max-w-2xl font-medium">
+              نسعد بمتابعتك المستمرة في رحاب القرآن الكريم. تابع حلقاتك ودرجاتك وملاحظاتك وانطلق نحو التميز.
             </p>
           </div>
-          <div class="text-left hidden lg:block">
-            <p class="text-primary-300 text-xs mb-1">اليوم</p>
-            <p class="text-white text-2xl font-black">{{ todayDateStr }}</p>
+
+          <!-- Date & Quick Status Badge -->
+          <div class="text-left hidden lg:flex flex-col items-end gap-2 bg-dark-900/60 border border-dark-700/60 p-4 rounded-2xl backdrop-blur-md">
+            <div class="flex items-center gap-2 text-dark-400 text-xs font-medium">
+              <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span>تاريخ اليوم</span>
+            </div>
+            <p class="text-white text-lg font-black tracking-tight">{{ todayDateStr }}</p>
+            <div *ngIf="warnings().length === 0" class="flex items-center gap-1.5 text-[11px] text-emerald-400 font-bold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+              سجل منضبط وخالٍ من الإنذارات
+            </div>
+            <div *ngIf="warnings().length > 0" class="flex items-center gap-1.5 text-[11px] text-amber-400 font-bold">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+              لديك {{ warnings().length }} إنذار مسجل
+            </div>
           </div>
         </div>
-        <!-- Decorative blobs -->
-        <div class="absolute -top-16 -left-16 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute -bottom-20 -right-12 w-80 h-80 bg-primary-400/20 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute top-1/2 left-1/3 w-40 h-40 bg-white/5 rounded-full blur-2xl pointer-events-none"></div>
       </div>
 
       <!-- Stats Row -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="glass-card p-5 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-primary-500/20 flex items-center justify-center shrink-0">
-            <svg class="w-6 h-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
+        
+        <!-- حلقات الطالب -->
+        <div class="glass-card p-4 sm:p-5 flex items-center gap-3.5 hover:border-emerald-500/40 transition-all duration-300 group">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-emerald-500/20 transition-all duration-300">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
           </div>
-          <div>
-            <p class="text-2xl font-black text-white">{{ groups().length }}</p>
-            <p class="text-xs text-dark-400 font-medium">حلقاتي</p>
+          <div class="min-w-0">
+            <p class="text-2xl font-black text-white group-hover:text-emerald-400 transition-colors">{{ groups().length }}</p>
+            <p class="text-xs text-dark-400 font-medium truncate">حلقاتي القرآنية</p>
           </div>
         </div>
-        <div class="glass-card p-5 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center shrink-0">
-            <svg class="w-6 h-6 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+
+        <!-- الاختبارات -->
+        <div class="glass-card p-4 sm:p-5 flex items-center gap-3.5 hover:border-blue-500/40 transition-all duration-300 group">
+          <div class="w-12 h-12 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-blue-500/20 transition-all duration-300">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
             </svg>
           </div>
-          <div>
-            <p class="text-2xl font-black text-white">{{ examResults().length }}</p>
-            <p class="text-xs text-dark-400 font-medium">اختبارات</p>
+          <div class="min-w-0">
+            <p class="text-2xl font-black text-white group-hover:text-blue-400 transition-colors">{{ examResults().length }}</p>
+            <p class="text-xs text-dark-400 font-medium truncate">اختبارات منجزة</p>
           </div>
         </div>
-        <div class="glass-card p-5 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center shrink-0">
-            <svg class="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+
+        <!-- المسابقات -->
+        <div class="glass-card p-4 sm:p-5 flex items-center gap-3.5 hover:border-amber-500/40 transition-all duration-300 group">
+          <div class="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-amber-500/20 transition-all duration-300">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
             </svg>
           </div>
-          <div>
-            <p class="text-2xl font-black text-white">{{ competitions().length }}</p>
-            <p class="text-xs text-dark-400 font-medium">مسابقات</p>
+          <div class="min-w-0">
+            <p class="text-2xl font-black text-white group-hover:text-amber-400 transition-colors">{{ competitions().length }}</p>
+            <p class="text-xs text-dark-400 font-medium truncate">المسابقات</p>
           </div>
         </div>
-        <div class="glass-card p-5 flex items-center gap-4">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0"
-               [class]="todaySessions().length > 0 ? 'bg-primary-500/20' : 'bg-dark-800'">
-            <svg class="w-6 h-6" [class]="todaySessions().length > 0 ? 'text-primary-400' : 'text-dark-500'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+
+        <!-- حصص اليوم -->
+        <div class="glass-card p-4 sm:p-5 flex items-center gap-3.5 hover:border-purple-500/40 transition-all duration-300 group">
+          <div class="w-12 h-12 rounded-2xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center shrink-0 group-hover:scale-105 group-hover:bg-purple-500/20 transition-all duration-300">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <div>
-            <p class="text-2xl font-black" [class]="todaySessions().length > 0 ? 'text-primary-400' : 'text-white'">
-              {{ todaySessions().length }}
+          <div class="min-w-0">
+            <p class="text-2xl font-black text-white group-hover:text-purple-400 transition-colors">{{ todaySessions().length }}</p>
+            <p class="text-xs text-dark-400 font-medium truncate">حصص اليوم</p>
+          </div>
+        </div>
+
+        <!-- الإنذارات -->
+        <a [routerLink]="['/student/warnings']"
+           class="glass-card p-4 sm:p-5 flex items-center gap-3.5 cursor-pointer transition-all duration-300 group col-span-2 sm:col-span-1 block"
+           [ngClass]="warnings().length > 0 ? 'hover:border-amber-500/50 bg-amber-500/5' : 'hover:border-emerald-500/50'">
+          <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 group-hover:scale-105"
+               [ngClass]="warnings().length > 0 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'">
+            <svg *ngIf="warnings().length > 0" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <svg *ngIf="warnings().length === 0" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <p class="text-2xl font-black transition-colors" [ngClass]="warnings().length > 0 ? 'text-amber-400' : 'text-emerald-400'">
+              {{ warnings().length }}
             </p>
-            <p class="text-xs text-dark-400 font-medium">حصص اليوم</p>
+            <p class="text-xs font-medium truncate" [ngClass]="warnings().length > 0 ? 'text-amber-300/80' : 'text-dark-400'">
+              {{ warnings().length > 0 ? 'إنذارات مسجلة' : 'سجل الإنذارات' }}
+            </p>
           </div>
-        </div>
+        </a>
+
       </div>
 
       <!-- Loading -->
@@ -105,6 +160,34 @@ interface TodaySession {
       </div>
 
       <div *ngIf="!isLoading()" class="space-y-8">
+
+        <!-- Compact Alert Banner when warnings exist -->
+        <div *ngIf="warnings().length > 0"
+             class="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 backdrop-blur-sm">
+          <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0 shadow-lg shadow-amber-500/10">
+              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="text-sm sm:text-base font-bold text-white">تنبيه: يوجد إنذار مسجل في ملفك</h3>
+                <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+                  {{ warnings().length }} إنذار
+                </span>
+              </div>
+              <p class="text-xs text-dark-300 mt-0.5 leading-relaxed">
+                يرجى مراجعة صفحة الإنذارات والحرص على الالتزام بحلقات القرآن الكريم.
+              </p>
+            </div>
+          </div>
+          <a routerLink="/student/warnings"
+             class="btn-secondary self-start sm:self-center py-2 px-5 text-xs font-bold text-amber-300 border-amber-500/30 hover:bg-amber-500/20 hover:text-white transition-all shrink-0 flex items-center gap-1.5 shadow-sm">
+            <span>الانتقال لصفحة الإنذارات</span>
+            <svg class="w-3.5 h-3.5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+          </a>
+        </div>
 
         <!-- Today's Sessions -->
         <div *ngIf="todaySessions().length > 0">
@@ -137,15 +220,15 @@ interface TodaySession {
           </div>
         </div>
 
-        <!-- No session today -->
+        <!-- No session today note -->
         <div *ngIf="todaySessions().length === 0 && groups().length > 0"
-             class="glass-card p-5 flex items-center gap-4 border-dashed">
-          <div class="w-10 h-10 rounded-xl bg-dark-800 flex items-center justify-center shrink-0">
-            <svg class="w-5 h-5 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             class="p-4 rounded-2xl bg-dark-900/60 border border-dark-800/80 flex items-center gap-3 text-dark-300 text-xs backdrop-blur-sm">
+          <div class="w-8 h-8 rounded-xl bg-dark-800 border border-dark-700/60 text-emerald-400 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <p class="text-dark-400 text-sm">لا توجد حصص مجدولة اليوم. استرح واستعد لغد أفضل! 😊</p>
+          <p class="leading-relaxed">لا توجد حصص مجدولة لك اليوم. استثمر وقتك في مراجعة وتثبيت محفوظك القرآني. ✨</p>
         </div>
 
         <!-- My Groups -->
@@ -333,12 +416,14 @@ export class StudentDashboardComponent implements OnInit {
   private examService = inject(ExamService);
   private competitionService = inject(CompetitionService);
   private scheduleService = inject(ScheduleService);
+  private warningService = inject(StudentWarningService);
   authService = inject(AuthService);
 
   groups = signal<GroupCardDTO[]>([]);
   examResults = signal<ExamResultDTO[]>([]);
   competitions = signal<StudentCompetitionResult[]>([]);
   todaySessions = signal<TodaySession[]>([]);
+  warnings = signal<StudentWarningViewDTO[]>([]);
   isLoading = signal(true);
 
   readonly todayDateStr = new Date().toLocaleDateString('ar-EG', {
@@ -352,10 +437,6 @@ export class StudentDashboardComponent implements OnInit {
   loadData() {
     this.isLoading.set(true);
     const studentId = this.authService.studentId();
-    if (!studentId) {
-      this.isLoading.set(false);
-      return;
-    }
 
     // Load groups first, then schedules for those groups
     this.studentService.getPortalGroups().subscribe({
@@ -366,13 +447,30 @@ export class StudentDashboardComponent implements OnInit {
       error: () => {}
     });
 
+    const examsObs = studentId
+      ? this.examService.getStudentResults(studentId).pipe(catchError(() => of([])))
+      : of([]);
+    const compsObs = studentId
+      ? this.competitionService.getStudentCompetitions(studentId).pipe(catchError(() => of([])))
+      : of([]);
+    const warnsObs = this.warningService.getMyWarnings().pipe(
+      catchError(() => {
+        if (studentId) {
+          return this.warningService.getByStudentId(studentId).pipe(catchError(() => of([])));
+        }
+        return of([] as StudentWarningViewDTO[]);
+      })
+    );
+
     forkJoin({
-      exams: this.examService.getStudentResults(studentId).pipe(catchError(() => of([]))),
-      comps: this.competitionService.getStudentCompetitions(studentId).pipe(catchError(() => of([]))),
+      exams: examsObs,
+      comps: compsObs,
+      warns: warnsObs
     }).subscribe({
-      next: ({ exams, comps }) => {
+      next: ({ exams, comps, warns }) => {
         this.examResults.set(exams);
         this.competitions.set(comps);
+        this.warnings.set(warns);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)

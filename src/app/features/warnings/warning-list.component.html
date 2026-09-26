@@ -1,0 +1,514 @@
+<div class="space-y-6 animate-fade-in" dir="rtl">
+
+  <!-- ── Top Header ────────────────────────────────────────────────────────── -->
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-white flex items-center gap-3">
+        <span class="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/5">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </span>
+        سجل الإنذارات والمخالفات
+      </h1>
+      <p class="text-dark-400 text-xs mt-1">متابعة وإدارة إنذارات الطلاب (غياب - شغب - عدم حفظ) وتوثيق الإجراءات التأديبية</p>
+    </div>
+
+    <!-- Main Action Button -->
+    <button (click)="openAddModal()"
+      class="btn-primary py-2.5 px-5 flex items-center gap-2 text-sm shadow-xl shadow-primary-500/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+      </svg>
+      <span>إعطاء إنذار لطالب</span>
+    </button>
+  </div>
+
+  <!-- ── Summary KPI Cards ─────────────────────────────────────────────────── -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Total -->
+    <div (click)="setTypeFilter(null)"
+      [class]="selectedType() === null ? 'border-primary-500/50 bg-primary-500/5' : 'hover:border-dark-700'"
+      class="glass-card p-5 border cursor-pointer transition-all duration-300 group">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-dark-400">إجمالي الإنذارات</span>
+        <div class="w-8 h-8 rounded-xl bg-dark-800 text-dark-400 group-hover:text-primary-400 flex items-center justify-center transition-colors">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black text-white">{{ summary().totalCount }}</span>
+        <span class="text-[11px] text-dark-500">إنذار مسجل</span>
+      </div>
+    </div>
+
+    <!-- غياب -->
+    <div (click)="setTypeFilter(WarningType.Absence)"
+      [class]="selectedType() === WarningType.Absence ? 'border-amber-500/50 bg-amber-500/5' : 'hover:border-dark-700'"
+      class="glass-card p-5 border cursor-pointer transition-all duration-300 group">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-amber-400">إنذارات الغياب</span>
+        <div class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black text-amber-300">{{ summary().absenceCount }}</span>
+        <span class="text-[11px] text-dark-500">مخالفة غياب</span>
+      </div>
+    </div>
+
+    <!-- شغب -->
+    <div (click)="setTypeFilter(WarningType.Misbehavior)"
+      [class]="selectedType() === WarningType.Misbehavior ? 'border-red-500/50 bg-red-500/5' : 'hover:border-dark-700'"
+      class="glass-card p-5 border cursor-pointer transition-all duration-300 group">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-red-400">إنذارات الشغب</span>
+        <div class="w-8 h-8 rounded-xl bg-red-500/10 text-red-400 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black text-red-300">{{ summary().misbehaviorCount }}</span>
+        <span class="text-[11px] text-dark-500">مخالفة سلوكية</span>
+      </div>
+    </div>
+
+    <!-- عدم حفظ -->
+    <div (click)="setTypeFilter(WarningType.NotMemorized)"
+      [class]="selectedType() === WarningType.NotMemorized ? 'border-purple-500/50 bg-purple-500/5' : 'hover:border-dark-700'"
+      class="glass-card p-5 border cursor-pointer transition-all duration-300 group">
+      <div class="flex items-center justify-between">
+        <span class="text-xs font-bold text-purple-400">إنذارات عدم الحفظ</span>
+        <div class="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        </div>
+      </div>
+      <div class="mt-3 flex items-baseline gap-2">
+        <span class="text-2xl font-black text-purple-300">{{ summary().notMemorizedCount }}</span>
+        <span class="text-[11px] text-dark-500">تقصير في الحفظ</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Filter & Search Toolbar ────────────────────────────────────────────── -->
+  <div class="glass-card p-4 border-dark-800 space-y-4">
+    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+      
+      <!-- Type Filter Pills -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <button (click)="setTypeFilter(null)"
+          [class]="selectedType() === null ? 'bg-primary-500 text-white font-bold' : 'bg-dark-800 text-dark-400 hover:text-white'"
+          class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-colors">
+          الكل ({{ summary().totalCount }})
+        </button>
+        <button (click)="setTypeFilter(WarningType.Absence)"
+          [class]="selectedType() === WarningType.Absence ? 'bg-amber-500 text-black font-bold' : 'bg-dark-800 text-dark-400 hover:text-amber-300'"
+          class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-colors flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          غياب ({{ summary().absenceCount }})
+        </button>
+        <button (click)="setTypeFilter(WarningType.Misbehavior)"
+          [class]="selectedType() === WarningType.Misbehavior ? 'bg-red-500 text-white font-bold' : 'bg-dark-800 text-dark-400 hover:text-red-300'"
+          class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-colors flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-400"></span>
+          شغب ({{ summary().misbehaviorCount }})
+        </button>
+        <button (click)="setTypeFilter(WarningType.NotMemorized)"
+          [class]="selectedType() === WarningType.NotMemorized ? 'bg-purple-500 text-white font-bold' : 'bg-dark-800 text-dark-400 hover:text-purple-300'"
+          class="px-3 py-1.5 rounded-xl text-xs whitespace-nowrap transition-colors flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+          عدم حفظ ({{ summary().notMemorizedCount }})
+        </button>
+      </div>
+
+      <!-- Quick Search -->
+      <div class="relative flex-1 max-w-md">
+        <input type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event); onFilterChange()"
+          placeholder="ابحث باسم الطالب، الكود، أو السبب..."
+          class="input-field py-2 pr-9 pl-4 text-xs w-full">
+        <svg class="w-4 h-4 text-dark-400 absolute right-3 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Secondary Filters (Group, Dates) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-dark-800/80">
+      <!-- Group Filter -->
+      <div>
+        <label class="block text-[11px] font-bold text-dark-400 mb-1">تصفية حسب الحلقة</label>
+        <select [ngModel]="selectedGroupId()" (ngModelChange)="selectedGroupId.set($event); onFilterChange()"
+          class="input-field py-1.5 text-xs">
+          <option [ngValue]="null">جميع الحلقات</option>
+          <option *ngFor="let g of allGroups()" [ngValue]="g.id">{{ g.name }}</option>
+        </select>
+      </div>
+
+      <!-- From Date -->
+      <div>
+        <label class="block text-[11px] font-bold text-dark-400 mb-1">من تاريخ</label>
+        <input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event); onFilterChange()"
+          class="input-field py-1.5 text-xs">
+      </div>
+
+      <!-- To Date + Reset -->
+      <div class="flex items-end gap-2">
+        <div class="flex-1">
+          <label class="block text-[11px] font-bold text-dark-400 mb-1">إلى تاريخ</label>
+          <input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event); onFilterChange()"
+            class="input-field py-1.5 text-xs">
+        </div>
+        <button (click)="resetFilters()"
+          class="btn-secondary py-1.5 px-3 text-xs flex items-center gap-1 text-dark-400 hover:text-white"
+          title="إعادة تعيين الفلاتر">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span class="hidden sm:inline">مسح</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Table of Warnings ─────────────────────────────────────────────────── -->
+  <div class="glass-card overflow-hidden border-dark-800">
+    <!-- Loading State -->
+    <div *ngIf="isLoading()" class="flex flex-col items-center justify-center py-20 gap-3">
+      <div class="w-9 h-9 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
+      <p class="text-dark-400 text-xs animate-pulse">جارٍ تحميل قائمة الإنذارات...</p>
+    </div>
+
+    <!-- Data Table -->
+    <div *ngIf="!isLoading()" class="overflow-x-auto">
+      <table class="w-full text-right border-collapse">
+        <thead class="bg-dark-900/80 border-b border-dark-800">
+          <tr>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400">الطالب</th>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400">نوع الإنذار</th>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400">تاريخ الإنذار</th>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400">التفاصيل والسبب</th>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400">الحلقة</th>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400">المسجل</th>
+            <th class="px-6 py-3.5 text-xs font-bold text-dark-400 text-center">إجراءات</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-dark-800/60">
+          <tr *ngFor="let warn of warnings()" class="hover:bg-dark-800/40 transition-colors group">
+            
+            <!-- Student Info -->
+            <td class="px-6 py-4">
+              <a [routerLink]="['/dashboard/students', warn.studentId]"
+                class="flex items-center gap-2.5 text-white hover:text-primary-400 font-bold transition-colors">
+                <span class="w-8 h-8 rounded-xl bg-gradient-to-br from-primary-600 to-primary-900 flex items-center justify-center text-xs font-black text-white shadow-inner">
+                  {{ warn.studentName.charAt(0) }}
+                </span>
+                <div>
+                  <div class="text-sm font-bold">{{ warn.studentName }}</div>
+                  <div class="text-[10px] text-dark-400 font-mono">#{{ warn.studentCode }}</div>
+                </div>
+              </a>
+            </td>
+
+            <!-- Warning Type Badge -->
+            <td class="px-6 py-4">
+              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold"
+                [ngClass]="getWarningTypeBadgeClass(warn.warningType)">
+                <span class="w-1.5 h-1.5 rounded-full"
+                  [ngClass]="getWarningTypeDotClass(warn.warningType)"></span>
+                {{ getWarningTypeLabel(warn.warningType) }}
+              </span>
+            </td>
+
+            <!-- Date -->
+            <td class="px-6 py-4">
+              <div class="text-xs text-white font-mono">{{ warn.date | date:'yyyy/MM/dd' }}</div>
+            </td>
+
+            <!-- Reason -->
+            <td class="px-6 py-4">
+              <div class="text-xs text-dark-300 font-medium max-w-sm break-words leading-relaxed">
+                {{ warn.reason || '---' }}
+              </div>
+            </td>
+
+            <!-- Group -->
+            <td class="px-6 py-4">
+              <span class="text-xs text-dark-300 font-medium">{{ warn.groupName || '---' }}</span>
+            </td>
+
+            <!-- Created By -->
+            <td class="px-6 py-4">
+              <span class="text-xs text-dark-400">{{ warn.createdByName || 'النظام' }}</span>
+            </td>
+
+            <!-- Actions -->
+            <td class="px-6 py-4 text-center">
+              <div class="flex items-center justify-center gap-1">
+                <a [routerLink]="['/dashboard/students', warn.studentId]"
+                  class="p-1.5 rounded-lg text-dark-400 hover:text-primary-400 hover:bg-dark-700 transition-colors"
+                  title="عرض ملف الطالب">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  </svg>
+                </a>
+                <button (click)="onDeleteWarning(warn.id)"
+                  class="p-1.5 rounded-lg text-dark-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                  title="حذف الإنذار">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr *ngIf="warnings().length === 0">
+            <td colspan="7" class="px-6 py-16 text-center text-dark-500">
+              <div class="flex flex-col items-center justify-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-dark-800 flex items-center justify-center text-dark-400">
+                  <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p class="text-sm font-bold text-dark-300">لا توجد أي إنذارات مطابقة للفلاتر المحددة</p>
+                <p class="text-xs text-dark-500">يمكنك تسجيل إنذار جديد بالضغط على زر "إعطاء إنذار لطالب"</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    <div *ngIf="totalPages() > 1"
+      class="p-4 border-t border-dark-800 bg-dark-900/50 flex items-center justify-between gap-4">
+      <div class="text-xs text-dark-400">
+        عرض الصفحة <span class="text-white font-bold">{{ currentPage() }}</span> من <span class="text-white font-bold">{{ totalPages() }}</span>
+        (إجمالي {{ totalCount() }} إنذار)
+      </div>
+      <div class="flex items-center gap-2">
+        <button (click)="goToPage(currentPage() - 1)" [disabled]="currentPage() === 1"
+          class="btn-secondary py-1.5 px-3 text-xs disabled:opacity-40">
+          السابق
+        </button>
+        <button (click)="goToPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()"
+          class="btn-secondary py-1.5 px-3 text-xs disabled:opacity-40">
+          التالي
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Issue Warning to Any Student Modal ────────────────────────────────────── -->
+<div *ngIf="showAddModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in"
+    (click)="showAddModal.set(false)"></div>
+  <div class="relative bg-dark-900 w-full max-w-xl rounded-2xl border border-dark-700 p-6 shadow-2xl animate-slide-up max-h-[92vh] overflow-y-auto"
+    dir="rtl">
+    
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-dark-800 mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-white">إعطاء إنذار لطالب</h2>
+          <p class="text-dark-400 text-xs mt-0.5">تسجيل مخالفة أو إنذار رسمي في ملف الطالب</p>
+        </div>
+      </div>
+      <button (click)="showAddModal.set(false)" class="text-dark-400 hover:text-white p-1">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="onSubmitWarning()" class="space-y-4">
+      
+      <!-- Student Picker -->
+      <div>
+        <label class="block text-xs font-bold text-dark-300 mb-1.5">اختر الطالب *</label>
+        
+        <!-- If student is selected -->
+        <div *ngIf="selectedStudent() as s"
+          class="flex items-center justify-between p-3 rounded-xl bg-dark-800/80 border border-primary-500/40">
+          <div class="flex items-center gap-3">
+            <div class="w-8 h-8 rounded-lg bg-primary-500/20 text-primary-400 flex items-center justify-center text-xs font-bold">
+              {{ s.fullName.charAt(0) }}
+            </div>
+            <div>
+              <div class="text-sm font-bold text-white">{{ s.fullName }}</div>
+              <div class="text-[10px] text-dark-400 font-mono">#{{ s.code }}</div>
+            </div>
+          </div>
+          <button type="button" (click)="clearSelectedStudent()"
+            class="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors">
+            تغيير الطالب
+          </button>
+        </div>
+
+        <!-- Search Input & Dropdown -->
+        <div *ngIf="!selectedStudent()" class="space-y-2">
+          <div class="relative">
+            <input type="text"
+              [ngModel]="studentSearchText()"
+              (ngModelChange)="studentSearchText.set($event)"
+              name="studentSearch"
+              placeholder="اكتب اسم الطالب أو الكود للبحث..."
+              class="input-field py-2 text-xs">
+          </div>
+
+          <!-- Suggested List -->
+          <div class="max-h-36 overflow-y-auto rounded-xl bg-dark-800/90 border border-dark-700 divide-y divide-dark-700/50">
+            <button type="button" *ngFor="let s of filteredStudents"
+              (click)="selectStudent(s)"
+              class="w-full p-2.5 flex items-center justify-between hover:bg-dark-700 text-right transition-colors group">
+              <span class="text-xs font-bold text-white group-hover:text-primary-400">{{ s.fullName }}</span>
+              <span class="text-[10px] text-dark-400 font-mono">#{{ s.code }}</span>
+            </button>
+            <div *ngIf="filteredStudents.length === 0" class="p-3 text-center text-xs text-dark-500">
+              لم يتم العثور على طالب مطابق
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Warning Type Selector -->
+      <div>
+        <label class="block text-xs font-bold text-dark-300 mb-2">نوع الإنذار *</label>
+        <div class="grid grid-cols-3 gap-2">
+          <!-- غياب -->
+          <button type="button"
+            (click)="newWarning.warningType = WarningType.Absence"
+            [class]="newWarning.warningType === WarningType.Absence
+              ? 'border-amber-500 bg-amber-500/15 text-amber-300 font-bold shadow-sm ring-1 ring-amber-500'
+              : 'border-dark-700 bg-dark-800 text-dark-400 hover:border-dark-600'"
+            class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="text-xs">غياب</span>
+          </button>
+
+          <!-- شغب -->
+          <button type="button"
+            (click)="newWarning.warningType = WarningType.Misbehavior"
+            [class]="newWarning.warningType === WarningType.Misbehavior
+              ? 'border-red-500 bg-red-500/15 text-red-300 font-bold shadow-sm ring-1 ring-red-500'
+              : 'border-dark-700 bg-dark-800 text-dark-400 hover:border-dark-600'"
+            class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span class="text-xs">شغب</span>
+          </button>
+
+          <!-- عدم حفظ -->
+          <button type="button"
+            (click)="newWarning.warningType = WarningType.NotMemorized"
+            [class]="newWarning.warningType === WarningType.NotMemorized
+              ? 'border-purple-500 bg-purple-500/15 text-purple-300 font-bold shadow-sm ring-1 ring-purple-500'
+              : 'border-dark-700 bg-dark-800 text-dark-400 hover:border-dark-600'"
+            class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5">
+            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span class="text-xs">عدم حفظ</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Date & Group Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-dark-300 mb-1">تاريخ الإنذار *</label>
+          <input type="date" [(ngModel)]="newWarning.date" name="date" required class="input-field py-2 text-xs">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-dark-300 mb-1">الحلقة (اختياري)</label>
+          <div *ngIf="!selectedStudent()" class="p-2 rounded-xl bg-dark-800/80 border border-dark-700 text-xs text-dark-400">
+            يرجى اختيار الطالب أولاً
+          </div>
+          <div *ngIf="selectedStudent() && isLoadingStudentGroups()" class="p-2 rounded-xl bg-dark-800/80 border border-dark-700 text-xs text-dark-400 flex items-center gap-2">
+            <div class="w-3.5 h-3.5 border-2 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+            <span>جارِ تحميل حلقات الطالب...</span>
+          </div>
+          <select *ngIf="selectedStudent() && !isLoadingStudentGroups() && studentGroupsForModal().length > 0"
+            [(ngModel)]="newWarning.groupId" name="groupId" class="input-field py-2 text-xs">
+            <option [ngValue]="null">-- بدون تحديد حلقة --</option>
+            <option *ngFor="let g of studentGroupsForModal()" [ngValue]="g.id">{{ g.name }}</option>
+          </select>
+          <div *ngIf="selectedStudent() && !isLoadingStudentGroups() && studentGroupsForModal().length === 0"
+            class="p-2 rounded-xl bg-dark-800/80 border border-dark-700 text-xs text-amber-400/90 flex items-center gap-1.5">
+            <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>هذا الطالب غير مسجل في أي حلقة حالياً</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Reasons Suggestions -->
+      <div *ngIf="quickReasons[newWarning.warningType]?.length">
+        <label class="block text-xs font-bold text-dark-300 mb-1.5">اقتراحات سريعة لسبب الإنذار</label>
+        <div class="flex flex-wrap gap-1.5">
+          <button type="button" *ngFor="let qr of quickReasons[newWarning.warningType]"
+            (click)="setQuickReason(qr)"
+            class="text-[11px] px-2.5 py-1 rounded-lg bg-dark-800 hover:bg-dark-700 text-dark-300 hover:text-white border border-dark-700 transition-colors text-right">
+            + {{ qr }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Reason Textarea -->
+      <div>
+        <label class="block text-xs font-bold text-dark-300 mb-1">التفاصيل والسبب</label>
+        <textarea [(ngModel)]="newWarning.reason" name="reason" rows="3"
+          class="input-field py-2 text-xs min-h-[75px]"
+          placeholder="اكتب سبب الإنذار أو تفاصيل المخالفة..."></textarea>
+      </div>
+
+      <!-- Submit & Cancel -->
+      <div class="flex gap-3 pt-3">
+        <button type="submit" [disabled]="isSaving() || !newWarning.studentId"
+          class="btn-primary flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-2">
+          <span *ngIf="!isSaving()">تأكيد وتسجيل الإنذار</span>
+          <div *ngIf="isSaving()"
+            class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+        </button>
+        <button type="button" (click)="showAddModal.set(false)"
+          class="btn-secondary flex-1 py-2.5 text-xs font-bold">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

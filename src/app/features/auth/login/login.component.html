@@ -1,4 +1,9 @@
 <div class="min-h-screen flex items-center justify-center relative overflow-hidden" dir="rtl">
+  <!-- Floating Theme Toggle -->
+  <div class="absolute top-5 left-5 z-20">
+    <app-theme-toggle variant="floating" />
+  </div>
+
   <!-- Animated Background -->
   <div class="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-900 to-primary-950">
     <!-- Decorative orbs -->
@@ -20,9 +25,13 @@
     <div class="glass-card p-8 md:p-10">
       <!-- Logo & Header -->
       <div class="text-center mb-8">
-        <div
-          class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600/20 to-gold-500/20 border border-primary-500/20 mb-5 shadow-lg shadow-primary-900/20">
-          <img src="assets/logo.png" alt="كُتّاب" class="w-14 h-14 object-contain">
+        <!-- Dark mode logo: white logo on frosted gradient pill -->
+        <div class="logo-dark inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-gradient-to-br from-primary-600/20 to-gold-500/20 border border-primary-500/20 mb-5 shadow-lg shadow-primary-900/20">
+          <img src="assets/logo-dark.png" alt="كُتّاب" class="w-14 h-14 object-contain">
+        </div>
+        <!-- Light mode logo: full coloured brand logo -->
+        <div class="logo-light mb-5 flex items-center justify-center">
+          <img src="assets/logo.png" alt="كُتّاب" class="h-20 w-auto object-contain">
         </div>
         <h1 class="text-3xl font-bold text-white mb-2">مرحباً بك</h1>
         <p class="text-dark-400">سجل دخولك لمتابعة لوحة التحكم</p>

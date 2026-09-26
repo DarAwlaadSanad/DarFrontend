@@ -4,16 +4,21 @@ import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } fro
 import { AuthService } from '../../core/services/auth.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { NotificationDTO } from '../../core/models/notification.models';
+import { ThemeService } from '../../core/services/theme.service';
+import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
+import { ChatService } from '../../core/services/chat.service';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ThemeToggleComponent],
   templateUrl: './dashboard.component.html',
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   public authService = inject(AuthService);
   public notificationService = inject(NotificationService);
+  public chatService = inject(ChatService);
+  public themeService = inject(ThemeService);
   private router = inject(Router);
   private elementRef = inject(ElementRef);
 
@@ -32,11 +37,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
     // Build nav items based on permissions
     this.navItems = [
-      { label: 'الرئيسية', icon: 'home', route: '/dashboard/home' }
+      { label: 'الرئيسية', icon: 'home', route: '/dashboard/home' },
+      { label: 'الشات الجماعي', icon: 'chat', route: '/dashboard/chat' }
     ];
 
     if (this.authService.hasPermission('Permissions.Students.View')) {
       this.navItems.push({ label: 'الطلاب', icon: 'users', route: '/dashboard/students' });
+    }
+    if (this.authService.hasPermission('Permissions.Students.View') || this.authService.hasPermission('Permissions.Warnings.View')) {
+      this.navItems.push({ label: 'الإنذارات', icon: 'alert-triangle', route: '/dashboard/warnings' });
     }
     if (this.authService.hasPermission('Permissions.Groups.View')) {
       this.navItems.push({ label: 'الحلقات', icon: 'book', route: '/dashboard/groups' });
@@ -95,10 +104,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.notificationService.startConnection();
+    this.chatService.startConnection();
   }
 
   ngOnDestroy() {
     this.notificationService.stopConnection();
+    this.chatService.stopConnection();
   }
 
   @HostListener('window:resize')

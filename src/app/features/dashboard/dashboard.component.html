@@ -7,22 +7,23 @@
 
   <!-- ── Sidebar ────────────────────────────────────────── -->
   <aside
-    class="lg:sticky fixed top-0 bottom-0 right-0 z-30 flex flex-col h-screen transition-all duration-300 ease-in-out flex-shrink-0"
+    class="sidebar-panel lg:sticky fixed top-0 bottom-0 right-0 z-30 flex flex-col h-screen transition-all duration-300 ease-in-out flex-shrink-0"
     [class.w-72]="isSidebarOpen()" [class.w-20]="!isSidebarOpen() && !isMobile()"
-    [class.translate-x-full]="!isSidebarOpen() && isMobile()" [class.translate-x-0]="isSidebarOpen() || !isMobile()"
-    style="background: linear-gradient(180deg, #0d1526 0%, #070d1a 100%); border-left: 1px solid rgba(51,65,85,0.5);">
+    [class.translate-x-full]="!isSidebarOpen() && isMobile()" [class.translate-x-0]="isSidebarOpen() || !isMobile()">
     <!-- Logo -->
-    <div class="h-16 lg:h-20 flex items-center px-4 overflow-hidden flex-shrink-0"
-      style="border-bottom: 1px solid rgba(51,65,85,0.4);">
-      <div
-        class="w-9 h-9 min-w-[36px] rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-900/50">
-        <img src="assets/logo.png" alt="كُتّاب" class="w-6 h-6 object-contain"
+    <div class="h-16 lg:h-20 flex items-center px-4 overflow-hidden flex-shrink-0 border-b border-dark-800">
+      <!-- Dark mode: icon on gradient pill -->
+      <div class="logo-dark w-9 h-9 min-w-[36px] rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-900/50">
+        <img src="assets/logo-dark.png" alt="كُتّاب" class="w-6 h-6 object-contain"
           onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
         <span class="text-white font-black text-sm" style="display:none">ك</span>
       </div>
+      <!-- Light mode: full coloured logo -->
+      <img src="assets/logo.png" alt="كُتّاب" class="logo-light h-10 w-auto object-contain">
+
       <div *ngIf="isSidebarOpen()" class="mr-3 animate-fade-in">
-        <div class="text-lg font-black text-white leading-tight">كُتّاب</div>
-        <div class="text-[10px] text-primary-400 font-medium leading-tight">نظام إدارة المركز</div>
+        <div class="logo-dark text-lg font-black text-white leading-tight">كُتّاب</div>
+        <div class="logo-dark text-[10px] text-primary-400 font-medium leading-tight">نظام إدارة المركز</div>
       </div>
     </div>
 
@@ -69,6 +70,15 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016zM12 9v2m0 4h.01" />
           </svg>
+          <svg *ngIf="item.icon === 'chat'" class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+          </svg>
+          <svg *ngIf="item.icon === 'alert-triangle'" class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
         </div>
 
         <span *ngIf="isSidebarOpen()" class="mr-3.5 font-semibold text-sm relative z-10 animate-fade-in">{{ item.label
@@ -82,7 +92,7 @@
     </nav>
 
     <!-- Logout -->
-    <div class="p-3 flex-shrink-0" style="border-top: 1px solid rgba(51,65,85,0.4);">
+    <div class="p-3 flex-shrink-0 border-t border-dark-800">
       <button (click)="logout()"
         class="flex items-center w-full p-3 rounded-xl text-dark-500 hover:text-red-400 hover:bg-red-500/8 transition-all duration-200 group">
         <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -98,8 +108,7 @@
   <main class="flex-1 min-w-0 w-full transition-all duration-300 flex flex-col">
 
     <!-- Top Header -->
-    <header class="h-16 lg:h-18 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20 flex-shrink-0"
-      style="background: rgba(7,13,26,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(51,65,85,0.4);">
+    <header class="header-panel h-16 lg:h-18 flex items-center justify-between px-4 lg:px-6 sticky top-0 z-20 flex-shrink-0">
 
       <div class="flex items-center gap-3">
         <button (click)="toggleSidebar()"
@@ -119,7 +128,25 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Theme Toggle -->
+        <app-theme-toggle variant="header" />
+
+        <!-- Quick Chat Button -->
+        <a routerLink="/dashboard/chat"
+           class="p-2 rounded-lg text-dark-500 hover:text-white hover:bg-dark-800 transition-all relative"
+           routerLinkActive="text-primary-400 bg-dark-800"
+           title="الشات الجماعي">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+          <span class="absolute bottom-1 right-1 w-2 h-2 rounded-full border border-dark-900 transition-colors"
+                [class.bg-emerald-400]="chatService.isConnected()"
+                [class.bg-dark-600]="!chatService.isConnected()">
+          </span>
+        </a>
+
         <!-- Notifications Container -->
         <div class="relative notification-container">
           <button (click)="toggleNotification()"
@@ -146,8 +173,7 @@
 
           <!-- Notifications Dropdown -->
           <div *ngIf="isNotificationOpen()"
-            class="absolute left-0 mt-2 w-80 sm:w-96 rounded-2xl shadow-2xl py-2 animate-scale-in z-50 border border-dark-700/80"
-            style="background: #0f172a;"
+            class="dropdown-panel absolute left-0 mt-2 w-80 sm:w-96 rounded-2xl shadow-2xl py-2 animate-scale-in z-50 border border-dark-700/80"
             dir="rtl">
             <!-- Header -->
             <div class="px-4 py-2.5 flex items-center justify-between border-b border-dark-800">
@@ -259,9 +285,8 @@
           </button>
 
           <div *ngIf="isProfileOpen()"
-            class="absolute left-0 mt-2 w-52 rounded-2xl shadow-2xl py-1 animate-scale-in z-50"
-            style="background: #111827; border: 1px solid rgba(51,65,85,0.7);">
-            <div class="px-4 py-3 border-b flex items-center gap-2.5" style="border-color: rgba(51,65,85,0.5);">
+            class="dropdown-panel absolute left-0 mt-2 w-52 rounded-2xl shadow-2xl py-1 animate-scale-in z-50 border border-dark-700/80">
+            <div class="px-4 py-3 border-b border-dark-800 flex items-center gap-2.5">
               <div class="w-8 h-8 rounded-lg overflow-hidden bg-primary-600 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
                 <img *ngIf="authService.currentUser()?.profilePictureUrl"
                      [src]="authService.currentUser()?.profilePictureUrl"
@@ -325,6 +350,13 @@
     background: rgba(30, 41, 59, 0.5);
     border-color: rgba(51, 65, 85, 0.4);
     color: #e2e8f0;
+  }
+
+  :host-context(.light) .nav-link:hover:not(.is-active),
+  .light .nav-link:hover:not(.is-active) {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    color: #0f172a;
   }
 
   header {

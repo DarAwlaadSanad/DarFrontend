@@ -1,0 +1,253 @@
+<div class="chat-wrapper flex flex-col h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-5rem)] max-w-5xl mx-auto p-2 sm:p-4 transition-all" dir="rtl">
+
+  <!-- ── Chat Main Card ─────────────────────────────────────────────────── -->
+  <div class="chat-card flex-1 flex flex-col rounded-2xl sm:rounded-3xl border overflow-hidden shadow-2xl relative">
+
+    <!-- ── Top Header ─────────────────────────────────────────────────── -->
+    <header class="chat-header px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between border-b flex-shrink-0 z-10 backdrop-blur-md">
+      
+      <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <!-- Room Avatar -->
+        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-emerald-700 flex items-center justify-center text-white shadow-lg shadow-primary-900/40 flex-shrink-0">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+          </svg>
+        </div>
+
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold text-white truncate">محادثة إدارة الدار والمعلمين</h1>
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              دعم مباشر
+            </span>
+          </div>
+          <p class="text-xs text-dark-400 truncate mt-0.5">
+            تواصل مباشر وفوري مع معلمي وإداريي المركز للاستفسارات والمتابعة
+          </p>
+        </div>
+      </div>
+
+      <!-- Controls & Status -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <!-- Connection Pill -->
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium"
+             [class.bg-emerald-500/10]="chatService.isConnected()"
+             [class.border-emerald-500/30]="chatService.isConnected()"
+             [class.text-emerald-400]="chatService.isConnected()"
+             [class.bg-amber-500/10]="chatService.isConnecting()"
+             [class.border-amber-500/30]="chatService.isConnecting()"
+             [class.text-amber-400]="chatService.isConnecting()"
+             [class.bg-red-500/10]="!chatService.isConnected() && !chatService.isConnecting()"
+             [class.border-red-500/30]="!chatService.isConnected() && !chatService.isConnecting()"
+             [class.text-red-400]="!chatService.isConnected() && !chatService.isConnecting()">
+          <span class="w-2 h-2 rounded-full"
+                [class.bg-emerald-400]="chatService.isConnected()"
+                [class.animate-pulse]="chatService.isConnected() || chatService.isConnecting()"
+                [class.bg-amber-400]="chatService.isConnecting()"
+                [class.bg-red-400]="!chatService.isConnected() && !chatService.isConnecting()"></span>
+          <span *ngIf="chatService.isConnected()">متصل مباشر</span>
+          <span *ngIf="chatService.isConnecting()">جارِ الاتصال...</span>
+          <span *ngIf="!chatService.isConnected() && !chatService.isConnecting()">غير متصل</span>
+        </div>
+
+        <!-- Refresh Button -->
+        <button (click)="refreshMessages()"
+                class="p-2 sm:p-2.5 rounded-xl text-dark-400 hover:text-white hover:bg-dark-800 transition-all border border-transparent"
+                [class.animate-spin]="chatService.isLoadingMessages()"
+                title="تحديث الرسائل">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ── Disconnected Alert (if connection lost) ────────────────────────── -->
+    <div *ngIf="!chatService.isConnected() && !chatService.isConnecting()" 
+         class="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 flex items-center justify-between text-xs text-amber-300 animate-fade-in z-10">
+      <div class="flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+        <span>الاتصال المباشر منقطع حالياً، يتم استخدام الوضع الاحتياطي التلقائي.</span>
+      </div>
+      <button (click)="reconnect()" class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-medium transition-all">
+        إعادة المحاولة
+      </button>
+    </div>
+
+    <!-- ── Messages Feed Area ─────────────────────────────────────────── -->
+    <div #messagesContainer
+         (scroll)="onScroll()"
+         class="chat-feed flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 relative">
+
+      <!-- Loading State -->
+      <div *ngIf="chatService.isLoadingMessages() && chatService.messages().length === 0" 
+           class="flex flex-col items-center justify-center py-16 gap-3">
+        <div class="w-10 h-10 border-3 border-primary-500/30 border-t-primary-500 rounded-full animate-spin"></div>
+        <p class="text-sm text-dark-400">جارِ تحميل الرسائل...</p>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="!chatService.isLoadingMessages() && chatService.messages().length === 0" 
+           class="flex flex-col items-center justify-center py-16 text-center max-w-sm mx-auto animate-fade-in">
+        <div class="w-16 h-16 rounded-3xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center text-primary-400 mb-4 shadow-lg shadow-primary-950/20">
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+          </svg>
+        </div>
+        <h3 class="text-base font-bold text-white mb-1">مرحباً بك في محادثة الدار</h3>
+        <p class="text-xs text-dark-400 leading-relaxed">
+          يمكنك إرسال أي استفسار أو رسالة لمعلميك وإدارة المركز، وسيقومون بالرد عليك في أقرب وقت.
+        </p>
+      </div>
+
+      <!-- Messages Grouped By Date -->
+      <ng-container *ngFor="let group of groupedMessages()">
+        <!-- Date Divider -->
+        <div class="flex items-center justify-center my-4">
+          <span class="date-pill px-4 py-1 rounded-full text-[11px] font-semibold shadow-sm">
+            {{ group.dateLabel }}
+          </span>
+        </div>
+
+        <!-- Messages in this date -->
+        <div class="space-y-3.5">
+          <div *ngFor="let msg of group.messages" 
+               class="flex items-end gap-2.5 transition-all animate-fade-in"
+               [class.justify-start]="isMyMessage(msg)"
+               [class.justify-end]="!isMyMessage(msg)">
+
+            <!-- ── Case 1: Student's Message (Sent by me) ── -->
+            <ng-container *ngIf="isMyMessage(msg)">
+              <div class="my-message-bubble max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-bl-sm p-3.5 shadow-md">
+                <p class="text-sm leading-relaxed whitespace-pre-wrap select-text font-normal text-white">
+                  {{ msg.content }}
+                </p>
+                <div class="flex items-center justify-end gap-1.5 mt-1.5 text-[10px] text-emerald-100/80">
+                  <span>{{ formatTime(msg.sentAt) }}</span>
+                  <svg class="w-3.5 h-3.5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- ── Case 2: Teacher/Admin Message ── -->
+            <ng-container *ngIf="!isMyMessage(msg)">
+              <!-- Sender Avatar -->
+              <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-700 flex items-center justify-center text-[11px] font-bold text-white shadow flex-shrink-0 mb-1"
+                   [title]="msg.senderName">
+                م
+              </div>
+
+              <!-- Message Bubble -->
+              <div class="other-message-bubble max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-br-sm p-3.5 shadow-md">
+                <!-- Sender Name -->
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="text-xs font-bold text-primary-400">
+                    {{ msg.senderName || 'إدارة الدار والمعلمين' }}
+                  </span>
+                  <span class="text-[9px] px-1.5 py-0.2 rounded bg-primary-500/10 text-primary-400 border border-primary-500/20 font-semibold">
+                    إدارة المركز
+                  </span>
+                </div>
+
+                <!-- Text Content -->
+                <p class="text-sm leading-relaxed whitespace-pre-wrap select-text font-normal">
+                  {{ msg.content }}
+                </p>
+
+                <!-- Time -->
+                <div class="flex items-center justify-start mt-1.5 text-[10px] text-dark-400">
+                  <span>{{ formatTime(msg.sentAt) }}</span>
+                </div>
+              </div>
+            </ng-container>
+
+          </div>
+        </div>
+      </ng-container>
+
+    </div>
+
+    <!-- ── Floating Scroll-To-Bottom Button ────────────────────────────── -->
+    <button *ngIf="showScrollButton()"
+            (click)="scrollToBottom(true)"
+            class="scroll-bottom-btn absolute bottom-36 left-6 p-2.5 rounded-full shadow-xl transition-all z-20 flex items-center gap-1.5 text-xs font-semibold animate-bounce"
+            title="الانتقال لآخر الرسائل">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+      </svg>
+      <span class="hidden sm:inline">أحدث الرسائل</span>
+    </button>
+
+    <!-- ── Quick Replies Bar ───────────────────────────────────────────── -->
+    <div class="quick-replies-bar px-4 py-2 border-t overflow-x-auto flex items-center gap-2 flex-shrink-0 scrollbar-none z-10">
+      <span class="text-[11px] font-semibold text-dark-400 whitespace-nowrap ml-1 flex items-center gap-1">
+        <span>⚡</span> رد سريع:
+      </span>
+      <button *ngFor="let reply of quickReplies"
+              (click)="sendQuickReply(reply)"
+              class="quick-reply-chip text-xs px-3 py-1 rounded-full whitespace-nowrap transition-all border">
+        {{ reply }}
+      </button>
+    </div>
+
+    <!-- ── Quick Emojis Drawer ─────────────────────────────────────────── -->
+    <div *ngIf="isEmojiOpen()"
+         class="emoji-drawer px-4 py-2 border-t flex items-center gap-2 overflow-x-auto animate-fade-in z-10">
+      <button *ngFor="let emoji of quickEmojis"
+              (click)="addEmoji(emoji)"
+              class="text-xl p-1.5 rounded-xl hover:bg-dark-800 hover:scale-125 active:scale-95 transition-all">
+        {{ emoji }}
+      </button>
+    </div>
+
+    <!-- ── Message Composer Bottom Bar ─────────────────────────────────── -->
+    <footer class="chat-footer p-3 sm:p-4 border-t flex-shrink-0 z-10">
+      <form (ngSubmit)="onSendMessage()" class="flex items-end gap-2 sm:gap-3">
+        
+        <!-- Emoji Button -->
+        <button type="button"
+                (click)="toggleEmoji()"
+                class="p-2.5 sm:p-3 rounded-2xl text-dark-400 hover:text-amber-400 hover:bg-dark-800 transition-all flex-shrink-0 border border-transparent"
+                [class.text-amber-400]="isEmojiOpen()"
+                title="إضافة رمز تعبيري">
+          <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </button>
+
+        <!-- Input Box -->
+        <div class="chat-input-container flex-1 rounded-2xl border transition-all flex items-center p-1.5 sm:p-2 relative">
+          <textarea #messageInput
+                    [ngModel]="inputText()"
+                    (ngModelChange)="inputText.set($event)"
+                    (keydown)="onKeyDown($event)"
+                    name="message"
+                    rows="1"
+                    placeholder="اكتب رسالتك لإدارة المركز والمعلمين... (Enter للإرسال)"
+                    class="w-full bg-transparent border-0 text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-0 resize-none max-h-32 px-2 py-1 leading-relaxed">
+          </textarea>
+        </div>
+
+        <!-- Send Button -->
+        <button type="submit"
+                [disabled]="!inputText().trim() || chatService.isSending()"
+                class="send-btn inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-white shadow-lg transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
+                title="إرسال الرسالة">
+          <svg *ngIf="!chatService.isSending()" class="w-5 h-5 -rotate-90 transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+          <div *ngIf="chatService.isSending()" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+        </button>
+
+      </form>
+    </footer>
+
+  </div>
+
+</div>

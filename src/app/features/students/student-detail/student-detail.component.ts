@@ -14,6 +14,16 @@ import { StudentFeeService } from '../../../core/services/student-fee.service';
 import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
+import { StudentWarningService } from '../../../core/services/student-warning.service';
+import {
+  StudentWarningViewDTO,
+  StudentWarningCreateDTO,
+  StudentWarningSummaryDTO,
+  WarningType,
+  getWarningTypeLabel,
+  getWarningTypeBadgeClass,
+  getWarningTypeDotClass
+} from '../../../core/models/student-warning.models';
 
 @Component({
   selector: 'app-student-detail',
@@ -31,6 +41,7 @@ export class StudentDetailComponent implements OnInit {
   private router = inject(Router);
   private ui = inject(UiService);
   private academicYearService = inject(AcademicYearService);
+  private warningService = inject(StudentWarningService);
 
   surahs = this.memorizationService.surahs;
   isAddingMemorization = signal(false);
@@ -78,6 +89,46 @@ export class StudentDetailComponent implements OnInit {
   isExemptedThisMonth = signal<boolean | null>(null);
   exemptionReason = signal<string | null>(null);
 
+  // Warnings
+  studentWarnings = signal<StudentWarningViewDTO[]>([]);
+  warningSummary = signal<StudentWarningSummaryDTO | null>(null);
+  showAddWarningModal = signal(false);
+  isSavingWarning = signal(false);
+  WarningType = WarningType;
+  getWarningTypeLabel = getWarningTypeLabel;
+  getWarningTypeBadgeClass = getWarningTypeBadgeClass;
+  getWarningTypeDotClass = getWarningTypeDotClass;
+
+  newWarning: StudentWarningCreateDTO = {
+    studentId: 0,
+    warningType: WarningType.Absence,
+    date: new Date().toISOString().split('T')[0],
+    reason: '',
+    groupId: null
+  };
+
+  quickReasons: Record<number, string[]> = {
+    [WarningType.Absence]: [
+      'غياب متكرر بدون إذن مسبق',
+      'تجاوز الحد الأقصى لأيام الغياب',
+      'التأخر المتكرر عن موعد بدء الحلقة'
+    ],
+    [WarningType.Misbehavior]: [
+      'إثارة الشغب ومقاطعة الزملاء أثناء الحلقة',
+      'عدم الالتزام بآداب حلقة القرآن الكريم',
+      'استخدام الهاتف أو الانشغال أثناء الحلقة'
+    ],
+    [WarningType.NotMemorized]: [
+      'عدم حفظ الورد القرآني المحدد للحلقة',
+      'التقصير الواضح في مراجعة وتثبيت المحفوظ',
+      'عدم الاستعداد للتسميع للمرة الثانية'
+    ],
+    [WarningType.Other]: [
+      'عدم إحضار المصحف الشريف',
+      'مخالفة تعليمات إدارة المركز'
+    ]
+  };
+
   ngOnInit() {
     this.loadStudent();
     this.loadAllGroups();
@@ -91,9 +142,13 @@ export class StudentDetailComponent implements OnInit {
       next: (data) => {
         this.student.set(data);
         this.newMemRecord.studentId = data.id;
+        if (data.groups && data.groups.length > 0) {
+          this.studentGroups.set(data.groups);
+        }
         this.loadStudentGroups(data.id);
         this.loadExamResults(data.id);
         this.loadStudentFees(data.id);
+        this.loadStudentWarnings(data.id);
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false),
@@ -102,7 +157,11 @@ export class StudentDetailComponent implements OnInit {
 
   loadStudentGroups(id: number) {
     this.studentService.getStudentGroups(id).subscribe({
-      next: (data) => this.studentGroups.set(data)
+      next: (data) => {
+        if (data && data.length > 0) {
+          this.studentGroups.set(data);
+        }
+      }
     });
   }
 
@@ -422,5 +481,71 @@ export class StudentDetailComponent implements OnInit {
       case 2: return 'أخرى';
       default: return 'غير محدد';
     }
+  }
+
+  // ── Warnings Management ─────────────────────────────────────────────────────
+  loadStudentWarnings(studentId: number) {
+    this.warningService.getByStudentId(studentId).subscribe({
+      next: (data) => this.studentWarnings.set(data),
+      error: () => {}
+    });
+    this.warningService.getSummary(studentId).subscribe({
+      next: (summary) => this.warningSummary.set(summary),
+      error: () => {}
+    });
+  }
+
+  openAddWarningModal() {
+    const s = this.student();
+    if (!s) return;
+    const groups = this.studentGroups().length > 0 ? this.studentGroups() : (s.groups || []);
+    if (this.studentGroups().length === 0 && groups.length > 0) {
+      this.studentGroups.set(groups);
+    }
+    this.newWarning = {
+      studentId: s.id,
+      warningType: WarningType.Absence,
+      date: new Date().toISOString().split('T')[0],
+      reason: '',
+      groupId: groups.length === 1 ? groups[0].id : null
+    };
+    this.showAddWarningModal.set(true);
+  }
+
+  setQuickReason(reason: string) {
+    this.newWarning.reason = reason;
+  }
+
+  onAddWarning() {
+    const s = this.student();
+    if (!s || this.isSavingWarning()) return;
+
+    this.isSavingWarning.set(true);
+    this.newWarning.studentId = s.id;
+    this.warningService.create(this.newWarning).subscribe({
+      next: () => {
+        this.ui.success('تم تسجيل الإنذار بنجاح');
+        this.isSavingWarning.set(false);
+        this.showAddWarningModal.set(false);
+        this.loadStudentWarnings(s.id);
+      },
+      error: (err) => {
+        this.isSavingWarning.set(false);
+        this.ui.error(err.error || 'حدث خطأ أثناء تسجيل الإنذار');
+      }
+    });
+  }
+
+  async onDeleteWarning(warningId: number) {
+    const s = this.student();
+    if (!s || !await this.ui.confirm('هل أنت متأكد من حذف هذا الإنذار؟')) return;
+
+    this.warningService.delete(warningId).subscribe({
+      next: () => {
+        this.ui.success('تم حذف الإنذار بنجاح');
+        this.loadStudentWarnings(s.id);
+      },
+      error: () => this.ui.error('حدث خطأ أثناء حذف الإنذار')
+    });
   }
 }
