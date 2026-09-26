@@ -79,7 +79,7 @@
     <!-- ── Messages Feed Area ─────────────────────────────────────────── -->
     <div #messagesContainer
          (scroll)="onScroll()"
-         class="chat-feed flex-1 overflow-y-auto p-4 sm:p-6 space-y-6 relative">
+         class="chat-feed flex-1 overflow-y-auto p-4 sm:p-6 pb-8 sm:pb-10 space-y-6 relative">
 
       <!-- Loading State -->
       <div *ngIf="chatService.isLoadingMessages() && chatService.messages().length === 0" 

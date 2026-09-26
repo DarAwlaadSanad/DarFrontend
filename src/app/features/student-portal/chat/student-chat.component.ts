@@ -7,7 +7,8 @@ import {
   computed,
   ViewChild,
   ElementRef,
-  AfterViewChecked
+  AfterViewChecked,
+  effect
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -28,12 +29,30 @@ interface MessageGroup {
   templateUrl: './student-chat.component.html',
   styleUrls: ['./student-chat.component.css']
 })
-export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked {
+export class StudentChatComponent implements OnInit, OnDestroy {
   public chatService = inject(ChatService);
   public authService = inject(AuthService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInput!: ElementRef<HTMLTextAreaElement>;
+
+  private isNearBottom = true;
+  private previousMessageCount = 0;
+
+  constructor() {
+    effect(() => {
+      const msgs = this.chatService.messages();
+      const count = msgs.length;
+      if (count > this.previousMessageCount) {
+        const lastMsg = msgs[count - 1];
+        const isMine = lastMsg ? this.isMyMessage(lastMsg) : false;
+        if (isMine || this.isNearBottom) {
+          this.scrollToBottom(false);
+        }
+      }
+      this.previousMessageCount = count;
+    });
+  }
 
   inputText = signal<string>('');
   isEmojiOpen = signal<boolean>(false);
@@ -92,12 +111,6 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
     });
   }
 
-  ngAfterViewChecked() {
-    if (this.shouldScrollToBottom) {
-      this.scrollToBottom(false);
-    }
-  }
-
   ngOnDestroy() {}
 
   async onSendMessage() {
@@ -119,10 +132,11 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
     this.inputText.set('');
     this.isEmojiOpen.set(false);
     this.shouldScrollToBottom = true;
+    this.scrollToBottom(false);
 
     try {
       await this.chatService.sendStudentMessage(text);
-      this.scrollToBottom(true);
+      this.scrollToBottom(false);
     } catch (err) {
       console.error('Failed to send student message:', err);
       this.inputText.set(text);
@@ -172,23 +186,23 @@ export class StudentChatComponent implements OnInit, OnDestroy, AfterViewChecked
   onScroll() {
     if (!this.messagesContainer) return;
     const el = this.messagesContainer.nativeElement;
-    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 120;
-    this.shouldScrollToBottom = atBottom;
-    this.showScrollButton.set(!atBottom);
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
+    this.isNearBottom = distanceFromBottom < 80;
+    this.showScrollButton.set(distanceFromBottom > 150);
   }
 
   scrollToBottom(immediate: boolean = false) {
-    if (!this.messagesContainer) return;
-    try {
+    setTimeout(() => {
+      if (!this.messagesContainer) return;
       const el = this.messagesContainer.nativeElement;
       if (immediate) {
         el.scrollTop = el.scrollHeight;
       } else {
         el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
       }
-      this.shouldScrollToBottom = false;
+      this.isNearBottom = true;
       this.showScrollButton.set(false);
-    } catch {}
+    }, 40);
   }
 
   isMyMessage(message: ChatMessageDTO): boolean {
