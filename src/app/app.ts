@@ -3,13 +3,17 @@ import { RouterOutlet } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { UiService } from './core/services/ui.service';
 import { ThemeService } from './core/services/theme.service';
+import { PwaInstallComponent } from './shared/components/pwa-install/pwa-install.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, PwaInstallComponent],
   template: `
     <router-outlet />
+
+    <!-- PWA Install Prompt & Update Alert -->
+    <app-pwa-install />
 
     <!-- Toasts Container -->
     <div class="fixed bottom-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none" dir="rtl">
