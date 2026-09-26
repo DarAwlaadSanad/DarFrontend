@@ -8,6 +8,13 @@ import { ThemeService } from '../../core/services/theme.service';
 import { ThemeToggleComponent } from '../../shared/components/theme-toggle/theme-toggle.component';
 import { ChatService } from '../../core/services/chat.service';
 
+export interface NavItem {
+  label: string;
+  icon: string;
+  route?: string;
+  children?: Array<{ label: string; icon?: string; route: string }>;
+}
+
 @Component({
   selector: 'app-dashboard',
   standalone: true,
@@ -26,8 +33,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isProfileOpen = signal(false);
   isNotificationOpen = signal(false);
   isMobile = signal(window.innerWidth < 1024);
+  openSubmenus = signal<{ [key: string]: boolean }>({});
 
-  navItems: Array<{ label: string, icon: string, route: string }> = [];
+  navItems: NavItem[] = [];
 
   constructor() {
     // Redirect students to student portal
@@ -38,24 +46,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
     // Build nav items based on permissions
     this.navItems = [
       { label: 'الرئيسية', icon: 'home', route: '/dashboard/home' },
-      { label: 'الشات الجماعي', icon: 'chat', route: '/dashboard/chat' }
     ];
 
     if (this.authService.hasPermission('Permissions.Students.View')) {
       this.navItems.push({ label: 'الطلاب', icon: 'users', route: '/dashboard/students' });
     }
-    if (this.authService.hasPermission('Permissions.Students.View') || this.authService.hasPermission('Permissions.Warnings.View')) {
-      this.navItems.push({ label: 'الإنذارات', icon: 'alert-triangle', route: '/dashboard/warnings' });
-    }
+
     if (this.authService.hasPermission('Permissions.Groups.View')) {
       this.navItems.push({ label: 'الحلقات', icon: 'book', route: '/dashboard/groups' });
     }
-    if (this.authService.hasPermission('Permissions.AcademicYears.View')) {
-      this.navItems.push({ label: 'السنوات الدراسية', icon: 'calendar', route: '/dashboard/academic-years' });
-    }
+
     if (this.authService.hasPermission('Permissions.Fees.View')) {
       this.navItems.push({ label: 'الشهريات', icon: 'cash', route: '/dashboard/fees' });
+
     }
+    if (this.authService.hasPermission('Permissions.Students.View') || this.authService.hasPermission('Permissions.Warnings.View')) {
+      this.navItems.push({ label: 'الإنذارات', icon: 'alert-triangle', route: '/dashboard/warnings' });
+    }
+
     if (this.authService.hasPermission('Permissions.Schedules.View')) {
       this.navItems.push({ label: 'جدول الحصص', icon: 'calendar', route: '/dashboard/timetable' });
     }
@@ -83,26 +91,87 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.authService.hasPermission('Permissions.Rooms.View')) {
       this.navItems.push({ label: 'الغرف', icon: 'home', route: '/dashboard/rooms' });
     }
-    if (this.authService.hasPermission('Permissions.Finance.View')) {
-      this.navItems.push({ label: 'المصروفات العامة', icon: 'cash', route: '/dashboard/finance/center-expenses' });
-      this.navItems.push({ label: 'تبرعات وإيرادات', icon: 'cash', route: '/dashboard/finance/center-incomes' });
-      this.navItems.push({ label: 'التقرير المالي', icon: 'file-text', route: '/dashboard/finance/monthly-report' });
-      this.navItems.push({ label: 'رواتب الموظفين', icon: 'cash', route: '/dashboard/finance/payroll' });
-      this.navItems.push({ label: 'عقود الموظفين', icon: 'file-text', route: '/dashboard/finance/contracts' });
-    }
-    if (this.authService.hasPermission('Permissions.Finance.Manage')) {
-      this.navItems.push({ label: 'الإعدادات المالية', icon: 'shield-lock', route: '/dashboard/finance/settings' });
+
+    // Financial Management Group (الإدارة المالية)
+    const hasFinanceView = this.authService.hasPermission('Permissions.Finance.View');
+    const hasFinanceManage = this.authService.hasPermission('Permissions.Finance.Manage');
+
+    if (hasFinanceView || hasFinanceManage) {
+      const financeChildren: Array<{ label: string; icon?: string; route: string }> = [];
+      if (hasFinanceView) {
+        financeChildren.push(
+          { label: 'المصروفات العامة', icon: 'cash', route: '/dashboard/finance/center-expenses' },
+          { label: 'تبرعات وإيرادات', icon: 'cash', route: '/dashboard/finance/center-incomes' },
+          { label: 'التقرير المالي', icon: 'file-text', route: '/dashboard/finance/monthly-report' },
+          { label: 'رواتب الموظفين', icon: 'cash', route: '/dashboard/finance/payroll' },
+          { label: 'عقود الموظفين', icon: 'file-text', route: '/dashboard/finance/contracts' }
+        );
+      }
+      if (hasFinanceManage) {
+        financeChildren.push({ label: 'الإعدادات المالية', icon: 'shield-lock', route: '/dashboard/finance/settings' });
+      }
+
+      if (financeChildren.length > 0) {
+        this.navItems.push({
+          label: 'الإدارة المالية',
+          icon: 'cash',
+          children: financeChildren
+        });
+      }
     }
 
-    // Auto-close sidebar after navigation on mobile
+    this.navItems.push({ label: 'الشات', icon: 'chat', route: '/dashboard/chat' });
+
+    if (this.authService.hasPermission('Permissions.AcademicYears.View')) {
+      this.navItems.push({ label: 'السنوات الدراسية', icon: 'calendar', route: '/dashboard/academic-years' });
+    }
+
+    // Auto-close sidebar after navigation on mobile & auto-expand active submenus
     this.router.events.subscribe(e => {
-      if (e instanceof NavigationEnd && this.isMobile()) {
-        this.isSidebarOpen.set(false);
+      if (e instanceof NavigationEnd) {
+        if (this.isMobile()) {
+          this.isSidebarOpen.set(false);
+        }
+        this.checkActiveSubmenus();
       }
     });
   }
 
+  toggleSubmenu(label: string, event?: Event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!this.isSidebarOpen()) {
+      this.isSidebarOpen.set(true);
+    }
+    this.openSubmenus.update(prev => ({
+      ...prev,
+      [label]: !prev[label]
+    }));
+  }
+
+  isSubmenuOpen(label: string): boolean {
+    return !!this.openSubmenus()[label];
+  }
+
+  isSubmenuActive(item: NavItem): boolean {
+    if (!item.children) return false;
+    const currentUrl = this.router.url;
+    return item.children.some(child => currentUrl.startsWith(child.route));
+  }
+
+  private checkActiveSubmenus() {
+    const currentUrl = this.router.url;
+    for (const item of this.navItems) {
+      if (item.children && item.children.some(c => currentUrl.startsWith(c.route))) {
+        this.openSubmenus.update(prev => ({ ...prev, [item.label]: true }));
+      }
+    }
+  }
+
   ngOnInit() {
+    this.checkActiveSubmenus();
     this.notificationService.startConnection();
     this.chatService.startConnection();
   }

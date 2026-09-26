@@ -7,8 +7,8 @@ import {
   computed,
   ViewChild,
   ElementRef,
-  AfterViewChecked,
-  effect
+  effect,
+  HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -59,6 +59,15 @@ export class GroupChatComponent implements OnInit, OnDestroy {
 
   // Tab State: 'group' (staff group chat) or 'students' (student conversations)
   activeTab = signal<'group' | 'students'>('group');
+
+  // Mobile Master-Detail view signals
+  isMobileView = signal<boolean>(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
+  showMobileChat = signal<boolean>(false);
+
+  @HostListener('window:resize')
+  onResize() {
+    this.isMobileView.set(window.innerWidth < 768);
+  }
 
   // Input & UI Signals
   inputText = signal<string>('');
@@ -186,10 +195,12 @@ export class GroupChatComponent implements OnInit, OnDestroy {
     if (tab === 'group') {
       this.loadStaffRoom();
     } else {
+      if (this.isMobileView()) {
+        this.showMobileChat.set(false);
+      }
       this.chatService.getStudentRooms().subscribe({
         next: (rooms) => {
-          if (rooms && rooms.length > 0) {
-            // Select first student room if current active is not a student support room
+          if (rooms && rooms.length > 0 && !this.isMobileView()) {
             const current = this.chatService.activeRoom();
             if (!current || current.type !== 'StudentSupport') {
               this.selectStudentRoom(rooms[0]);
@@ -202,6 +213,7 @@ export class GroupChatComponent implements OnInit, OnDestroy {
 
   selectStudentRoom(room: ChatRoomDTO) {
     this.chatService.activeRoom.set(room);
+    this.showMobileChat.set(true);
     this.chatService.joinRoom(room.id);
     this.chatService.loadMessages(room.id).subscribe({
       next: () => {

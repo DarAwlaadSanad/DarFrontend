@@ -1,7 +1,7 @@
 <div class="space-y-7 animate-fade-in" dir="rtl">
 
   <!-- Page Header -->
-  <div class="flex flex-wrap items-start justify-between gap-4">
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <div class="flex items-center gap-2 mb-1">
         <div class="w-8 h-8 rounded-lg bg-primary-500/15 flex items-center justify-center">
@@ -12,55 +12,62 @@
         </div>
         <h1 class="text-2xl lg:text-3xl font-bold text-white">حلقات التحفيظ</h1>
       </div>
-      <p class="text-dark-400 text-sm mr-10">إدارة ومتابعة حلقات التحفيظ وأداء الطلاب</p>
+      <p class="text-dark-400 text-xs sm:text-sm mr-10">إدارة ومتابعة حلقات التحفيظ وأداء الطلاب</p>
     </div>
-    <div class="flex items-center gap-3">
+
+    <!-- Actions Bar (100% responsive, zero overflow) -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto">
       <input type="file" id="fileUpload" class="hidden" accept=".xlsx, .xls" (change)="onFileSelected($event)">
-      <button (click)="triggerFileInput()" [disabled]="isImporting()" class="btn-secondary"
-        title="رفع ملف إكسيل لإضافة مجموعات">
-        <svg *ngIf="isImporting()" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        <svg *ngIf="!isImporting()" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-        </svg>
-        {{ isImporting() ? 'جاري الرفع...' : 'رفع الإكسيل' }}
-      </button>
-
-      <button (click)="exportTemplate()" [disabled]="isExportingTemplate()" class="btn-secondary"
-        title="تحميل نموذج فارغ للملء">
-        <svg *ngIf="isExportingTemplate()" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        <svg *ngIf="!isExportingTemplate()" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-        </svg>
-        {{ isExportingTemplate() ? 'جاري التحميل...' : 'تحميل النموذج' }}
-      </button>
-
-      <button (click)="exportData()" [disabled]="isExporting()" class="btn-secondary"
-        title="تحميل بيانات المجموعات الحالية">
-        <svg *ngIf="isExporting()" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        <svg *ngIf="!isExporting()" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        {{ isExporting() ? 'جاري التحميل...' : 'تحميل البيانات' }}
-      </button>
-
-      <button (click)="openModal()" class="btn-primary">
+      
+      <!-- Primary: Add Group -->
+      <button (click)="openModal()" class="btn-primary py-2.5 px-4 text-sm font-bold shadow-md order-1 sm:order-last">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
-        إضافة حلقة
+        <span>إضافة حلقة جديدة</span>
       </button>
+
+      <!-- Secondary: Excel Actions Grid on Mobile, Flex on Desktop -->
+      <div class="grid grid-cols-3 sm:flex items-center gap-1.5 sm:gap-2 order-2 sm:order-first">
+        <button (click)="triggerFileInput()" [disabled]="isImporting()" class="btn-secondary py-2 px-2 sm:px-3 text-xs justify-center"
+          title="رفع ملف إكسيل لإضافة مجموعات">
+          <svg *ngIf="isImporting()" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <svg *ngIf="!isImporting()" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span class="truncate">{{ isImporting() ? 'جاري الرفع...' : 'رفع الإكسيل' }}</span>
+        </button>
+
+        <button (click)="exportTemplate()" [disabled]="isExportingTemplate()" class="btn-secondary py-2 px-2 sm:px-3 text-xs justify-center"
+          title="تحميل نموذج فارغ للملء">
+          <svg *ngIf="isExportingTemplate()" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <svg *ngIf="!isExportingTemplate()" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="truncate">{{ isExportingTemplate() ? 'جاري...' : 'النموذج' }}</span>
+        </button>
+
+        <button (click)="exportData()" [disabled]="isExporting()" class="btn-secondary py-2 px-2 sm:px-3 text-xs justify-center"
+          title="تحميل بيانات المجموعات الحالية">
+          <svg *ngIf="isExporting()" class="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          <svg *ngIf="!isExporting()" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span class="truncate">{{ isExporting() ? 'جاري...' : 'البيانات' }}</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -203,52 +210,72 @@
         style="background: linear-gradient(135deg, rgba(74,222,128,0.04) 0%, transparent 60%);"></div>
 
       <!-- Card Body -->
-      <div class="p-6 flex-1">
-        <div class="flex items-start justify-between mb-4">
-          <div class="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300"
-            style="background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.12);">
-            <svg class="w-6 h-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-          <div class="flex flex-col gap-1 items-end">
-            <span class="badge-green text-xs">{{ group.studentCount }} طالب</span>
-            <span class="text-[10px] font-bold text-dark-300 bg-dark-800/80 px-2 py-0.5 rounded border border-dark-700">
-              <span class="text-sky-400">♂ {{ group.maleCount || 0 }}</span>
-              <span class="mx-1 text-dark-600">•</span>
-              <span class="text-pink-400">♀ {{ group.femaleCount || 0 }}</span>
-            </span>
-            <span *ngIf="group.isOnline"
-              class="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">أونلاين</span>
-            <span *ngIf="!group.isOnline && group.roomName"
-              class="px-2 py-0.5 rounded text-[10px] font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
-              {{ group.roomName }}</span>
-            <div class="flex items-center gap-1 mt-1 z-10"
-              *ngIf="authService.hasPermission('Permissions.Groups.Manage')">
-              <button (click)="editGroup(group, $event)"
-                class="w-6 h-6 rounded flex items-center justify-center bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 transition-colors"
-                title="تعديل">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-              <button *ngIf="authService.hasPermission('Permissions.Groups.Delete')"
-                (click)="deleteGroup(group, $event)"
-                class="w-6 h-6 rounded flex items-center justify-center bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
-                title="حذف">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
+      <div class="p-5 sm:p-6 flex-1 flex flex-col">
+        <!-- Top Row: Icon + Title + Actions -->
+        <div class="flex items-start justify-between gap-3 mb-3.5">
+          <div class="flex items-center gap-3 min-w-0 flex-1">
+            <div class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-300 shadow-sm"
+              style="background: rgba(74,222,128,0.08); border: 1px solid rgba(74,222,128,0.15);">
+              <svg class="w-5.5 h-5.5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+              </svg>
             </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-base sm:text-lg font-bold text-white truncate transition-colors duration-200" [title]="group.name">
+                {{ group.name }}
+              </h3>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span *ngIf="group.isOnline"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+                  أونلاين
+                </span>
+                <span *ngIf="!group.isOnline && group.roomName"
+                  class="px-2 py-0.5 rounded text-[11px] font-medium bg-purple-500/10 text-purple-300 border border-purple-500/25">
+                  {{ group.roomName }}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions (Edit/Delete) on top-left (RTL) -->
+          <div class="flex items-center gap-1.5 flex-shrink-0 z-10"
+            *ngIf="authService.hasPermission('Permissions.Groups.Manage')">
+            <button (click)="editGroup(group, $event)"
+              class="w-7 h-7 rounded-lg flex items-center justify-center bg-blue-500/10 hover:bg-blue-500/25 text-blue-400 transition-colors"
+              title="تعديل">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button *ngIf="authService.hasPermission('Permissions.Groups.Delete')"
+              (click)="deleteGroup(group, $event)"
+              class="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/10 hover:bg-red-500/25 text-red-400 transition-colors"
+              title="حذف">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
           </div>
         </div>
 
-        <h3 class="text-lg font-bold text-white mb-2 transition-colors duration-200">{{ group.name }}</h3>
-        <p class="text-dark-400 text-sm line-clamp-2 leading-relaxed">
+        <!-- Badges Row: Student count + Gender breakdown -->
+        <div class="flex items-center flex-wrap gap-2 mb-3">
+          <span class="badge-green text-xs font-semibold px-2.5 py-1">
+            {{ group.studentCount }} طالب
+          </span>
+          <span class="text-xs font-bold text-dark-300 bg-dark-800/80 px-2.5 py-1 rounded-full border border-dark-700/80 flex items-center gap-1.5">
+            <span class="text-sky-400">♂ {{ group.maleCount || 0 }}</span>
+            <span class="text-dark-600">•</span>
+            <span class="text-pink-400">♀ {{ group.femaleCount || 0 }}</span>
+          </span>
+        </div>
+
+        <!-- Description -->
+        <p class="text-dark-400 text-xs sm:text-sm line-clamp-2 leading-relaxed mt-auto">
           {{ group.description || 'لا يوجد وصف مضاف لهذه الحلقة حتى الآن' }}
         </p>
       </div>

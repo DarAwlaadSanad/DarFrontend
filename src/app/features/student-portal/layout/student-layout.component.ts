@@ -99,7 +99,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
                 </div>
                 <svg class="w-3.5 h-3.5 text-dark-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
               </button>
-              <div *ngIf="isProfileOpen()" class="dropdown-panel absolute left-0 mt-2 w-44 rounded-xl shadow-2xl py-2 animate-fade-in z-50 border border-dark-700/80">
+              <div *ngIf="isProfileOpen()" class="dropdown-panel absolute left-0 mt-2 w-48 max-w-[calc(100vw-2rem)] rounded-xl shadow-2xl py-2 animate-fade-in z-50 border border-dark-700/80">
                 <div class="px-4 py-2 border-b border-dark-800 mb-2">
                   <p class="text-xs text-dark-500 uppercase font-bold tracking-widest mb-1">بيانات الطالب</p>
                   <p class="text-sm font-bold text-white truncate">{{ authService.currentUser()?.fullName }}</p>
@@ -113,7 +113,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         </header>
 
         <!-- Page Content -->
-        <div class="p-4 lg:p-8 pb-6">
+        <div class="p-2 sm:p-4 lg:p-8 pb-6">
           <router-outlet></router-outlet>
         </div>
       </main>

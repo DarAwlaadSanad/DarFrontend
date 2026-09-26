@@ -1,10 +1,10 @@
-<div class="chat-wrapper flex flex-col h-[calc(100vh-4.5rem)] lg:h-[calc(100vh-5rem)] max-w-7xl mx-auto p-2 sm:p-4 transition-all" dir="rtl">
+<div class="chat-wrapper flex flex-col h-[calc(100dvh-4.5rem)] lg:h-[calc(100dvh-5rem)] max-w-7xl mx-auto p-1.5 sm:p-4 transition-all" dir="rtl">
 
   <!-- ── Top Mode Switcher (Tabs) ──────────────────────────────────────── -->
-  <div *ngIf="canViewStudentChats()" class="flex items-center gap-2 mb-3 bg-dark-900/60 p-1.5 rounded-2xl border border-dark-800 w-fit backdrop-blur-md">
+  <div *ngIf="canViewStudentChats()" class="flex items-center gap-2 mb-2 sm:mb-3 bg-dark-900/60 p-1.5 rounded-2xl border border-dark-800 w-full sm:w-fit backdrop-blur-md overflow-x-auto">
     <button type="button"
             (click)="switchTab('group')"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all"
+            class="flex items-center justify-center gap-2 flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap"
             [class.bg-gradient-to-r]="activeTab() === 'group'"
             [class.from-primary-600]="activeTab() === 'group'"
             [class.to-emerald-700]="activeTab() === 'group'"
@@ -12,7 +12,7 @@
             [class.shadow-md]="activeTab() === 'group'"
             [class.text-dark-400]="activeTab() !== 'group'"
             [class.hover:text-white]="activeTab() !== 'group'">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
           d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
       </svg>
@@ -21,7 +21,7 @@
 
     <button type="button"
             (click)="switchTab('students')"
-            class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all relative"
+            class="flex items-center justify-center gap-2 flex-1 sm:flex-initial px-3 sm:px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all relative whitespace-nowrap"
             [class.bg-gradient-to-r]="activeTab() === 'students'"
             [class.from-primary-600]="activeTab() === 'students'"
             [class.to-emerald-700]="activeTab() === 'students'"
@@ -29,7 +29,7 @@
             [class.shadow-md]="activeTab() === 'students'"
             [class.text-dark-400]="activeTab() !== 'students'"
             [class.hover:text-white]="activeTab() !== 'students'">
-      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
           d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
       </svg>
@@ -42,11 +42,12 @@
   </div>
 
   <!-- ── Main Chat Layout ─────────────────────────────────────────────── -->
-  <div class="flex-1 flex gap-3 sm:gap-4 overflow-hidden min-h-0">
+  <div class="flex-1 flex gap-3 sm:gap-4 overflow-hidden min-h-0 relative">
 
     <!-- ── Left/Side Column: Student Conversations List (when in 'students' tab) ── -->
     <div *ngIf="activeTab() === 'students'" 
-         class="w-72 sm:w-80 flex-shrink-0 flex flex-col rounded-2xl sm:rounded-3xl border chat-sidebar overflow-hidden shadow-xl">
+         class="w-full md:w-80 flex-shrink-0 flex flex-col rounded-2xl sm:rounded-3xl border chat-sidebar overflow-hidden shadow-xl"
+         [class.hidden]="isMobileView() && showMobileChat()">
       
       <!-- Sidebar Header -->
       <div class="p-3.5 border-b flex flex-col gap-2.5 flex-shrink-0">
@@ -128,14 +129,27 @@
     </div>
 
     <!-- ── Right/Main Pane: Conversation Card ──────────────────────────── -->
-    <div class="chat-card flex-1 flex flex-col rounded-2xl sm:rounded-3xl border overflow-hidden shadow-2xl relative min-w-0">
+    <div class="chat-card flex-1 flex flex-col rounded-2xl sm:rounded-3xl border overflow-hidden shadow-2xl relative min-w-0"
+         [class.hidden]="isMobileView() && activeTab() === 'students' && !showMobileChat()">
 
       <!-- ── Conversation Header ───────────────────────────────────────── -->
-      <header class="chat-header px-4 py-3 sm:px-6 sm:py-4 flex items-center justify-between border-b flex-shrink-0 z-10 backdrop-blur-md">
+      <header class="chat-header px-3 sm:px-6 py-3 sm:py-4 flex items-center justify-between border-b flex-shrink-0 z-10 backdrop-blur-md">
         
-        <div class="flex items-center gap-3 sm:gap-4 min-w-0">
+        <div class="flex items-center gap-2.5 sm:gap-4 min-w-0">
+          <!-- Mobile Back Button to Students List -->
+          <button *ngIf="isMobileView() && activeTab() === 'students'"
+                  (click)="showMobileChat.set(false)"
+                  type="button"
+                  class="p-1.5 -mr-1 rounded-xl text-dark-300 hover:text-white hover:bg-dark-800 transition-colors flex items-center gap-1 text-xs font-bold flex-shrink-0"
+                  title="العودة لقائمة محادثات الطلاب">
+            <svg class="w-5 h-5 -rotate-180 transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+            <span class="text-[11px]">المحادثات</span>
+          </button>
+
           <!-- Room Avatar / Icon -->
-          <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-emerald-700 flex items-center justify-center text-white shadow-lg shadow-primary-900/40 flex-shrink-0">
+          <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-primary-500 to-emerald-700 flex items-center justify-center text-white shadow-lg shadow-primary-900/40 flex-shrink-0">
             <svg *ngIf="activeTab() === 'group'" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
                 d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />

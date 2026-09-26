@@ -25,7 +25,7 @@ import { PwaService } from '../../../core/services/pwa.service';
 
     <!-- ── Floating PWA Install Banner ────────────────────────────────── -->
     <div *ngIf="pwa.canInstall() && !pwa.isInstalled()"
-         class="fixed bottom-4 sm:bottom-6 right-4 left-4 sm:left-auto sm:right-6 sm:max-w-md z-[105] animate-slide-up"
+         class="fixed bottom-4 sm:bottom-6 right-4 left-4 sm:left-auto sm:right-6 sm:max-w-md z-[105] animate-slide-up mb-[env(safe-area-inset-bottom,0px)]"
          dir="rtl">
       <div class="pwa-banner p-3.5 sm:p-4 rounded-3xl border shadow-2xl backdrop-blur-xl flex items-center justify-between gap-3 relative overflow-hidden">
         
