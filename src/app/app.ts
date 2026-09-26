@@ -4,13 +4,17 @@ import { CommonModule } from '@angular/common';
 import { UiService } from './core/services/ui.service';
 import { ThemeService } from './core/services/theme.service';
 import { PwaInstallComponent } from './shared/components/pwa-install/pwa-install.component';
+import { OfflineIndicatorComponent } from './shared/components/offline-indicator/offline-indicator.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PwaInstallComponent],
+  imports: [CommonModule, RouterOutlet, PwaInstallComponent, OfflineIndicatorComponent],
   template: `
     <router-outlet />
+
+    <!-- Offline Mode & Sync Floating Indicator -->
+    <app-offline-indicator />
 
     <!-- PWA Install Prompt & Update Alert -->
     <app-pwa-install />

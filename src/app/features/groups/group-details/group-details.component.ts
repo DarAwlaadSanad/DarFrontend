@@ -1,14 +1,15 @@
-import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { GroupService } from '../../../core/services/group.service';
 import { StudentService } from '../../../core/services/student.service';
 import { ScheduleService } from '../../../core/services/schedule.service';
 import { AttendanceBatchService } from '../../../core/services/attendance-batch.service';
 import { EvaluationService } from '../../../core/services/evaluation.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { OfflineSyncService } from '../../../core/services/offline-sync.service';
 import { GroupDetailsDTO, AttendanceStatus, normalizeAttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
 import { StudentAddDTO, getGenderLabel } from '../../../core/models/student.models';
 import { GroupScheduleViewDTO, CreateGroupScheduleDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
@@ -39,7 +40,7 @@ interface SessionEditorRow {
   imports: [CommonModule, FormsModule, RouterLink, GroupExamsComponent],
   templateUrl: './group-details.component.html',
 })
-export class GroupDetailsComponent implements OnInit {
+export class GroupDetailsComponent implements OnInit, OnDestroy {
   private groupService = inject(GroupService);
   private studentService = inject(StudentService);
   private scheduleService = inject(ScheduleService);
@@ -52,6 +53,10 @@ export class GroupDetailsComponent implements OnInit {
   private exportService = inject(ExportService);
   private route = inject(ActivatedRoute);
   public authService = inject(AuthService);
+  public offlineSync = inject(OfflineSyncService);
+
+  private syncSub?: Subscription;
+  isWorkingOffline = signal(false);
 
   details = signal<GroupDetailsDTO | null>(null);
   activeTab = signal<'records' | 'schedules' | 'fee-plans' | 'student-fees' | 'exams'>('records');
@@ -129,6 +134,17 @@ export class GroupDetailsComponent implements OnInit {
         this.loadStudentFees(id);
       }
     });
+
+    // Listen for background sync completions to refresh live data
+    this.syncSub = this.offlineSync.syncCompleted$.subscribe(result => {
+      if (result.successCount > 0 && this.details()) {
+        this.loadDetails(this.details()!.groupId);
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    this.syncSub?.unsubscribe();
   }
 
   loadAcademicYears() {
@@ -137,13 +153,38 @@ export class GroupDetailsComponent implements OnInit {
 
   loadDetails(id: number) {
     this.isLoading.set(true);
+
+    // If device is offline, load from local cache if available
+    if (!this.offlineSync.isOnline()) {
+      const cached = this.offlineSync.getCachedGroupDetails(id);
+      if (cached) {
+        this.details.set(cached.details);
+        this.isWorkingOffline.set(true);
+        this.isLoading.set(false);
+        this.ui.info('أنت تعمل دون اتصال بالإنترنت. يتم عرض النسخة المحفوظة محلياً.');
+        return;
+      }
+    }
+
     this.groupService.getDetails(id, this.currentMonth(), this.currentYear()).subscribe({
       next: (data) => {
         this.details.set(data);
+        this.isWorkingOffline.set(false);
+        // Cache group details locally for future offline availability
+        this.offlineSync.cacheGroupDetails(id, data);
         this.loadStudentFees(id); // Reload fees when month/year changes
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        this.isLoading.set(false);
+        // Fallback to locally cached data on connection failure
+        const cached = this.offlineSync.getCachedGroupDetails(id);
+        if (cached) {
+          this.details.set(cached.details);
+          this.isWorkingOffline.set(true);
+          this.ui.info('تعذر الاتصال بالخادم. يتم عرض البيانات المحفوظة محلياً.');
+        }
+      }
     });
   }
 
@@ -235,6 +276,13 @@ export class GroupDetailsComponent implements OnInit {
         }))
     };
 
+    // If completely offline: save to offline sync queue immediately
+    if (!this.offlineSync.isOnline()) {
+      this.saveSessionOffline(session, attBatch, evalBatch);
+      return;
+    }
+
+    // If online: attempt API call, with graceful offline fallback on network disconnect
     forkJoin([
       this.attendanceSvc.saveBatch(attBatch),
       ...(evalBatch.entries.length ? [this.evaluationSvc.saveBatch(evalBatch)] : [])
@@ -243,13 +291,59 @@ export class GroupDetailsComponent implements OnInit {
         this.isSaving.set(false);
         this.showSessionEditor.set(false);
         this.groupService.clearDetailsCache();
+        this.ui.success('تم حفظ سجل الجلسة ودرجات التسميع بنجاح');
         this.loadDetails(this.details()!.groupId);
       },
-      error: () => {
-        this.isSaving.set(false);
-        this.ui.error('حدث خطأ أثناء الحفظ');
+      error: (err) => {
+        // If network error occurred, fallback seamlessly to offline queue
+        if (!navigator.onLine || err.status === 0) {
+          this.saveSessionOffline(session, attBatch, evalBatch);
+        } else {
+          this.isSaving.set(false);
+          this.ui.error('حدث خطأ أثناء الحفظ على الخادم');
+        }
       }
     });
+  }
+
+  private saveSessionOffline(session: SessionViewDTO, attBatch: any, evalBatch: any) {
+    this.offlineSync.enqueueSession({
+      sessionId: session.sessionId,
+      groupId: this.details()!.groupId,
+      groupName: this.details()!.groupName,
+      sessionDate: session.date,
+      attendanceBatch: attBatch,
+      evaluationBatch: evalBatch.entries.length ? evalBatch : undefined,
+      editorRows: this.editorRows()
+    });
+
+    // Optimistically update the students' records in the active in-memory details
+    const current = this.details();
+    if (current && current.students) {
+      for (const row of this.editorRows()) {
+        const st = current.students.find(x => x.studentId === row.studentId);
+        if (st) {
+          if (!st.records) st.records = {};
+          st.records[session.sessionId] = {
+            attendance: row.status,
+            score: row.score !== null ? row.score : undefined,
+            comment: row.comment || undefined
+          };
+          st.totalPresent = Object.values(st.records).filter(r => r.attendance === AttendanceStatus.Present).length;
+          const scores = Object.values(st.records).map(r => r.score).filter((s): s is number => typeof s === 'number');
+          st.totalEvaluation = scores.reduce((sum, v) => sum + v, 0);
+        }
+      }
+      this.details.set({ ...current });
+    }
+
+    this.isSaving.set(false);
+    this.showSessionEditor.set(false);
+    this.ui.info('تم حفظ الحضور ودرجات التسميع محلياً (بدون اتصال). ستتم المزامنة تلقائياً عند عودة الإنترنت.');
+  }
+
+  isSessionPending(sessionId: number): boolean {
+    return this.offlineSync.isSessionPending(sessionId);
   }
 
   // ── Schedules ───────────────────────────────────────────────────────────────

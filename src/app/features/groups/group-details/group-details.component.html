@@ -79,6 +79,25 @@
 
   <!-- ── Records Tab ────────────────────────────────────────────────────────── -->
   <div *ngIf="activeTab() === 'records'" class="space-y-4">
+    <!-- Offline Mode Banner in Group Details -->
+    <div *ngIf="!offlineSync.isOnline() || isWorkingOffline() || offlineSync.pendingCount() > 0"
+      class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 flex items-center justify-between gap-3 text-xs text-amber-200 animate-slide-in">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse flex-shrink-0"></span>
+        <span *ngIf="!offlineSync.isOnline()">
+          <strong>وضع عدم الاتصال:</strong> يمكنك تسجيل الحضور والغياب ودرجات التسميع دون إنترنت. سيتم الحفظ محلياً والمزامنة تلقائياً فور عودة الشبكة.
+        </span>
+        <span *ngIf="offlineSync.isOnline() && offlineSync.pendingCount() > 0">
+          <strong>بانتظار المزامنة:</strong> لديك {{ offlineSync.pendingCount() }} جلسات مسجلة دون اتصال.
+        </span>
+      </div>
+      <button *ngIf="offlineSync.isOnline() && offlineSync.pendingCount() > 0"
+        (click)="offlineSync.syncAllPending()"
+        class="px-3 py-1 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 font-bold border border-amber-500/40 transition-colors flex-shrink-0">
+        مزامنة الآن
+      </button>
+    </div>
+
     <!-- Filters -->
     <div class="flex items-center gap-2 justify-end no-print flex-wrap">
       <select [(ngModel)]="currentMonth" (change)="onMonthYearChange()" class="input-field py-2 px-3 text-sm w-auto">
@@ -108,12 +127,18 @@
                 class="w-36 lg:w-56 px-3 lg:px-6 py-3 font-bold text-white sticky right-0 bg-dark-900/95 backdrop-blur z-10 border-l border-dark-700 text-sm">
                 الطالب</th>
               <th *ngFor="let session of sortedSessions()" (click)="openSessionEditor(session)"
-                class="px-2 lg:px-3 py-3 text-center border-l border-dark-700/50 cursor-pointer hover:bg-primary-600/10 group transition-colors min-w-[56px]">
+                class="px-2 lg:px-3 py-3 text-center border-l border-dark-700/50 cursor-pointer hover:bg-primary-600/10 group transition-colors min-w-[56px] relative">
                 <div class="text-[10px] text-dark-400 mb-0.5 group-hover:text-primary-400 transition-colors">{{
                   session.date | date:'EEE' }}</div>
                 <div class="text-xs font-bold text-white group-hover:text-primary-400 transition-colors">{{ session.date
                   | date:'d/M' }}</div>
-                <div *ngIf="authService.hasPermission('Permissions.Sessions.Manage')"
+                <div *ngIf="isSessionPending(session.sessionId)"
+                  class="mt-1 inline-flex items-center gap-0.5 px-1 py-0.5 rounded text-[8px] bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30"
+                  title="محفوظ محلياً - بانتظار المزامنة">
+                  <span>⏳</span>
+                  <span>معلق</span>
+                </div>
+                <div *ngIf="authService.hasPermission('Permissions.Sessions.Manage') && !isSessionPending(session.sessionId)"
                   class="text-[9px] text-dark-600 group-hover:text-primary-500 mt-0.5 hidden lg:block">تعديل</div>
               </th>
               <th class="w-14 lg:w-16 px-1 py-3 text-center font-bold text-primary-400 bg-primary-500/5 text-[10px]">
@@ -394,7 +419,17 @@
     <!-- Header -->
     <div class="flex items-center justify-between px-4 lg:px-6 py-4 border-b border-dark-800 flex-shrink-0">
       <div>
-        <h2 class="text-base lg:text-xl font-bold text-white">تسجيل الحضور والتقييم</h2>
+        <div class="flex items-center gap-2">
+          <h2 class="text-base lg:text-xl font-bold text-white">تسجيل الحضور والتقييم</h2>
+          <span *ngIf="!offlineSync.isOnline()"
+            class="px-2 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold">
+            دون اتصال
+          </span>
+          <span *ngIf="editingSession() && isSessionPending(editingSession()!.sessionId)"
+            class="px-2 py-0.5 rounded-full text-[10px] bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold">
+            بانتظار المزامنة
+          </span>
+        </div>
         <p class="text-dark-400 text-xs mt-0.5">{{ editingSession()?.date | date:'fullDate' }}</p>
       </div>
       <button (click)="showSessionEditor.set(false)"
@@ -435,7 +470,7 @@
           <!-- Score + comment -->
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="text-[10px] text-dark-500 mb-1 block">الدرجة</label>
+              <label class="text-[10px] text-dark-500 mb-1 block">درجة التسميع</label>
               <input type="number" [(ngModel)]="row.score" min="0" max="100"
                 class="input-field py-1.5 px-2 text-sm text-center w-full" placeholder="--">
             </div>
@@ -453,8 +488,8 @@
         <thead class="sticky top-0 bg-dark-900 z-10">
           <tr class="text-dark-400 text-xs border-b border-dark-800">
             <th class="px-4 lg:px-6 py-3 text-right font-semibold">الطالب</th>
-            <th class="px-3 py-3 text-center font-semibold">الحضور</th>
-            <th class="px-3 py-3 text-center font-semibold w-20">الدرجة</th>
+            <th class="px-3 py-3 text-center font-semibold">الحضور والغياب</th>
+            <th class="px-3 py-3 text-center font-semibold w-24">درجة التسميع</th>
             <th class="px-3 py-3 text-right font-semibold">ملاحظة</th>
           </tr>
         </thead>
@@ -486,12 +521,13 @@
 
     <!-- Footer -->
     <div class="p-4 lg:p-6 border-t border-dark-800 flex gap-3 flex-shrink-0">
-      <button (click)="saveSession()" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm">
+      <button (click)="saveSession()" [disabled]="isSaving()" class="btn-primary flex-1 py-3 text-sm flex items-center justify-center gap-2">
         <svg *ngIf="isSaving()" class="w-4 h-4 animate-spin ml-2 inline" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        حفظ الحضور والتقييم
+        <span *ngIf="offlineSync.isOnline()">حفظ الحضور والتقييم</span>
+        <span *ngIf="!offlineSync.isOnline()">حفظ محلياً (ستتم المزامنة تلقائياً)</span>
       </button>
       <button (click)="showSessionEditor.set(false)" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
     </div>
