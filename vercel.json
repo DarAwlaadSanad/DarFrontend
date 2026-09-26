@@ -5,6 +5,10 @@
       "destination": "http://darawlaadsanad.runasp.net/api/$1"
     },
     {
+      "source": "/hubs/(.*)",
+      "destination": "http://darawlaadsanad.runasp.net/hubs/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

@@ -21,9 +21,12 @@ export class NotificationService {
 
   private hubConnection: signalR.HubConnection | null = null;
   private audioCtx: AudioContext | null = null;
+  private pollInterval: any = null;
+  private isPollingActive = false;
 
   constructor() {
     this.requestPermission();
+    this.startAutoPolling();
   }
 
   requestPermission() {
@@ -35,53 +38,43 @@ export class NotificationService {
   // ─── SignalR ────────────────────────────────────────────────────────────────
 
   startConnection() {
+    this.startAutoPolling();
+
     if (this.hubConnection && this.hubConnection.state !== signalR.HubConnectionState.Disconnected) {
       return;
     }
 
-    this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(this.hubUrl, {
-        accessTokenFactory: () => this.auth.getToken() || '',
-        transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
-      })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-      .configureLogging(signalR.LogLevel.Warning)
-      .build();
+    try {
+      this.hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl(this.hubUrl, {
+          accessTokenFactory: () => this.auth.getToken() || '',
+          transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+        })
+        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+        .configureLogging(signalR.LogLevel.Warning)
+        .build();
 
-    // Listen for real-time notifications
-    this.hubConnection.on('ReceiveNotification', (notification: NotificationDTO) => {
-      // Prepend new notification to the list
-      this.notifications.update(list => [notification, ...list]);
-      this.unreadCount.update(c => c + 1);
+      // Listen for real-time notifications
+      this.hubConnection.on('ReceiveNotification', (notification: NotificationDTO) => {
+        // Check if already in list to avoid duplicates
+        const exists = this.notifications().some(n => n.id === notification.id);
+        if (!exists) {
+          this.notifications.update(list => [notification, ...list]);
+          this.unreadCount.update(c => c + 1);
 
-      // Play sound
-      this.playNotificationSound();
+          // Play sound
+          this.playNotificationSound();
 
-      // Show browser desktop notification
-      this.showBrowserNotification(notification.title, notification.message);
-    });
+          // Show browser desktop notification
+          this.showBrowserNotification(notification.title, notification.message);
+        }
+      });
 
-    this.hubConnection.onreconnecting(() => {
-      this.isConnected.set(false);
-    });
+      this.hubConnection.onreconnecting(() => {
+        this.isConnected.set(false);
+      });
 
-    this.hubConnection.onreconnected(async () => {
-      this.isConnected.set(true);
-      const userId = this.getUserId();
-      if (userId) {
-        try {
-          await this.hubConnection!.invoke('JoinUserGroup', userId);
-        } catch { }
-      }
-    });
-
-    this.hubConnection.onclose(() => {
-      this.isConnected.set(false);
-    });
-
-    this.hubConnection
-      .start()
-      .then(async () => {
+      this.hubConnection.onreconnected(async () => {
         this.isConnected.set(true);
         const userId = this.getUserId();
         if (userId) {
@@ -89,20 +82,86 @@ export class NotificationService {
             await this.hubConnection!.invoke('JoinUserGroup', userId);
           } catch { }
         }
-        this.loadNotifications();
-      })
-      .catch(() => {
-        this.isConnected.set(false);
-        this.loadNotifications();
       });
+
+      this.hubConnection.onclose(() => {
+        this.isConnected.set(false);
+      });
+
+      this.hubConnection
+        .start()
+        .then(async () => {
+          this.isConnected.set(true);
+          const userId = this.getUserId();
+          if (userId) {
+            try {
+              await this.hubConnection!.invoke('JoinUserGroup', userId);
+            } catch { }
+          }
+          this.loadNotifications();
+        })
+        .catch((err) => {
+          console.warn('SignalR Notification connection error, using auto-poll fallback:', err);
+          this.isConnected.set(false);
+          this.loadNotifications();
+        });
+    } catch (err) {
+      console.warn('Failed to build Notification Hub connection:', err);
+      this.isConnected.set(false);
+      this.loadNotifications();
+    }
   }
 
   stopConnection() {
+    this.stopAutoPolling();
     if (this.hubConnection) {
       this.hubConnection.stop().catch(() => { });
       this.hubConnection = null;
       this.isConnected.set(false);
     }
+  }
+
+  // ─── Auto-Polling Fallback ──────────────────────────────────────────────────
+
+  startAutoPolling() {
+    if (this.isPollingActive) return;
+    this.isPollingActive = true;
+
+    this.pollInterval = setInterval(() => {
+      if (!this.auth.getToken()) return;
+      this.silentSyncNotifications();
+    }, 12000);
+  }
+
+  stopAutoPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+    this.isPollingActive = false;
+  }
+
+  private silentSyncNotifications() {
+    this.http.get<NotificationListResponseDTO>(`${this.apiUrl}/my-notifications?count=30`).subscribe({
+      next: (res) => {
+        if (!res) return;
+        const prevCount = this.unreadCount();
+        const prevFirstId = this.notifications()[0]?.id;
+
+        this.notifications.set(res.notifications || []);
+        this.unreadCount.set(res.unreadCount || 0);
+
+        // If unread count increased or new notification arrived
+        if (res.unreadCount > prevCount && res.notifications && res.notifications.length > 0) {
+          const newest = res.notifications[0];
+          if (newest && newest.id !== prevFirstId) {
+            this.playNotificationSound();
+            this.showBrowserNotification(newest.title, newest.message);
+          }
+        }
+      },
+      error: () => {}
+    });
   }
 
   // ─── HTTP ────────────────────────────────────────────────────────────────

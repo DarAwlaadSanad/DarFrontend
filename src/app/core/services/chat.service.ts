@@ -29,72 +29,86 @@ export class ChatService {
   private hubConnection: signalR.HubConnection | null = null;
   private audioCtx: AudioContext | null = null;
   private currentJoinedRoomId: number | null = null;
+  private pollInterval: any = null;
+  private isPollingActive = false;
 
-  constructor() {}
+  constructor() {
+    this.startAutoPolling();
+  }
 
   // ─── SignalR Connection ───────────────────────────────────────────────────
 
   startConnection(): Promise<void> {
+    this.startAutoPolling();
+
     if (this.hubConnection && (this.hubConnection.state === signalR.HubConnectionState.Connected || this.hubConnection.state === signalR.HubConnectionState.Connecting)) {
       return Promise.resolve();
     }
 
     this.isConnecting.set(true);
 
-    this.hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl(this.hubUrl, {
-        accessTokenFactory: () => this.auth.getToken() || '',
-        transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
-      })
-      .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-      .configureLogging(signalR.LogLevel.Warning)
-      .build();
+    try {
+      this.hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl(this.hubUrl, {
+          accessTokenFactory: () => this.auth.getToken() || '',
+          transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+        })
+        .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
+        .configureLogging(signalR.LogLevel.Warning)
+        .build();
 
-    // Listen for incoming messages
-    this.hubConnection.on('ReceiveMessage', (message: ChatMessageDTO) => {
-      this.handleIncomingMessage(message);
-    });
+      // Listen for incoming messages
+      this.hubConnection.on('ReceiveMessage', (message: ChatMessageDTO) => {
+        this.handleIncomingMessage(message);
+      });
 
-    this.hubConnection.onreconnecting(() => {
-      this.isConnected.set(false);
-      this.isConnecting.set(true);
-    });
+      this.hubConnection.onreconnecting(() => {
+        this.isConnected.set(false);
+        this.isConnecting.set(true);
+      });
 
-    this.hubConnection.onreconnected(async () => {
-      this.isConnected.set(true);
-      this.isConnecting.set(false);
-      // Re-join current active room
-      if (this.currentJoinedRoomId) {
-        try {
-          await this.hubConnection!.invoke('JoinRoom', this.currentJoinedRoomId);
-        } catch { }
-      }
-    });
-
-    this.hubConnection.onclose(() => {
-      this.isConnected.set(false);
-      this.isConnecting.set(false);
-      this.currentJoinedRoomId = null;
-    });
-
-    return this.hubConnection
-      .start()
-      .then(() => {
+      this.hubConnection.onreconnected(async () => {
         this.isConnected.set(true);
         this.isConnecting.set(false);
-        // If room was already set before connection finished, join it now
-        if (this.activeRoom()) {
-          this.joinRoom(this.activeRoom()!.id);
+        // Re-join current active room
+        if (this.currentJoinedRoomId) {
+          try {
+            await this.hubConnection!.invoke('JoinRoom', this.currentJoinedRoomId);
+          } catch { }
         }
-      })
-      .catch((err) => {
-        console.warn('SignalR Chat connection error, will use HTTP fallback:', err);
+      });
+
+      this.hubConnection.onclose(() => {
         this.isConnected.set(false);
         this.isConnecting.set(false);
+        this.currentJoinedRoomId = null;
       });
+
+      return this.hubConnection
+        .start()
+        .then(() => {
+          this.isConnected.set(true);
+          this.isConnecting.set(false);
+          // If room was already set before connection finished, join it now
+          if (this.activeRoom()) {
+            this.joinRoom(this.activeRoom()!.id);
+          }
+        })
+        .catch((err) => {
+          console.warn('SignalR Chat connection error, using HTTP & real-time auto-sync fallback:', err);
+          this.isConnected.set(false);
+          this.isConnecting.set(false);
+        });
+    } catch (err) {
+      console.warn('Failed to build SignalR connection, using fallback:', err);
+      this.isConnected.set(false);
+      this.isConnecting.set(false);
+      return Promise.resolve();
+    }
   }
 
   stopConnection() {
+    this.stopAutoPolling();
     if (this.hubConnection) {
       if (this.currentJoinedRoomId) {
         this.hubConnection.invoke('LeaveRoom', this.currentJoinedRoomId).catch(() => {});
@@ -105,6 +119,99 @@ export class ChatService {
       this.isConnecting.set(false);
       this.currentJoinedRoomId = null;
     }
+  }
+
+  // ─── Auto-Polling Fallback (الوضع الاحتياطي الذكي للتحديث اللحظي) ──────────
+
+  startAutoPolling() {
+    if (this.isPollingActive) return;
+    this.isPollingActive = true;
+
+    let pollCounter = 0;
+    this.pollInterval = setInterval(() => {
+      pollCounter++;
+
+      const room = this.activeRoom();
+      if (room && room.id) {
+        this.silentSyncMessages(room.id);
+      }
+
+      // Every 3 polls (~7.5s), refresh student rooms unread counts if rooms are active
+      if (pollCounter % 3 === 0 && this.studentRooms().length > 0) {
+        this.silentSyncStudentRooms();
+      }
+    }, 2500);
+  }
+
+  stopAutoPolling() {
+    if (this.pollInterval) {
+      clearInterval(this.pollInterval);
+      this.pollInterval = null;
+    }
+    this.isPollingActive = false;
+  }
+
+  private silentSyncMessages(roomId: number) {
+    if (!this.auth.getToken()) return;
+
+    this.http.get<ChatMessageDTO[]>(`${this.apiUrl}/${roomId}/messages?page=1`).subscribe({
+      next: (msgs) => {
+        if (!msgs || msgs.length === 0) return;
+        const currentList = this.messages();
+        const currentIds = new Set(currentList.map(m => m.id));
+
+        const mapped: ChatMessageDTO[] = msgs.map(m => ({
+          id: (m as any).id ?? (m as any).Id,
+          roomId: (m as any).roomId ?? (m as any).RoomId,
+          senderName: (m as any).senderName ?? (m as any).SenderName ?? 'مستخدم',
+          senderId: (m as any).senderId ?? (m as any).SenderId,
+          studentSenderId: (m as any).studentSenderId ?? (m as any).StudentSenderId,
+          isStudent: (m as any).isStudent ?? (m as any).IsStudent ?? false,
+          content: (m as any).content ?? (m as any).Content ?? '',
+          sentAt: (m as any).sentAt ?? (m as any).SentAt,
+          isRead: (m as any).isRead ?? (m as any).IsRead ?? false
+        }));
+
+        const newMsgs = mapped.filter(m => !currentIds.has(m.id));
+        if (newMsgs.length > 0) {
+          this.messages.update(list => [...list, ...newMsgs]);
+
+          // Check if any incoming message is from another user
+          const myId = this.auth.userId();
+          const myName = this.auth.currentUser()?.fullName || this.auth.currentUser()?.userName;
+          const hasIncoming = newMsgs.some(m => {
+            const isMine = (myId && m.senderId === myId) || (myName && m.senderName === myName);
+            return !isMine;
+          });
+
+          if (hasIncoming) {
+            this.playMessageSound();
+          }
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  private silentSyncStudentRooms() {
+    if (!this.auth.getToken()) return;
+
+    this.http.get<ChatRoomDTO[]>(`${this.apiUrl}/student-rooms`).subscribe({
+      next: (rooms) => {
+        if (!rooms) return;
+        const mapped = rooms.map(r => ({
+          id: (r as any).id ?? (r as any).Id,
+          name: (r as any).name ?? (r as any).Name,
+          type: (r as any).type ?? (r as any).Type,
+          studentId: (r as any).studentId ?? (r as any).StudentId,
+          studentName: (r as any).studentName ?? (r as any).StudentName,
+          unreadCount: (r as any).unreadCount ?? (r as any).UnreadCount ?? 0,
+          lastMessage: (r as any).lastMessage ?? (r as any).LastMessage
+        }));
+        this.studentRooms.set(mapped);
+      },
+      error: () => {}
+    });
   }
 
   async joinRoom(roomId: number) {
