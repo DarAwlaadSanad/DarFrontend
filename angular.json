@@ -28,9 +28,12 @@
                 "input": "src/assets",
                 "output": "assets"
               },
-              "src/manifest.webmanifest"
+              "src/manifest.webmanifest",
+              "src/.well-known"
             ],
-            "styles": ["src/styles.css"]
+            "styles": [
+              "src/styles.css"
+            ]
           },
           "configurations": {
             "production": {
