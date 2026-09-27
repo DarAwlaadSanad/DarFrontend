@@ -1,0 +1,42 @@
+.map-container {
+  border-radius: 1rem;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+
+/* Ensure Leaflet tiles and controls look great in dark theme */
+:host ::ng-deep .leaflet-container {
+  font-family: 'Cairo', sans-serif !important;
+  background-color: #0f172a;
+}
+
+:host ::ng-deep .leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  padding: 4px;
+}
+
+:host ::ng-deep .leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+:host ::ng-deep .custom-map-pin,
+:host ::ng-deep .dialog-map-pin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Pulse animation for current location indicator */
+@keyframes pulse-ring {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 0.4; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.pulse-circle {
+  animation: pulse-ring 2s infinite ease-in-out;
+}

@@ -94,6 +94,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (this.authService.hasPermission('Permissions.Rooms.View')) {
       this.navItems.push({ label: 'الغرف', icon: 'home', route: '/dashboard/rooms' });
     }
+    if (this.authService.hasPermission('Permissions.TeacherAttendance.Manage') || this.authService.hasRole('Admin') || this.authService.hasRole('SuperAdmin')) {
+      this.navItems.push({ label: 'أماكن تسجيل الحضور', icon: 'map-pin', route: '/dashboard/settings/locations' });
+    }
 
     // Financial Management Group (الإدارة المالية)
     const hasFinanceView = this.authService.hasPermission('Permissions.Finance.View');

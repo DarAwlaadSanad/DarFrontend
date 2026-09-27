@@ -55,8 +55,9 @@ export class TeacherAttendanceService {
     );
   }
 
-  checkIn(): Observable<CheckInResponseDTO> {
-    return this.http.post<CheckInResponseDTO>(`${this.apiUrl}/check-in`, {}).pipe(
+  checkIn(coords?: { latitude: number; longitude: number }): Observable<CheckInResponseDTO> {
+    const payload = coords ? { latitude: coords.latitude, longitude: coords.longitude } : {};
+    return this.http.post<CheckInResponseDTO>(`${this.apiUrl}/check-in`, payload).pipe(
       tap(response => {
         if (response.success && response.record) {
           this.todayRecord.set(response.record);

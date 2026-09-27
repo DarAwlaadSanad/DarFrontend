@@ -88,6 +88,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/rooms/rooms').then(m => m.RoomsComponent)
       },
       {
+        path: 'settings/locations',
+        loadComponent: () => import('./features/settings/attendance-locations/attendance-locations.component').then(m => m.AttendanceLocationsComponent)
+      },
+      {
+        path: 'locations',
+        loadComponent: () => import('./features/settings/attendance-locations/attendance-locations.component').then(m => m.AttendanceLocationsComponent)
+      },
+      {
         path: 'attendance',
         loadComponent: () =>
           import('./features/teacher-attendance/teacher-attendance.component').then(m => m.TeacherAttendanceComponent),

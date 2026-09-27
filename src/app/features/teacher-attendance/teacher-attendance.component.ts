@@ -24,7 +24,20 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   todayRecord = this.attendanceService.todayRecord;
 
   isAbsent = computed(() => {
+    // If there is an upcoming period, the teacher is not absent for the day!
+    if (this.hasNextPeriod()) return false;
     return this.todayRecord()?.isAbsent === true;
+  });
+
+  hasPreviousPeriodAbsent = computed(() => {
+    const all = this.todayStatus()?.allTodayRecords || [];
+    return all.some(r => r.isAbsent);
+  });
+
+  previousPeriodAbsentReason = computed(() => {
+    const all = this.todayStatus()?.allTodayRecords || [];
+    const abs = all.find(r => r.isAbsent);
+    return abs?.absenceReason || null;
   });
 
   isCheckedIn = computed(() => {
@@ -44,6 +57,15 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     return ps.find(p => p.periodNumber === currNum) || ps[0] || null;
   });
 
+  nextPeriod = computed(() => {
+    const ps = this.periods();
+    return ps.find(p => p.status === 'Upcoming') || null;
+  });
+
+  hasNextPeriod = computed(() => {
+    return !!this.nextPeriod();
+  });
+
   hasNoSessions = computed(() => {
     const s = this.todayStatus();
     return s ? (!s.canCheckIn && s.requiresSessions && !s.hasSessionsToday) : false;
@@ -60,6 +82,9 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   targetPeriodForCheckIn = computed(() => {
     const ps = this.periods();
     if (!ps.length) return null;
+    const upcoming = ps.find(p => p.status === 'Upcoming');
+    if (upcoming) return upcoming;
+
     const records = this.todayStatus()?.allTodayRecords || [];
     const checkedInCount = records.filter(r => !!r.checkInTime).length;
     if (checkedInCount < ps.length) {
@@ -73,9 +98,6 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   });
 
   checkInAllowedTimeStr = computed(() => {
-    const backendAllowed = this.todayStatus()?.allowedCheckInTime;
-    if (backendAllowed) return backendAllowed;
-
     const startTime = this.targetPeriodStartTimeStr();
     if (!startTime) return null;
     const d = this.parseTodayTime(startTime);
@@ -90,15 +112,25 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
   isCheckInExpired = computed(() => {
     const status = this.todayStatus();
     if (status && !status.requiresSessions) return false;
-    if (this.isCheckedIn() || this.isAbsent()) return false;
+    if (this.isAbsent()) return false;
+
+    // If currently checked in without checkout, check-in is not expired
+    const rec = this.todayRecord();
+    if (rec?.checkInTime && !rec?.checkOutTime) return false;
 
     const target = this.targetPeriodForCheckIn() || this.currentPeriod();
     if (!target?.endTime) return false;
 
-    // Departure time arrives 10 minutes before period end
+    // Departure time arrives 10 minutes before period end (or at end time if short session)
     const d = this.parseTodayTime(target.endTime);
     if (!d) return false;
+
+    const startD = this.parseTodayTime(target.startTime);
     d.setMinutes(d.getMinutes() - 10);
+    if (startD && d.getTime() <= startD.getTime()) {
+      const endD = this.parseTodayTime(target.endTime);
+      return endD ? this.currentTime().getTime() >= endD.getTime() : false;
+    }
 
     return this.currentTime().getTime() >= d.getTime();
   });
@@ -108,7 +140,7 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     if (this.isAbsent()) return false;
 
     const status = this.todayStatus();
-    if (status && !status.requiresSessions) return true;
+    if (status && !status.requiresSessions && (!status.periods || status.periods.length === 0)) return true;
     if (status && !status.canCheckIn) return false;
 
     const allowedTimeStr = this.checkInAllowedTimeStr();
@@ -231,9 +263,50 @@ export class TeacherAttendanceComponent implements OnInit, OnDestroy {
     return new Date(`1970-01-01T${timeStr}`);
   }
 
+  isGettingGps = signal<boolean>(false);
+
   checkIn(): void {
+    if (!navigator.geolocation) {
+      this.uiService.error('متصفحك لا يدعم تحديد الموقع الجغرافي (GPS).');
+      return;
+    }
+
+    this.isGettingGps.set(true);
     this.isLoading.set(true);
-    this.attendanceService.checkIn().subscribe({
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        this.isGettingGps.set(false);
+        const coords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude
+        };
+        this.executeCheckIn(coords);
+      },
+      (error) => {
+        this.isGettingGps.set(false);
+        this.isLoading.set(false);
+        let errorMsg = 'تعذر الحصول على موقعك الجغرافي.';
+        if (error.code === error.PERMISSION_DENIED) {
+          errorMsg = 'يجب السماح بالوصول إلى الموقع الجغرافي (GPS) في المتصفح للتحقق من تواجدك في مقر المركز لتسجيل الحضور.';
+        } else if (error.code === error.POSITION_UNAVAILABLE) {
+          errorMsg = 'إشارة الموقع الجغرافي (GPS) غير متوفرة حالياً، يرجى تفعيل الموقع في جهازك.';
+        } else if (error.code === error.TIMEOUT) {
+          errorMsg = 'انتهت مهلة تحديد الموقع الجغرافي، يرجى المحاولة مرة أخرى.';
+        }
+        this.uiService.error(errorMsg);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 12000,
+        maximumAge: 0
+      }
+    );
+  }
+
+  private executeCheckIn(coords?: { latitude: number; longitude: number }): void {
+    this.isLoading.set(true);
+    this.attendanceService.checkIn(coords).subscribe({
       next: (response) => {
         this.isLoading.set(false);
         if (response.success) {
