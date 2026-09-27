@@ -48,7 +48,9 @@ export class LoginComponent {
         }
       },
       error: (err) => {
-        if (err.status === 401) {
+        if (err.error?.message) {
+          this.errorMessage.set(err.error.message);
+        } else if (err.status === 401) {
           this.errorMessage.set(this.loginMode() === 'staff' ? 'اسم المستخدم أو كلمة المرور غير صحيحة' : 'كود الطالب أو كلمة المرور غير صحيحة');
         } else {
           this.errorMessage.set('حدث خطأ، يرجى المحاولة مرة أخرى');

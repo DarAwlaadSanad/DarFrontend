@@ -347,13 +347,28 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   }
 
   // ── Schedules ───────────────────────────────────────────────────────────────
+  editingScheduleId = signal<number | null>(null);
+
   openAddScheduleModal() {
+    this.editingScheduleId.set(null);
     this.newSchedule = {
       groupId: this.details()!.groupId,
       dayOfWeek: DayOfWeekAr.Saturday,
       startTime: '16:00:00',
       endTime: '18:00:00',
       effectiveFrom: new Date().toISOString().split('T')[0]
+    };
+    this.showAddScheduleModal.set(true);
+  }
+
+  openEditScheduleModal(sch: GroupScheduleViewDTO) {
+    this.editingScheduleId.set(sch.id);
+    this.newSchedule = {
+      groupId: sch.groupId,
+      dayOfWeek: sch.dayOfWeek,
+      startTime: sch.startTime.slice(0, 5),
+      endTime: sch.endTime.slice(0, 5),
+      effectiveFrom: sch.effectiveFrom
     };
     this.showAddScheduleModal.set(true);
   }
@@ -366,16 +381,24 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
       startTime: this.newSchedule.startTime.length === 5 ? this.newSchedule.startTime + ':00' : this.newSchedule.startTime,
       endTime: this.newSchedule.endTime.length === 5 ? this.newSchedule.endTime + ':00' : this.newSchedule.endTime,
     };
-    this.scheduleService.addSchedule(payload).subscribe({
+
+    const editId = this.editingScheduleId();
+    const action$ = editId
+      ? this.scheduleService.updateSchedule(editId, payload)
+      : this.scheduleService.addSchedule(payload);
+
+    action$.subscribe({
       next: () => {
         this.isSaving.set(false);
         this.showAddScheduleModal.set(false);
+        this.editingScheduleId.set(null);
+        this.ui.success(editId ? 'تم تعديل الموعد بنجاح' : 'تم إضافة الموعد بنجاح');
         this.loadSchedules(this.details()!.groupId);
         this.loadDetails(this.details()!.groupId);
       },
       error: (err) => { 
         this.isSaving.set(false); 
-        const errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'حدث خطأ أثناء إضافة الموعد';
+        const errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'حدث خطأ أثناء حفظ الموعد';
         this.ui.error(errorMsg); 
       }
     });

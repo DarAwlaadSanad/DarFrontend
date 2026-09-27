@@ -31,7 +31,7 @@ export class AuthService {
     return roles as string[];
   });
   isStudent = computed(() => this.userRoles().includes('Student'));
-  isTeacher = computed(() => this.userRoles().includes('Teacher'));
+  isTeacher = computed(() => this.userRoles().includes('مدرس') || this.userRoles().includes('Teacher'));
   userId = computed<string | undefined>(() => {
     const token = this.authState()?.token;
     if (!token) return undefined;
@@ -175,6 +175,7 @@ export class AuthService {
     return roles.some((r: string) => {
       if (!r) return false;
       if (r.toLowerCase() === role.toLowerCase()) return true;
+      if ((role.toLowerCase() === 'teacher' || role === 'مدرس') && (r === 'مدرس' || r.toLowerCase() === 'teacher')) return true;
       if ((role.toLowerCase() === 'supervisor' || role === 'مشرف') && (r === 'مشرف' || r.toLowerCase() === 'supervisor')) return true;
       return false;
     });

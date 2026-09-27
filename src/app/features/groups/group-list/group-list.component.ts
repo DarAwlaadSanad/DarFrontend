@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -30,6 +30,7 @@ export class GroupListComponent implements OnInit {
   
   groups = signal<GroupCardDTO[]>([]);
   teachers = signal<UserViewDTO[]>([]);
+  isLoadingTeachers = signal(false);
   rooms = signal<RoomViewDTO[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
@@ -44,6 +45,23 @@ export class GroupListComponent implements OnInit {
     roomId: undefined
   };
   editGroupId = signal<number | null>(null);
+
+  currentEditingGroup = computed(() => {
+    const id = this.editGroupId();
+    if (!id) return null;
+    return this.groups().find(g => g.id === id) || null;
+  });
+
+  editGroupMissingTeacher = computed(() => {
+    const cg = this.currentEditingGroup();
+    if (!cg || !cg.teacherId) return null;
+    const exists = this.teachers().some(t => t.id === cg.teacherId);
+    if (exists) return null;
+    return {
+      id: cg.teacherId,
+      fullName: cg.teacherName || 'المعلم الحالي'
+    };
+  });
 
   ngOnInit() {
     this.loadGroups();
@@ -65,9 +83,14 @@ export class GroupListComponent implements OnInit {
   }
 
   loadTeachers() {
+    this.isLoadingTeachers.set(true);
     this.userService.getTeachers().subscribe({
       next: (data) => {
-        this.teachers.set(data);
+        this.teachers.set(data || []);
+        this.isLoadingTeachers.set(false);
+      },
+      error: () => {
+        this.isLoadingTeachers.set(false);
       }
     });
   }
@@ -81,6 +104,9 @@ export class GroupListComponent implements OnInit {
   openModal() {
     this.editGroupId.set(null);
     this.newGroup = { name: '', description: '', teacherId: '', isOnline: false, roomId: undefined };
+    if (this.teachers().length === 0) {
+      this.loadTeachers();
+    }
     this.showModal.set(true);
   }
 
@@ -94,6 +120,9 @@ export class GroupListComponent implements OnInit {
       isOnline: group.isOnline,
       roomId: group.roomId || undefined
     };
+    if (this.teachers().length === 0) {
+      this.loadTeachers();
+    }
     this.showModal.set(true);
   }
 

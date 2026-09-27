@@ -455,7 +455,20 @@ export class AdminAbsencesComponent implements OnInit {
         this.loadHistory();
       },
       error: (err) => {
-        const errorMsg = err.error?.message || (typeof err.error === 'string' ? err.error : null) || 'فشل في تعيين المعلم البديل';
+        let errorMsg = 'فشل في تعيين المعلم البديل';
+        if (err.error?.message && typeof err.error.message === 'string') {
+          errorMsg = err.error.message;
+        } else if (typeof err.error === 'string') {
+          const firstLine = err.error.split('\n')[0].replace(/\r/g, '').trim();
+          if (firstLine.includes('Exception:')) {
+            const extracted = firstLine.split(/Exception:\s*/).slice(1).join(' ').trim();
+            if (extracted && !extracted.startsWith('at ')) {
+              errorMsg = extracted;
+            }
+          } else if (!firstLine.startsWith('at ') && !firstLine.includes('.cs:line') && firstLine.length < 200) {
+            errorMsg = firstLine;
+          }
+        }
         this.uiService.error(errorMsg);
         this.isLoading.set(false);
       }
@@ -471,8 +484,12 @@ export class AdminAbsencesComponent implements OnInit {
         this.loadMonthlyReport();
         this.loadHistory();
       },
-      error: () => {
-        this.uiService.error('فشل في مسح المعلم البديل');
+      error: (err) => {
+        let errorMsg = 'فشل في مسح المعلم البديل';
+        if (err.error?.message && typeof err.error.message === 'string') {
+          errorMsg = err.error.message;
+        }
+        this.uiService.error(errorMsg);
         this.isLoading.set(false);
       }
     });

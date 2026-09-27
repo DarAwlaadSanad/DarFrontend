@@ -45,4 +45,12 @@ export class UserService {
   changePassword(dto: ChangePasswordDTO): Observable<{ message: string }> {
     return this.http.put<{ message: string }>(`${this.apiUrl}/profile/change-password`, dto);
   }
+
+  toggleStatus(userId: string): Observable<{ isActive: boolean; message: string }> {
+    return this.http.put<{ isActive: boolean; message: string }>(`${this.apiUrl}/${userId}/toggle-status`, {});
+  }
+
+  deleteUser(userId: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(`${this.apiUrl}/${userId}`);
+  }
 }

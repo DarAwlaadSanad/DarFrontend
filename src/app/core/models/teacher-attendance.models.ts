@@ -69,12 +69,26 @@ export interface CheckOutResponseDTO {
   record: TeacherAttendanceRecordDTO;
 }
 
+export interface TeacherPeriodDTO {
+  periodNumber: number;
+  startTime: string;
+  endTime: string;
+  sessionsCount: number;
+  status?: string; // 'Completed' | 'Active' | 'Upcoming' | 'Passed' | 'Absent'
+}
+
 export interface TodayAttendanceStatusDTO {
   hasSessionsToday: boolean;
   requiresSessions: boolean;
   canCheckIn: boolean;
+  isCheckInOpen?: boolean;
+  allowedCheckInTime?: string | null;
+  secondsUntilCheckIn?: number | null;
   message?: string | null;
   record?: TeacherAttendanceRecordDTO | null;
   sessionsCount: number;
+  periods?: TeacherPeriodDTO[];
+  allTodayRecords?: TeacherAttendanceRecordDTO[];
+  currentPeriodNumber?: number;
 }
 

@@ -10,6 +10,7 @@ import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { UiService } from '../../../core/services/ui.service';
 import { ExportService } from '../../../core/services/export.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-student-list',
@@ -18,6 +19,7 @@ import { ExportService } from '../../../core/services/export.service';
   templateUrl: './student-list.component.html',
 })
 export class StudentListComponent implements OnInit {
+  public authService = inject(AuthService);
   private studentService = inject(StudentService);
   private academicYearService = inject(AcademicYearService);
   private groupService = inject(GroupService);
@@ -48,6 +50,33 @@ export class StudentListComponent implements OnInit {
   newStudent: StudentAddDTO = this.getInitialStudent();
 
   studentCount = computed(() => this.totalCount());
+
+  revealedPasswords = signal<Set<number>>(new Set());
+
+  isPasswordRevealed(studentId: number): boolean {
+    return this.revealedPasswords().has(studentId);
+  }
+
+  togglePasswordReveal(studentId: number, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    const set = new Set(this.revealedPasswords());
+    if (set.has(studentId)) {
+      set.delete(studentId);
+    } else {
+      set.add(studentId);
+    }
+    this.revealedPasswords.set(set);
+  }
+
+  copyPassword(text: string | undefined, event: Event) {
+    event.stopPropagation();
+    event.preventDefault();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.ui.success('تم نسخ كلمة المرور بنجاح');
+    });
+  }
 
   filteredStudents = computed(() => this.students());
 

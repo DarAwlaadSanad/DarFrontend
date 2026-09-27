@@ -140,12 +140,20 @@
 
         <div>
           <label class="label">المعلم المسؤول <span class="text-red-400">*</span></label>
-          <select name="teacherId" [(ngModel)]="newGroup.teacherId" required class="input-field">
-            <option value="" disabled selected>اختر المعلم...</option>
-            <option *ngFor="let teacher of teachers()" [value]="teacher.id">
-              {{ teacher.fullName }}
-            </option>
-          </select>
+          <div class="relative">
+            <select name="teacherId" [(ngModel)]="newGroup.teacherId" required class="input-field" [disabled]="isLoadingTeachers()">
+              <option value="" disabled [selected]="!newGroup.teacherId">
+                {{ isLoadingTeachers() ? 'جاري تحميل قائمة المدرسين...' : 'اختر المعلم...' }}
+              </option>
+              <!-- In case the currently assigned teacher is not in the active teachers list -->
+              <option *ngIf="editGroupMissingTeacher()" [value]="editGroupMissingTeacher()!.id">
+                {{ editGroupMissingTeacher()!.fullName }}
+              </option>
+              <option *ngFor="let teacher of teachers()" [value]="teacher.id">
+                {{ teacher.fullName }}
+              </option>
+            </select>
+          </div>
         </div>
 
         <div class="flex items-center gap-3">

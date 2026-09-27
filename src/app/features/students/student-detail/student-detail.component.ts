@@ -15,6 +15,7 @@ import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { StudentWarningService } from '../../../core/services/student-warning.service';
+import { AuthService } from '../../../core/services/auth.service';
 import {
   StudentWarningViewDTO,
   StudentWarningCreateDTO,
@@ -32,6 +33,7 @@ import {
   templateUrl: './student-detail.component.html',
 })
 export class StudentDetailComponent implements OnInit {
+  public authService = inject(AuthService);
   private studentService = inject(StudentService);
   private memorizationService = inject(MemorizationService);
   private groupService = inject(GroupService);
@@ -98,6 +100,12 @@ export class StudentDetailComponent implements OnInit {
   getWarningTypeLabel = getWarningTypeLabel;
   getWarningTypeBadgeClass = getWarningTypeBadgeClass;
   getWarningTypeDotClass = getWarningTypeDotClass;
+
+  // Password Management
+  isPasswordRevealed = signal(false);
+  showResetPasswordModal = signal(false);
+  newPassword = '';
+  isResettingPassword = signal(false);
 
   newWarning: StudentWarningCreateDTO = {
     studentId: 0,
@@ -546,6 +554,52 @@ export class StudentDetailComponent implements OnInit {
         this.loadStudentWarnings(s.id);
       },
       error: () => this.ui.error('حدث خطأ أثناء حذف الإنذار')
+    });
+  }
+
+  togglePasswordReveal() {
+    this.isPasswordRevealed.update(v => !v);
+  }
+
+  copyToClipboard(text: string, label: string = 'النص') {
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.ui.success(`تم نسخ ${label} إلى الحافظة`);
+    }).catch(() => {
+      this.ui.error('فشل النسخ إلى الحافظة');
+    });
+  }
+
+  openResetPasswordModal() {
+    this.newPassword = '';
+    this.showResetPasswordModal.set(true);
+  }
+
+  closeResetPasswordModal() {
+    this.showResetPasswordModal.set(false);
+    this.newPassword = '';
+  }
+
+  submitResetPassword() {
+    const s = this.student();
+    if (!s || this.isResettingPassword()) return;
+
+    this.isResettingPassword.set(true);
+    const pwd = this.newPassword.trim() ? this.newPassword.trim() : undefined;
+    this.studentService.resetPassword(s.id, pwd).subscribe({
+      next: (res) => {
+        this.ui.success(res.message || 'تم تحديث كلمة المرور بنجاح');
+        this.isResettingPassword.set(false);
+        this.showResetPasswordModal.set(false);
+        this.newPassword = '';
+        if (this.student()) {
+          this.student.update(curr => curr ? { ...curr, password: res.password || pwd || curr.ssn } : null);
+        }
+      },
+      error: (err) => {
+        this.isResettingPassword.set(false);
+        this.ui.error(err.error?.message || err.error || 'حدث خطأ أثناء تعديل كلمة المرور');
+      }
     });
   }
 }

@@ -15,53 +15,71 @@ import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   template: `
-    <div class="space-y-6 lg:space-y-8 animate-fade-in" dir="rtl" *ngIf="details() as data">
-      <!-- Group Hero Header -->
-      <div class="relative overflow-hidden rounded-3xl bg-dark-900 border border-dark-800 p-6 lg:p-10 shadow-2xl">
-        <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div class="flex items-center gap-5">
-            <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
-              <svg class="w-10 h-10 lg:w-12 lg:h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
-            </div>
-            <div>
-              <div class="flex items-center gap-2 mb-1">
-                <h1 class="text-2xl lg:text-3xl font-black text-white">{{ data.groupName }}</h1>
-                <span class="bg-primary-500/10 text-primary-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary-500/20">حلقة نشطة</span>
-              </div>
-              <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-dark-400 text-sm">
-                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> المعلم: {{ data.teacherName }}</span>
-                <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> {{ data.students.length }} طلاب</span>
-              </div>
-            </div>
-          </div>
-          <a routerLink="/student" class="btn-secondary py-2.5 px-5 flex items-center gap-2 text-sm self-start md:self-center">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-            العودة للرئيسية
-          </a>
-        </div>
-        <!-- Decorations -->
-        <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary-500/5 rounded-full blur-3xl"></div>
-      </div>
-
-      <!-- Navigation Tabs -->
-      <div class="flex p-1 bg-dark-900 rounded-2xl border border-dark-800 w-full sm:w-fit">
-        <button (click)="activeTab.set('records')" 
-                [class]="activeTab()==='records' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
-                class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">سجلي الخاص</button>
-        <button (click)="activeTab.set('schedules')" 
-                [class]="activeTab()==='schedules' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
-                class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">مواعيد الحلقة</button>
-        <button (click)="activeTab.set('fees')" 
-                [class]="activeTab()==='fees' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
-                class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">رسوم الحلقة</button>
-      </div>
-
+    <div class="space-y-6 lg:space-y-8 animate-fade-in" dir="rtl">
+      <!-- Loading State -->
       <div *ngIf="isLoading()" class="flex flex-col items-center justify-center h-64 space-y-4">
         <div class="w-12 h-12 border-4 border-primary-500/20 border-t-primary-500 rounded-full animate-spin"></div>
         <p class="text-dark-400 text-sm font-medium animate-pulse">جاري جلب البيانات...</p>
       </div>
 
-      <div *ngIf="!isLoading()" class="animate-slide-up">
+      <!-- Error State -->
+      <div *ngIf="!isLoading() && !details()" class="glass-card p-12 text-center border-dark-800 space-y-4">
+        <div class="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400">
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <p class="text-white font-bold text-lg">تعذر تحميل بيانات الحلقة</p>
+        <p class="text-dark-400 text-sm">قد تكون الحلقة غير متاحة أو لا توجد صلاحية للوصول إليها.</p>
+        <div class="flex items-center justify-center gap-3 pt-2">
+          <button (click)="loadDetails()" class="btn-primary py-2 px-6 text-sm">إعادة المحاولة</button>
+          <a routerLink="/student" class="btn-secondary py-2 px-6 text-sm">العودة للرئيسية</a>
+        </div>
+      </div>
+
+      <!-- Content -->
+      <ng-container *ngIf="!isLoading() && details() as data">
+        <!-- Group Hero Header -->
+        <div class="relative overflow-hidden rounded-3xl bg-dark-900 border border-dark-800 p-6 lg:p-10 shadow-2xl">
+          <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="flex items-center gap-5">
+              <div class="w-16 h-16 lg:w-20 lg:h-20 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center text-white shadow-lg shadow-primary-500/20">
+                <svg class="w-10 h-10 lg:w-12 lg:h-12" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-2 mb-1">
+                  <h1 class="text-2xl lg:text-3xl font-black text-white">{{ data.groupName }}</h1>
+                  <span class="bg-primary-500/10 text-primary-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary-500/20">حلقة نشطة</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-dark-400 text-sm">
+                  <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> المعلم: {{ data.teacherName }}</span>
+                  <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg> {{ data.students.length }} طلاب</span>
+                </div>
+              </div>
+            </div>
+            <a routerLink="/student" class="btn-secondary py-2.5 px-5 flex items-center gap-2 text-sm self-start md:self-center">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+              العودة للرئيسية
+            </a>
+          </div>
+          <!-- Decorations -->
+          <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary-500/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex p-1 bg-dark-900 rounded-2xl border border-dark-800 w-full sm:w-fit">
+          <button (click)="activeTab.set('records')" 
+                  [class]="activeTab()==='records' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
+                  class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">سجلي الخاص</button>
+          <button (click)="activeTab.set('schedules')" 
+                  [class]="activeTab()==='schedules' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
+                  class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">مواعيد الحلقة</button>
+          <button (click)="activeTab.set('fees')" 
+                  [class]="activeTab()==='fees' ? 'bg-primary-600 text-white shadow-lg' : 'text-dark-500 hover:text-dark-300'"
+                  class="flex-1 sm:flex-none px-8 py-2.5 rounded-xl font-bold transition-all text-sm">رسوم الحلقة</button>
+        </div>
+
+        <div class="animate-slide-up">
         <!-- Records Tab -->
         <div *ngIf="activeTab() === 'records'" class="space-y-6">
           <div class="grid grid-cols-2 gap-4" *ngIf="myInfo() as me">
@@ -244,7 +262,8 @@ import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
              <p>لا توجد مواعيد مفعلة حالياً لهذه الحلقة</p>
           </div>
         </div>
-      </div>
+        </div>
+      </ng-container>
     </div>
 
   `,
@@ -302,12 +321,15 @@ export class StudentGroupDetailsComponent implements OnInit {
       next: (data) => {
         this.details.set(data);
         const myId = this.authService.studentId();
-        const me = data.students.find(s => s.studentId === myId);
+        const me = data.students?.find(s => Number(s.studentId) === Number(myId));
         this.myInfo.set(me || null);
         this.loadMyFee(groupId);
         this.isLoading.set(false);
       },
-      error: () => this.isLoading.set(false)
+      error: () => {
+        this.details.set(null);
+        this.isLoading.set(false);
+      }
     });
   }
 
@@ -315,7 +337,7 @@ export class StudentGroupDetailsComponent implements OnInit {
     this.studentFeeService.getAll(groupId, this.currentMonth(), this.currentYear()).subscribe({
       next: (data) => {
         const myId = this.authService.studentId();
-        const myFee = data.find(f => f.studentId === myId);
+        const myFee = data?.find(f => Number(f.studentId) === Number(myId));
         this.myFee.set(myFee || null);
       },
       error: () => this.myFee.set(null)
@@ -338,7 +360,9 @@ export class StudentGroupDetailsComponent implements OnInit {
   }
 
   getMyRecord(sessionId: number) {
-    return this.myInfo()?.records[sessionId];
+    const info = this.myInfo();
+    if (!info?.records) return undefined;
+    return info.records[sessionId] ?? (info.records as any)[String(sessionId)];
   }
 
   getStatusClass(status?: any): string {

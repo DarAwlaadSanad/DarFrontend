@@ -62,6 +62,7 @@ export interface StudentDetailsDTO {
   ssn: string;
   isActive: boolean;
   code: string;
+  password?: string;
   notes?: string;
   gender?: Gender | number | null;
   academicYear: AcademicYearViewDTO;

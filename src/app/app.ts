@@ -20,21 +20,21 @@ import { OfflineIndicatorComponent } from './shared/components/offline-indicator
     <app-pwa-install />
 
     <!-- Toasts Container -->
-    <div class="fixed bottom-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none" dir="rtl">
+    <div class="fixed bottom-6 left-6 z-[100] flex flex-col gap-3 pointer-events-none max-w-lg" dir="rtl">
       <div *ngFor="let toast of ui.toasts()"
-           class="pointer-events-auto flex items-center gap-3 p-4 rounded-2xl border backdrop-blur-xl shadow-2xl animate-slide-in min-w-[280px]"
+           class="pointer-events-auto flex items-start gap-3 p-4 rounded-2xl border backdrop-blur-xl shadow-2xl animate-slide-in min-w-[300px] max-w-md"
            [ngClass]="{
-             'bg-green-500/10 border-green-500/20 text-green-400': toast.type === 'success',
-             'bg-red-500/10 border-red-500/20 text-red-400': toast.type === 'error',
-             'bg-dark-900/60 border-dark-700 text-white': toast.type === 'info'
+             'bg-green-500/10 border-green-500/30 text-green-300': toast.type === 'success',
+             'bg-rose-500/15 border-rose-500/30 text-rose-200': toast.type === 'error',
+             'bg-dark-900/90 border-dark-700 text-white': toast.type === 'info'
            }">
-        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white/5 flex-shrink-0">
-          <svg *ngIf="toast.type === 'success'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-          <svg *ngIf="toast.type === 'error'"   class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-          <svg *ngIf="toast.type === 'info'"    class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <div class="w-8 h-8 rounded-full flex items-center justify-center bg-white/10 flex-shrink-0 mt-0.5">
+          <svg *ngIf="toast.type === 'success'" class="w-5 h-5 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          <svg *ngIf="toast.type === 'error'"   class="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+          <svg *ngIf="toast.type === 'info'"    class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         </div>
-        <span class="text-sm font-bold">{{ toast.message }}</span>
-        <button (click)="ui.removeToast(toast.id)" class="mr-auto p-1 hover:bg-white/10 rounded-lg transition-colors">
+        <div class="flex-1 pr-1 text-sm font-semibold leading-relaxed break-words">{{ toast.message }}</div>
+        <button (click)="ui.removeToast(toast.id)" class="mr-auto p-1 text-dark-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors flex-shrink-0">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
         </button>
       </div>

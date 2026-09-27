@@ -107,6 +107,7 @@ export class RoleFormComponent implements OnInit {
     if (action === 'View') return 'عرض وتصفح';
     if (action === 'Manage') return 'إدارة كاملة (إضافة وتعديل)';
     if (action === 'Delete') return 'حذف نهائي';
+    if (action === 'ViewPasswords') return 'رؤية وتعديل باسووردات الطلاب';
     if (action === 'Exempt') return 'إعفاء من الرسوم الشهرية';
     if (action === 'Export') return 'تصدير البيانات (Excel / PDF)';
     if (action === 'Import') return 'استيراد البيانات من ملفات Excel';

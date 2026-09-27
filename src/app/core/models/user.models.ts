@@ -5,6 +5,7 @@ export interface UserViewDTO {
   fullName: string;
   profilePictureUrl?: string;
   gender?: number | null;
+  isActive?: boolean;
   roles: string[];
 }
 

@@ -25,6 +25,10 @@ export class ScheduleService {
     return this.http.post<GroupScheduleViewDTO>(this.apiUrl, dto);
   }
 
+  updateSchedule(id: number, dto: CreateGroupScheduleDTO): Observable<GroupScheduleViewDTO> {
+    return this.http.put<GroupScheduleViewDTO>(`${this.apiUrl}/${id}`, dto);
+  }
+
   removeSchedule(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }

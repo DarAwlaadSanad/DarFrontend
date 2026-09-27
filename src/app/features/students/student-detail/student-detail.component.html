@@ -21,8 +21,7 @@
       <div>
         <h1 class="text-xl lg:text-2xl font-bold text-white flex items-center gap-3">
           {{ s.fullName }}
-          <span class="text-xs font-mono bg-dark-800 px-2 py-1 rounded-lg text-dark-500 border border-dark-700">#{{
-            s.code }}</span>
+
         </h1>
       </div>
       <div class="flex items-center gap-2 no-print">
@@ -63,51 +62,86 @@
           </div>
         </div>
 
-        <div>
-          <h2 class="text-white font-bold text-lg flex items-center justify-center gap-2">
+        <div class="w-full">
+          <h2 class="text-white font-bold text-xl flex items-center justify-center gap-2">
             {{ s.fullName }}
-            <span class="text-[10px] font-mono text-primary-400 opacity-70">({{ s.code }})</span>
           </h2>
-          <div class="flex flex-col items-center gap-1 mt-1">
-            <p *ngIf="s.ssn" class="text-dark-400 text-xs font-mono">{{ s.ssn }}</p>
-            <div class="flex items-center gap-2 mt-1">
-              <span *ngIf="age !== null"
-                class="text-primary-400 text-[10px] font-bold bg-primary-500/10 px-2 py-0.5 rounded-full">
-                {{ age }} سنة
-              </span>
-              <span [class]="s.isActive ? 'text-green-400 bg-green-500/10' : 'text-red-400 bg-red-500/10'"
-                class="text-[10px] font-bold px-2 py-0.5 rounded-full">
-                {{ s.isActive ? 'نشط' : 'متوقف' }}
-              </span>
-              <span *ngIf="normalizeGender(s.gender)"
-                [class]="isMale(s.gender) ? 'text-sky-400 bg-sky-500/10 border border-sky-500/30' : 'text-pink-400 bg-pink-500/10 border border-pink-500/30'"
-                class="text-[10px] font-bold px-2 py-0.5 rounded-full">
-                {{ getGenderLabel(s.gender) }}
-              </span>
-              <!-- Fee Exemption Badge -->
-              <span *ngIf="isExemptedThisMonth() === true"
-                class="text-blue-400 bg-blue-500/10 border border-blue-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1"
-                [title]="exemptionReason() || 'معفى من الرسوم'">
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+
+          <div class="flex items-center justify-center flex-wrap gap-2 mt-2">
+            <span *ngIf="age !== null"
+              class="text-primary-400 text-xs font-bold bg-primary-500/10 px-2.5 py-0.5 rounded-full border border-primary-500/20">
+              {{ age }} سنة
+            </span>
+            <span
+              [class]="s.isActive ? 'text-green-400 bg-green-500/10 border-green-500/20' : 'text-red-400 bg-red-500/10 border-red-500/20'"
+              class="text-xs font-bold px-2.5 py-0.5 rounded-full border">
+              {{ s.isActive ? 'نشط' : 'متوقف' }}
+            </span>
+            <span *ngIf="normalizeGender(s.gender)"
+              [class]="isMale(s.gender) ? 'text-sky-400 bg-sky-500/10 border border-sky-500/30' : 'text-pink-400 bg-pink-500/10 border border-pink-500/30'"
+              class="text-xs font-bold px-2.5 py-0.5 rounded-full">
+              {{ getGenderLabel(s.gender) }}
+            </span>
+            <!-- Fee Exemption Badge -->
+            <span *ngIf="isExemptedThisMonth() === true"
+              class="text-blue-400 bg-blue-500/10 border border-blue-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1"
+              [title]="exemptionReason() || 'معفى من الرسوم'">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              معفى
+            </span>
+            <span *ngIf="isExemptedThisMonth() === false"
+              class="text-red-400 bg-red-500/10 border border-red-500/30 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              غير معفى
+            </span>
+          </div>
+
+          <!-- Prominent Code & National ID Badges -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4 pt-3 border-t border-dark-800 text-right">
+            <!-- Code -->
+            <div class="p-3 rounded-xl bg-dark-900/80 border border-primary-500/30 flex items-center justify-between">
+              <div class="flex flex-col">
+                <span class="text-[11px] text-dark-400 font-medium">كود الطالب:</span>
+                <span class="text-primary-300 font-bold font-mono text-sm tracking-wider">#{{ s.code }}</span>
+              </div>
+              <button (click)="copyToClipboard(s.code, 'كود الطالب')" title="نسخ كود الطالب"
+                class="text-dark-400 hover:text-primary-400 p-1.5 rounded-lg hover:bg-dark-800 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                معفى
-              </span>
-              <span *ngIf="isExemptedThisMonth() === false"
-                class="text-red-400 bg-red-500/10 border border-red-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              </button>
+            </div>
+
+            <!-- SSN / National ID -->
+            <div class="p-3 rounded-xl bg-dark-900/80 border border-amber-500/30 flex items-center justify-between">
+              <div class="flex flex-col overflow-hidden">
+                <span class="text-[11px] text-dark-400 font-medium">الرقم القومي:</span>
+                <span class="text-amber-300 font-bold font-mono text-xs tracking-wider select-all truncate">
+                  {{ s.ssn || 'غير مسجل' }}
+                </span>
+              </div>
+              <button *ngIf="s.ssn" (click)="copyToClipboard(s.ssn, 'الرقم القومي')" title="نسخ الرقم القومي"
+                class="text-dark-400 hover:text-amber-400 p-1.5 rounded-lg hover:bg-dark-800 transition-colors flex-shrink-0">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                 </svg>
-                غير معفى
-              </span>
+              </button>
             </div>
           </div>
         </div>
 
         <!-- Academic Info -->
         <div class="w-full pt-4 border-t border-dark-800 space-y-3">
+
+
           <div class="flex items-center justify-between text-xs">
             <span class="text-dark-500 flex items-center gap-1.5">
               <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -126,13 +160,11 @@
               </svg>
               النوع
             </span>
-            <span
-              [ngClass]="{
+            <span [ngClass]="{
                 'bg-sky-500/10 text-sky-400 border-sky-500/20': isMale(s.gender),
                 'bg-pink-500/10 text-pink-400 border-pink-500/20': isFemale(s.gender),
                 'bg-dark-800 text-dark-400 border-dark-700': !normalizeGender(s.gender)
-              }"
-              class="px-2 py-0.5 rounded-full border text-[11px] font-bold">
+              }" class="px-2 py-0.5 rounded-full border text-[11px] font-bold">
               {{ getGenderLabel(s.gender) }}
             </span>
           </div>
@@ -144,16 +176,97 @@
               </svg>
               نوع التعليم
             </span>
-            <span
-              [ngClass]="{
+            <span [ngClass]="{
                 'bg-blue-500/10 text-blue-400 border-blue-500/20': s.academicYear && s.academicYear.typeSchool === 0,
                 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20': s.academicYear && s.academicYear.typeSchool === 1,
                 'bg-purple-500/10 text-purple-400 border-purple-500/20': s.academicYear && s.academicYear.typeSchool === 2,
                 'bg-dark-800 text-dark-400 border-dark-700': !s.academicYear
-              }"
-              class="px-2 py-0.5 rounded-full border text-[11px] font-bold">
+              }" class="px-2 py-0.5 rounded-full border text-[11px] font-bold">
               {{ getSchoolTypeLabel(s.academicYear ? s.academicYear.typeSchool : undefined) }}
             </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Login Credentials Card -->
+      <div *ngIf="authService.hasPermission('Permissions.Students.ViewPasswords')"
+        class="glass-card p-5 border-dark-800 bg-gradient-to-br from-dark-900/90 to-dark-800/40 border border-primary-500/20">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+            بيانات تسجيل دخول الطالب
+          </h3>
+          <button (click)="openResetPasswordModal()" title="تعديل أو تعيين كلمة المرور"
+            class="text-xs text-primary-400 hover:text-primary-300 bg-primary-500/10 hover:bg-primary-500/20 px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1 font-medium border border-primary-500/20">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            تعديل الباسوورد
+          </button>
+        </div>
+
+        <div class="space-y-3">
+          <!-- Code / Username -->
+          <div class="flex items-center justify-between bg-dark-900/60 p-2.5 rounded-xl border border-dark-700/60">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-dark-400">اسم المستخدم:</span>
+              <span class="font-mono text-sm text-primary-300 font-bold tracking-wider">#{{ s.code }}</span>
+            </div>
+            <button (click)="copyToClipboard(s.code, 'كود الطالب')" title="نسخ الكود"
+              class="text-dark-400 hover:text-primary-400 p-1 rounded-lg hover:bg-dark-700/50 transition-colors">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Password -->
+          <div class="flex items-center justify-between bg-dark-900/60 p-2.5 rounded-xl border border-dark-700/60">
+            <div class="flex items-center gap-2 overflow-hidden">
+              <span class="text-xs text-dark-400 whitespace-nowrap">كلمة المرور:</span>
+              <span *ngIf="isPasswordRevealed()"
+                class="font-mono text-sm text-amber-300 font-bold tracking-wider select-all truncate">
+                {{ s.password || s.ssn || 'لا توجد' }}
+              </span>
+              <span *ngIf="!isPasswordRevealed()" class="font-mono text-sm text-dark-400 tracking-widest select-none">
+                ••••••••
+              </span>
+            </div>
+
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <!-- Toggle Visibility -->
+              <button (click)="togglePasswordReveal()"
+                [title]="isPasswordRevealed() ? 'إخفاء كلمة المرور' : 'إظهار كلمة المرور'"
+                class="text-dark-400 hover:text-amber-400 p-1 rounded-lg hover:bg-dark-700/50 transition-colors">
+                <!-- Eye Open -->
+                <svg *ngIf="!isPasswordRevealed()" class="w-4 h-4" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                <!-- Eye Closed / Off -->
+                <svg *ngIf="isPasswordRevealed()" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" />
+                </svg>
+              </button>
+
+              <!-- Copy Password -->
+              <button (click)="copyToClipboard(s.password || s.ssn || '', 'كلمة المرور')" title="نسخ كلمة المرور"
+                class="text-dark-400 hover:text-primary-400 p-1 rounded-lg hover:bg-dark-700/50 transition-colors">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -350,13 +463,16 @@
           <!-- Actions & Mini Summary Badges -->
           <div class="flex items-center gap-2">
             <div *ngIf="warningSummary() as sum" class="hidden sm:flex items-center gap-1.5 text-xs">
-              <span *ngIf="sum.absenceCount > 0" class="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-bold">
+              <span *ngIf="sum.absenceCount > 0"
+                class="px-2 py-1 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 text-[11px] font-bold">
                 غياب: {{ sum.absenceCount }}
               </span>
-              <span *ngIf="sum.misbehaviorCount > 0" class="px-2 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 text-[11px] font-bold">
+              <span *ngIf="sum.misbehaviorCount > 0"
+                class="px-2 py-1 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 text-[11px] font-bold">
                 شغب: {{ sum.misbehaviorCount }}
               </span>
-              <span *ngIf="sum.notMemorizedCount > 0" class="px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[11px] font-bold">
+              <span *ngIf="sum.notMemorizedCount > 0"
+                class="px-2 py-1 rounded-lg bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[11px] font-bold">
                 عدم حفظ: {{ sum.notMemorizedCount }}
               </span>
             </div>
@@ -389,8 +505,7 @@
                 <td class="px-6 py-4">
                   <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
                     [ngClass]="getWarningTypeBadgeClass(warn.warningType)">
-                    <span class="w-1.5 h-1.5 rounded-full"
-                      [ngClass]="getWarningTypeDotClass(warn.warningType)"></span>
+                    <span class="w-1.5 h-1.5 rounded-full" [ngClass]="getWarningTypeDotClass(warn.warningType)"></span>
                     {{ getWarningTypeLabel(warn.warningType) }}
                   </span>
                 </td>
@@ -738,7 +853,7 @@
     (click)="showAddWarningModal.set(false)"></div>
   <div class="relative bg-dark-900 w-full max-w-lg rounded-2xl border border-dark-700 p-6 shadow-2xl animate-slide-up"
     dir="rtl">
-    
+
     <!-- Modal Header -->
     <div class="flex items-center justify-between pb-4 border-b border-dark-800 mb-5">
       <div class="flex items-center gap-3">
@@ -766,9 +881,7 @@
         <label class="block text-xs font-bold text-dark-300 mb-2">نوع الإنذار *</label>
         <div class="grid grid-cols-3 gap-2">
           <!-- غياب -->
-          <button type="button"
-            (click)="newWarning.warningType = WarningType.Absence"
-            [class]="newWarning.warningType === WarningType.Absence
+          <button type="button" (click)="newWarning.warningType = WarningType.Absence" [class]="newWarning.warningType === WarningType.Absence
               ? 'border-amber-500 bg-amber-500/15 text-amber-300 font-bold shadow-sm ring-1 ring-amber-500'
               : 'border-dark-700 bg-dark-800 text-dark-400 hover:border-dark-600'"
             class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5">
@@ -780,9 +893,7 @@
           </button>
 
           <!-- شغب -->
-          <button type="button"
-            (click)="newWarning.warningType = WarningType.Misbehavior"
-            [class]="newWarning.warningType === WarningType.Misbehavior
+          <button type="button" (click)="newWarning.warningType = WarningType.Misbehavior" [class]="newWarning.warningType === WarningType.Misbehavior
               ? 'border-red-500 bg-red-500/15 text-red-300 font-bold shadow-sm ring-1 ring-red-500'
               : 'border-dark-700 bg-dark-800 text-dark-400 hover:border-dark-600'"
             class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5">
@@ -794,9 +905,7 @@
           </button>
 
           <!-- عدم حفظ -->
-          <button type="button"
-            (click)="newWarning.warningType = WarningType.NotMemorized"
-            [class]="newWarning.warningType === WarningType.NotMemorized
+          <button type="button" (click)="newWarning.warningType = WarningType.NotMemorized" [class]="newWarning.warningType === WarningType.NotMemorized
               ? 'border-purple-500 bg-purple-500/15 text-purple-300 font-bold shadow-sm ring-1 ring-purple-500'
               : 'border-dark-700 bg-dark-800 text-dark-400 hover:border-dark-600'"
             class="flex flex-col items-center justify-center p-3 rounded-xl border transition-all text-center gap-1.5">
@@ -817,14 +926,16 @@
         </div>
         <div>
           <label class="block text-xs font-bold text-dark-300 mb-1">الحلقة (اختياري)</label>
-          <select *ngIf="studentGroups().length > 0" [(ngModel)]="newWarning.groupId" name="groupId" class="input-field py-2 text-xs">
+          <select *ngIf="studentGroups().length > 0" [(ngModel)]="newWarning.groupId" name="groupId"
+            class="input-field py-2 text-xs">
             <option [ngValue]="null">-- بدون تحديد حلقة --</option>
             <option *ngFor="let g of studentGroups()" [ngValue]="g.id">{{ g.name }}</option>
           </select>
           <div *ngIf="studentGroups().length === 0"
             class="p-2 rounded-xl bg-dark-800/80 border border-dark-700 text-xs text-amber-400/90 flex items-center gap-1.5">
             <svg class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <span>هذا الطالب غير مسجل في أي حلقة حالياً</span>
           </div>
@@ -835,8 +946,7 @@
       <div *ngIf="quickReasons[newWarning.warningType]?.length">
         <label class="block text-xs font-bold text-dark-300 mb-1.5">اقتراحات سريعة لسبب الإنذار</label>
         <div class="flex flex-wrap gap-1.5">
-          <button type="button" *ngFor="let qr of quickReasons[newWarning.warningType]"
-            (click)="setQuickReason(qr)"
+          <button type="button" *ngFor="let qr of quickReasons[newWarning.warningType]" (click)="setQuickReason(qr)"
             class="text-[11px] px-2.5 py-1 rounded-lg bg-dark-800 hover:bg-dark-700 text-dark-300 hover:text-white border border-dark-700 transition-colors text-right">
             + {{ qr }}
           </button>
@@ -846,8 +956,7 @@
       <!-- Reason Textarea -->
       <div>
         <label class="block text-xs font-bold text-dark-300 mb-1">التفاصيل والسبب</label>
-        <textarea [(ngModel)]="newWarning.reason" name="reason" rows="3"
-          class="input-field py-2 text-xs min-h-[75px]"
+        <textarea [(ngModel)]="newWarning.reason" name="reason" rows="3" class="input-field py-2 text-xs min-h-[75px]"
           placeholder="اكتب سبب الإنذار أو تفاصيل المخالفة..."></textarea>
       </div>
 
@@ -861,6 +970,59 @@
         </button>
         <button type="button" (click)="showAddWarningModal.set(false)"
           class="btn-secondary flex-1 py-2.5 text-xs font-bold">
+          إلغاء
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reset / Set Password Modal -->
+<div *ngIf="showResetPasswordModal() && authService.hasPermission('Permissions.Students.ViewPasswords')"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="absolute inset-0 bg-dark-950/80 backdrop-blur-sm animate-fade-in" (click)="closeResetPasswordModal()">
+  </div>
+  <div class="relative bg-dark-900 w-full max-w-md rounded-2xl border border-dark-700 p-6 shadow-2xl animate-slide-up"
+    dir="rtl">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-lg font-bold text-white flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+        </svg>
+        تعديل كلمة مرور الطالب
+      </h2>
+      <button (click)="closeResetPasswordModal()" class="text-dark-400 hover:text-white p-1 rounded-lg">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitResetPassword()" class="space-y-4">
+      <div *ngIf="student() as s" class="bg-dark-800/60 p-3 rounded-xl border border-dark-700/60 text-xs space-y-1">
+        <div class="text-dark-300">الطالب: <span class="text-white font-bold">{{ s.fullName }}</span></div>
+        <div class="text-dark-400 font-mono">الكود: #{{ s.code }} | الرقم القومي: {{ s.ssn || 'لا يوجد' }}</div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-dark-300 mb-1.5">كلمة المرور الجديدة</label>
+        <input type="text" [(ngModel)]="newPassword" name="newPassword" class="input-field py-2.5 font-mono text-sm"
+          placeholder="اترك الحقل فارغاً لإعادة الضبط للرقم القومي الافتراضي">
+        <p class="text-[11px] text-dark-400 mt-1.5">
+          * إذا تركت الحقل فارغاً، ستتم إعادة تعيين كلمة المرور تلقائياً إلى <strong class="text-primary-300">الرقم
+            القومي</strong> للطالب.
+        </p>
+      </div>
+
+      <div class="flex gap-3 pt-3">
+        <button type="submit" [disabled]="isResettingPassword()"
+          class="btn-primary flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-2">
+          <span *ngIf="!isResettingPassword()">حفظ كلمة المرور</span>
+          <div *ngIf="isResettingPassword()"
+            class="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></div>
+        </button>
+        <button type="button" (click)="closeResetPasswordModal()" class="btn-secondary flex-1 py-2.5 text-xs font-bold">
           إلغاء
         </button>
       </div>

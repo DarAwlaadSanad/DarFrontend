@@ -166,4 +166,8 @@ export class StudentService {
       params: { studentId: studentId?.toString() || '', currentPassword, newPassword }
     });
   }
+
+  resetPassword(studentId: number, password?: string): Observable<{ message: string; password?: string }> {
+    return this.http.put<{ message: string; password?: string }>(`${this.apiUrl}/${studentId}/reset-password`, { password });
+  }
 }

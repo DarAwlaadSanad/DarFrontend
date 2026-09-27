@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { UserService } from '../../../core/services/user.service';
 import { RoleService } from '../../../core/services/role.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { UiService } from '../../../core/services/ui.service';
 import { UserViewDTO } from '../../../core/models/user.models';
 import { Role } from '../../../core/models/role.models';
 import { normalizeGender, isMale, getGenderLabel } from '../../../core/models/student.models';
@@ -51,7 +52,8 @@ const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">النوع</th>
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">نوع الحساب</th>
                 <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">الأدوار المخصصة</th>
-                <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">إجراء</th>
+                <th class="px-4 py-3.5 text-right text-xs font-semibold text-dark-400">الحالة</th>
+                <th class="px-4 py-3.5 text-center text-xs font-semibold text-dark-400">إجراءات</th>
               </tr>
             </thead>
             <tbody>
@@ -66,7 +68,10 @@ const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
                       {{ user.fullName ? user.fullName.charAt(0) : '?' }}
                     </div>
                     <div>
-                      <div class="font-semibold text-dark-100 text-sm">{{ user.fullName }}</div>
+                      <div class="font-semibold text-dark-100 text-sm flex items-center gap-2">
+                        <span>{{ user.fullName }}</span>
+                        <span *ngIf="user.isActive === false" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-500/15 text-rose-400 border border-rose-500/20">معطل</span>
+                      </div>
                       <div class="text-xs text-dark-500">{{ user.userName }}</div>
                     </div>
                   </div>
@@ -102,18 +107,63 @@ const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
                           class="text-dark-600 text-xs italic">—</span>
                   </div>
                 </td>
+                <!-- Status Badge -->
+                <td class="px-4 py-3.5">
+                  <span *ngIf="user.isActive !== false"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-emerald-500/10 text-emerald-400 border-emerald-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                    نشط
+                  </span>
+                  <span *ngIf="user.isActive === false"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border bg-rose-500/10 text-rose-400 border-rose-500/20">
+                    <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                    غير نشط
+                  </span>
+                </td>
+                <!-- Actions -->
                 <td class="px-4 py-3.5 text-center">
-                  <!-- Only Users can receive custom roles -->
-                  <button *ngIf="!isAdmin(user) && canManageUsers()"
-                          (click)="openRoleModal(user)"
-                          class="px-3 py-1.5 rounded-lg bg-primary-500/10 text-primary-400 border border-primary-500/20 hover:bg-primary-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1.5 mx-auto">
-                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                    </svg>
-                    تعيين أدوار
-                  </button>
-                  <span *ngIf="isAdmin(user)" class="text-dark-600 text-xs italic">محمي</span>
-                  <span *ngIf="!isAdmin(user) && !canManageUsers()" class="text-dark-600 text-xs italic">—</span>
+                  <div class="flex items-center justify-center gap-1.5 flex-wrap">
+                    <!-- Assign roles (for non-admins) -->
+                    <button *ngIf="!isAdmin(user) && canManageUsers()"
+                            (click)="openRoleModal(user)"
+                            title="تعيين الأدوار"
+                            class="px-2.5 py-1.5 rounded-lg bg-primary-500/10 text-primary-400 border border-primary-500/20 hover:bg-primary-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                      </svg>
+                      <span>الأدوار</span>
+                    </button>
+
+                    <!-- Toggle Active / Inactive -->
+                    <button *ngIf="canManageUsers() && !isCurrentUser(user) && !isSuperAdmin(user)"
+                            (click)="toggleUserStatus(user)"
+                            [title]="user.isActive !== false ? 'تعطيل الحساب ومنعه من تسجيل الدخول' : 'تفعيل الحساب والسماح بتسجيل الدخول'"
+                            [class]="user.isActive !== false
+                              ? 'px-2.5 py-1.5 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500 hover:text-dark-950 transition-all text-xs font-bold flex items-center gap-1'
+                              : 'px-2.5 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1'">
+                      <svg *ngIf="user.isActive !== false" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"/>
+                      </svg>
+                      <svg *ngIf="user.isActive === false" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                      <span>{{ user.isActive !== false ? 'تعطيل' : 'تفعيل' }}</span>
+                    </button>
+
+                    <!-- Delete user -->
+                    <button *ngIf="canManageUsers() && !isCurrentUser(user) && !isAdmin(user)"
+                            (click)="deleteUser(user)"
+                            title="حذف المستخدم نهائياً"
+                            class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 text-rose-400 border border-rose-500/20 hover:bg-rose-500 hover:text-white transition-all text-xs font-bold flex items-center gap-1">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                      <span>حذف</span>
+                    </button>
+
+                    <span *ngIf="isCurrentUser(user)" class="text-dark-500 text-xs italic px-2">حسابك الحالي</span>
+                    <span *ngIf="!isCurrentUser(user) && isSuperAdmin(user)" class="text-dark-500 text-xs italic px-2">محمي</span>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -215,6 +265,7 @@ export class UserListComponent implements OnInit {
   private userService = inject(UserService);
   private roleService = inject(RoleService);
   private authService = inject(AuthService);
+  private uiService = inject(UiService);
 
   users = signal<UserViewDTO[]>([]);
   isLoading = signal(false);
@@ -251,12 +302,60 @@ export class UserListComponent implements OnInit {
     return user.roles.includes('Admin') || user.roles.includes('SuperAdmin');
   }
 
+  isSuperAdmin(user: UserViewDTO): boolean {
+    return user.roles.includes('SuperAdmin');
+  }
+
+  isCurrentUser(user: UserViewDTO): boolean {
+    return user.id === this.authService.userId();
+  }
+
   normalizeGender = normalizeGender;
   isMale = isMale;
   getGenderLabel = getGenderLabel;
 
   getCustomRoles(user: UserViewDTO): string[] {
     return user.roles.filter(r => !SYSTEM_ROLES.includes(r));
+  }
+
+  async toggleUserStatus(user: UserViewDTO) {
+    const isCurrentlyActive = user.isActive !== false;
+    const actionText = isCurrentlyActive ? 'تعطيل' : 'تفعيل';
+    const message = isCurrentlyActive
+      ? `هل أنت متأكد من تعطيل حساب (${user.fullName || user.userName})؟ لن يتمكن من تسجيل الدخول إلى النظام حتى يتم إعادة تفعيله.`
+      : `هل تريد تفعيل حساب (${user.fullName || user.userName}) والسماح له بتسجيل الدخول؟`;
+
+    const confirmed = await this.uiService.confirm(message);
+    if (!confirmed) return;
+
+    this.userService.toggleStatus(user.id).subscribe({
+      next: (res) => {
+        this.users.update(list =>
+          list.map(u => u.id === user.id ? { ...u, isActive: res.isActive } : u)
+        );
+        this.uiService.success(res.message);
+      },
+      error: (err) => {
+        this.uiService.error(err.error?.message || `فشل في ${actionText} الحساب`);
+      }
+    });
+  }
+
+  async deleteUser(user: UserViewDTO) {
+    const confirmed = await this.uiService.confirm(
+      `هل أنت متأكد من رغبتك في حذف المستخدم (${user.fullName || user.userName}) نهائياً؟ هذا الإجراء لا يمكن التراجع عنه.`
+    );
+    if (!confirmed) return;
+
+    this.userService.deleteUser(user.id).subscribe({
+      next: (res) => {
+        this.users.update(list => list.filter(u => u.id !== user.id));
+        this.uiService.success(res.message || 'تم حذف المستخدم بنجاح');
+      },
+      error: (err) => {
+        this.uiService.error(err.error?.message || 'فشل في حذف المستخدم');
+      }
+    });
   }
 
   openRoleModal(user: UserViewDTO) {
