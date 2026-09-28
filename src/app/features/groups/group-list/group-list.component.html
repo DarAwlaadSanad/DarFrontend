@@ -71,6 +71,44 @@
     </div>
   </div>
 
+  <!-- Halaqah Concept Banner -->
+  <div class="relative overflow-hidden rounded-2xl border border-primary-500/20 bg-gradient-to-r from-dark-900/90 via-dark-900/80 to-primary-950/40 p-5 sm:p-7 shadow-xl backdrop-blur-md">
+    <!-- Islamic Pattern Backdrop -->
+    <div class="absolute inset-0 bg-islamic-pattern opacity-20 pointer-events-none"></div>
+    <div class="absolute -right-16 -top-16 w-64 h-64 rounded-full bg-primary-500/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute left-1/4 -bottom-10 w-48 h-48 rounded-full bg-emerald-500/10 blur-2xl pointer-events-none"></div>
+
+    <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+      <!-- Text Description of Halaqah Concept -->
+      <div class="space-y-3 max-w-xl text-right">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary-500/15 border border-primary-500/30 text-primary-300 text-xs font-semibold">
+          <span class="w-2 h-2 rounded-full bg-primary-400 animate-pulse"></span>
+          <span>مفهوم حلقة التحفيظ</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-bold text-white tracking-wide">
+          مجالس النور والبركة لمدارسة القرآن الكريم
+        </h2>
+        <p class="text-dark-300 text-xs sm:text-sm leading-relaxed">
+          حلقة التحفيظ هي بيئة إيمانية مباركة يجتمع فيها الطلاب في حلقة منتظمة حول المعلم؛ يتلون كتاب الله حرفاً بحرف، ويتقنون أحكام التجويد والترتيل، ويتعاهدون الحفظ في جو من السكينة والمودة والتنافس المحمود.
+        </p>
+        <div class="pt-1 flex items-start sm:items-center gap-2 text-[11px] sm:text-xs text-primary-400/90 font-medium">
+          <svg class="w-4 h-4 flex-shrink-0 mt-0.5 sm:mt-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span>قال رسول الله ﷺ: «مَا اجْتَمَعَ قَوْمٌ فِي بَيْتٍ مِنْ بُيُوتِ اللهِ يَتْلُونَ كِتَابَ اللهِ وَيَتَدَارَسُونَهُ بَيْنَهُمْ، إِلَّا نَزَلَتْ عَلَيْهِمِ السَّكِينَةُ»</span>
+        </div>
+      </div>
+
+      <!-- Cut-out Halaqah Circle Illustration -->
+      <div class="relative flex-shrink-0 flex items-center justify-center">
+        <div class="absolute inset-0 bg-primary-500/15 rounded-full blur-2xl transform scale-90"></div>
+        <img src="assets/images/halaqah-circle.png" 
+             alt="حلقة تحفيظ القرآن الكريم" 
+             class="relative z-10 w-64 sm:w-80 md:w-96 object-contain filter drop-shadow-[0_12px_24px_rgba(0,0,0,0.6)] transform hover:scale-105 transition-transform duration-500">
+      </div>
+    </div>
+  </div>
+
   <!-- Stats Bar -->
   <div *ngIf="!isLoading() && groups().length > 0" class="grid grid-cols-2 sm:grid-cols-3 gap-4">
     <div class="card p-4 flex items-center gap-3">

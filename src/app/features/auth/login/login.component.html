@@ -4,20 +4,23 @@
     <app-theme-toggle variant="floating" />
   </div>
 
-  <!-- Animated Background -->
-  <div class="absolute inset-0 bg-gradient-to-br from-dark-950 via-dark-900 to-primary-950">
-    <!-- Decorative orbs -->
-    <div class="absolute top-1/4 -right-20 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl animate-float"></div>
-    <div class="absolute bottom-1/4 -left-20 w-80 h-80 bg-gold-500/10 rounded-full blur-3xl animate-float"
-      style="animation-delay: 1.5s;"></div>
-    <div
-      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-primary-800/5 rounded-full blur-3xl">
+  <!-- Animated Background with Islamic Imagery & Geometry -->
+  <div class="absolute inset-0 bg-dark-950 overflow-hidden">
+    <!-- Quran / Library Backdrop Image -->
+    <div class="absolute inset-0 bg-cover bg-center filter blur-[1.5px] scale-105 opacity-25"
+      style="background-image: url('assets/images/quran-bg.jpg');">
     </div>
+    <!-- Deep Gradient Vignette for perfect text and card contrast -->
+    <div class="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/85 to-dark-950/65"></div>
+    <div class="absolute inset-0 bg-gradient-to-br from-primary-950/50 via-transparent to-dark-950/90"></div>
 
-    <!-- Geometric pattern overlay -->
-    <div class="absolute inset-0 opacity-[0.03]"
-      style="background-image: url('data:image/svg+xml,%3Csvg width=&quot;60&quot; height=&quot;60&quot; viewBox=&quot;0 0 60 60&quot; xmlns=&quot;http://www.w3.org/2000/svg&quot;%3E%3Cg fill=&quot;none&quot; fill-rule=&quot;evenodd&quot;%3E%3Cg fill=&quot;%2322c55e&quot; fill-opacity=&quot;1&quot;%3E%3Cpath d=&quot;M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z&quot;/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');">
-    </div>
+    <!-- Decorative orbs -->
+    <div class="absolute top-1/4 -right-20 w-96 h-96 bg-primary-600/15 rounded-full blur-3xl animate-float"></div>
+    <div class="absolute bottom-1/4 -left-20 w-80 h-80 bg-gold-500/15 rounded-full blur-3xl animate-float"
+      style="animation-delay: 1.5s;"></div>
+
+    <!-- Islamic 8-pointed star pattern overlay -->
+    <div class="absolute inset-0 opacity-20 pointer-events-none bg-islamic-pattern"></div>
   </div>
 
   <!-- Login Card -->

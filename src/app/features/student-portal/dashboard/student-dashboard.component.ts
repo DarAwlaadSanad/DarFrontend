@@ -238,14 +238,10 @@ interface TodaySession {
             <h2 class="text-xl font-bold text-white">حلقاتي</h2>
           </div>
 
-          <div *ngIf="groups().length === 0" class="glass-card p-16 text-center border-dashed border-2">
-            <div class="w-16 h-16 bg-dark-800 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg class="w-8 h-8 opacity-30 text-dark-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-              </svg>
-            </div>
-            <h3 class="text-white font-bold mb-1">لا توجد حلقات</h3>
-            <p class="text-dark-500 text-sm">أنت غير مسجل في أي حلقة حالياً. يرجى مراجعة إدارة المركز.</p>
+          <div *ngIf="groups().length === 0" class="glass-card p-8 sm:p-12 text-center border-dashed border-2 flex flex-col items-center">
+            <img src="assets/images/halaqah-circle.png" alt="حلقة القرآن الكريم" class="w-52 sm:w-64 object-contain mb-4 filter drop-shadow-lg opacity-90 hover:scale-105 transition-transform duration-300">
+            <h3 class="text-white font-bold mb-1 text-base sm:text-lg">لا توجد حلقات مسجلة بعد</h3>
+            <p class="text-dark-400 text-xs sm:text-sm max-w-md">أنت غير مسجل في أي حلقة قرآنية حالياً. يرجى مراجعة إدارة المركز للانضمام إلى إحدى حلقات مدارسة وحفظ كتاب الله.</p>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">

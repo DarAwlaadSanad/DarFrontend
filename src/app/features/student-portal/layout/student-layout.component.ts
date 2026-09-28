@@ -9,7 +9,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ThemeToggleComponent],
   template: `
-    <div class="h-screen w-full bg-dark-950 flex overflow-hidden" dir="rtl">
+    <div class="h-screen w-full bg-dark-950 bg-mesh flex overflow-hidden relative" dir="rtl">
       <!-- Mobile Overlay -->
       <div *ngIf="isSidebarOpen() && isMobile()"
            (click)="toggleSidebar()"
@@ -112,8 +112,17 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
           </div>
         </header>
 
+        <!-- Ambient Islamic Artwork Backdrop -->
+        <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden select-none">
+          <div class="absolute inset-0 bg-cover bg-center opacity-[0.08] dark:opacity-[0.12] filter blur-[0.5px]"
+            style="background-image: url('assets/images/quran-bg.jpg');">
+          </div>
+          <div class="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/80 to-transparent dark:block hidden"></div>
+          <div class="absolute inset-0 bg-gradient-to-r from-dark-950/85 via-transparent to-dark-950/85 dark:block hidden"></div>
+        </div>
+
         <!-- Page Content -->
-        <main class="flex-1 p-2 sm:p-4 lg:p-8 pb-6 overflow-y-auto overflow-x-hidden">
+        <main class="flex-1 p-2 sm:p-4 lg:p-8 pb-6 overflow-y-auto overflow-x-hidden relative z-10">
           <router-outlet></router-outlet>
         </main>
       </div>

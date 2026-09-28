@@ -390,8 +390,19 @@
       </div>
     </header>
 
+    <!-- Ambient Islamic Artwork Backdrop (Quran Library Watermark) -->
+    <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden select-none">
+      <div class="absolute inset-0 bg-cover bg-center opacity-[0.08] dark:opacity-[0.12] filter blur-[0.5px] transition-opacity duration-300"
+        style="background-image: url('assets/images/quran-bg.jpg');">
+      </div>
+      <!-- Radial & Gradient Mask for seamless card readability -->
+      <div class="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/80 to-transparent dark:block hidden"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-dark-950/85 via-transparent to-dark-950/85 dark:block hidden"></div>
+      <div class="absolute inset-0 bg-gradient-to-t from-slate-100/90 via-slate-100/60 to-transparent dark:hidden block"></div>
+    </div>
+
     <!-- Page Content -->
-    <main class="flex-1 p-4 lg:p-7 pb-8 overflow-y-auto overflow-x-hidden">
+    <main class="flex-1 p-4 lg:p-7 pb-8 overflow-y-auto overflow-x-hidden relative z-10">
       <router-outlet></router-outlet>
     </main>
   </div>
