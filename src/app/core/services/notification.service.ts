@@ -46,13 +46,20 @@ export class NotificationService {
     }
 
     try {
+      const isProxy = typeof window !== 'undefined' && (
+        window.location.hostname.includes('vercel.app') ||
+        (window.location.protocol === 'https:' && environment.production)
+      );
+
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(this.hubUrl, {
           accessTokenFactory: () => this.auth.getToken() || '',
-          transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+          transport: isProxy
+            ? signalR.HttpTransportType.LongPolling
+            : signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
         })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Warning)
+        .configureLogging(environment.production ? signalR.LogLevel.None : signalR.LogLevel.Warning)
         .build();
 
       // Listen for real-time notifications
@@ -106,12 +113,16 @@ export class NotificationService {
           this.loadNotifications();
         })
         .catch((err) => {
-          console.warn('SignalR Notification connection error, using auto-poll fallback:', err);
+          if (!environment.production) {
+            console.warn('SignalR Notification connection error, using auto-poll fallback:', err);
+          }
           this.isConnected.set(false);
           this.loadNotifications();
         });
     } catch (err) {
-      console.warn('Failed to build Notification Hub connection:', err);
+      if (!environment.production) {
+        console.warn('Failed to build Notification Hub connection:', err);
+      }
       this.isConnected.set(false);
       this.loadNotifications();
     }

@@ -71,13 +71,20 @@ export class ChatService {
     this.isConnecting.set(true);
 
     try {
+      const isProxy = typeof window !== 'undefined' && (
+        window.location.hostname.includes('vercel.app') ||
+        (window.location.protocol === 'https:' && environment.production)
+      );
+
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(this.hubUrl, {
           accessTokenFactory: () => this.auth.getToken() || '',
-          transport: signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
+          transport: isProxy
+            ? signalR.HttpTransportType.LongPolling
+            : signalR.HttpTransportType.WebSockets | signalR.HttpTransportType.LongPolling
         })
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Warning)
+        .configureLogging(environment.production ? signalR.LogLevel.None : signalR.LogLevel.Warning)
         .build();
 
       // Listen for incoming messages
@@ -118,12 +125,16 @@ export class ChatService {
           }
         })
         .catch((err) => {
-          console.warn('SignalR Chat connection error, using HTTP & real-time auto-sync fallback:', err);
+          if (!environment.production) {
+            console.warn('SignalR Chat connection error, using HTTP & real-time auto-sync fallback:', err);
+          }
           this.isConnected.set(false);
           this.isConnecting.set(false);
         });
     } catch (err) {
-      console.warn('Failed to build SignalR connection, using fallback:', err);
+      if (!environment.production) {
+        console.warn('Failed to build SignalR connection, using fallback:', err);
+      }
       this.isConnected.set(false);
       this.isConnecting.set(false);
       return Promise.resolve();
