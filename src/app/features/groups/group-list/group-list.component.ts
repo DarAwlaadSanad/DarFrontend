@@ -204,10 +204,40 @@ export class GroupListComponent implements OnInit {
         this.ui.success('تم تحميل البيانات بنجاح');
       },
       error: () => {
-        this.ui.error('حدث خطأ أثناء تحميل البيانات');
+        // Fallback: Client-side export from currently loaded groups
+        try {
+          this.exportGroupsDataClientFallback();
+          this.ui.success('تم تحميل بيانات الحلقات بنجاح');
+        } catch {
+          this.ui.error('حدث خطأ أثناء تحميل البيانات');
+        }
         this.isExporting.set(false);
       }
     });
+  }
+
+  private exportGroupsDataClientFallback() {
+    const groups = this.groups();
+    const rows: string[][] = [
+      ['اسم الحلقة', 'المعلم', 'الغرفة', 'إجمالي الطلاب', 'الذكور', 'الإناث', 'الوصف', 'النوع']
+    ];
+
+    for (const g of groups) {
+      rows.push([
+        `"${(g.name || '').replace(/"/g, '""')}"`,
+        `"${(g.teacherName || '').replace(/"/g, '""')}"`,
+        `"${(g.roomName || (g.isOnline ? 'أونلاين' : 'غير محدد')).replace(/"/g, '""')}"`,
+        `"${g.studentCount || 0}"`,
+        `"${g.maleCount || 0}"`,
+        `"${g.femaleCount || 0}"`,
+        `"${(g.description || '').replace(/"/g, '""')}"`,
+        `"${g.isOnline ? 'أونلاين' : 'حضوري'}"`
+      ]);
+    }
+
+    const csvContent = '\uFEFF' + rows.map(r => r.join(',')).join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    this.exportService.downloadBlob(blob, 'بيانات_حلقات_الدار.csv');
   }
 
   exportTemplate() {
@@ -219,10 +249,26 @@ export class GroupListComponent implements OnInit {
         this.ui.success('تم تحميل النموذج بنجاح');
       },
       error: () => {
-        this.ui.error('حدث خطأ أثناء تحميل النموذج');
+        try {
+          this.exportTemplateClientFallback();
+          this.ui.success('تم تحميل النموذج بنجاح');
+        } catch {
+          this.ui.error('حدث خطأ أثناء تحميل النموذج');
+        }
         this.isExportingTemplate.set(false);
       }
     });
+  }
+
+  private exportTemplateClientFallback() {
+    const rows = [
+      ['المعلم:', 'اسم المعلم', 'كود المعلم', 'اسم الحلقة:', 'اسم المجموعة'],
+      ['م', 'اسم الطالب', 'الرقم القومي', 'رقم التليفون', 'السنة الدراسية', 'اليوم', 'من', 'الي', 'الغرفة', 'الوصف'],
+      ['1', 'محمد أحمد', '30101010101010', '01012345678', 'الأول الإعدادي (عام)', 'الأحد', '14:00', '16:00', 'غرفة 1', 'حلقة تجويد']
+    ];
+    const csvContent = '\uFEFF' + rows.map(r => r.map(c => `"${c.replace(/"/g, '""')}"`).join(',')).join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    this.exportService.downloadBlob(blob, 'نموذج_مجموعات_الدار.csv');
   }
 
   triggerFileInput() {
