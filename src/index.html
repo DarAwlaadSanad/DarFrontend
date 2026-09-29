@@ -2,19 +2,19 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8" />
-  <title>كُتّاب — نظام إدارة مراكز تحفيظ القرآن</title>
-  <meta name="description" content="نظام كُتّاب لإدارة حضور الطلاب وجداول الغياب في مراكز تحفيظ القرآن الكريم" />
+  <title>دار أولاد سند</title>
+  <meta name="description" content="دار أولاد سند لتعليم القراءة والكتابة وتحفيظ القرآن الكريم" />
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" />
   <base href="/" />
   
   <!-- PWA & Mobile Web App Meta -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#059669" />
+  <meta name="theme-color" content="#030b15" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="كُتَّاب" />
-  <meta name="application-name" content="كُتَّاب" />
+  <meta name="apple-mobile-web-app-title" content="دار أولاد سند" />
+  <meta name="application-name" content="دار أولاد سند" />
   
   <!-- App Icons -->
   <link rel="icon" type="image/png" href="assets/icons/icon-192x192.png" />
@@ -41,8 +41,96 @@
       } catch (e) {}
     })();
   </script>
+  <style>
+    /* Native Instant Pre-Bootstrap Splash Styles */
+    .pre-splash {
+      position: fixed;
+      inset: 0;
+      z-index: 999999;
+      background: #030b15;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
+      overflow: hidden;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      direction: rtl;
+    }
+    .pre-splash-bg {
+      position: absolute;
+      inset: 0;
+      background-image: url('assets/images/quran-bg.jpg');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+    .pre-splash-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(3,11,21,0.92) 0%, rgba(3,11,21,0.82) 50%, rgba(3,11,21,0.95) 100%);
+    }
+    .pre-splash-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.18;
+      background-image: url('assets/images/islamic-pattern.svg');
+      background-size: 80px 80px;
+    }
+    .pre-splash-bar-wrap {
+      width: 140px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      overflow: hidden;
+      margin-top: 14px;
+      position: relative;
+    }
+    .pre-splash-bar {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, #10b981, #f59e0b, transparent);
+      animation: preSplashAnim 1.4s infinite ease-in-out;
+    }
+    @keyframes preSplashAnim {
+      0% { transform: translateX(100%); }
+      50% { transform: translateX(0%); }
+      100% { transform: translateX(-100%); }
+    }
+  </style>
 </head>
-<body>
-  <app-root></app-root>
+<body class="bg-[#030b15]">
+  <app-root>
+    <div class="pre-splash">
+      <div class="pre-splash-bg"></div>
+      <div class="pre-splash-overlay"></div>
+      <div class="pre-splash-pattern"></div>
+      
+      <!-- Top Logo -->
+      <div style="position: relative; z-index: 10; padding-top: 3.5rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="width: 84px; height: 84px; border-radius: 1.25rem; background: #ffffff; padding: 10px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); border: 2px solid rgba(16, 185, 129, 0.4); display: flex; align-items: center; justify-content: center;">
+          <img src="assets/app-icon.png" alt="دار أولاد سند" style="width: 100%; height: 100%; object-fit: contain;" />
+        </div>
+        <h1 style="color: #ffffff; font-size: 1.6rem; font-weight: 800; margin: 12px 0 4px 0; letter-spacing: -0.02em;">دار أولاد سند</h1>
+        <p style="color: #6ee7b7; font-size: 0.82rem; font-weight: 600; margin: 0;">لتعليم القراءة والكتابة وتحفيظ القرآن الكريم</p>
+      </div>
+
+      <!-- Center Halaqah Circle -->
+      <div style="position: relative; z-index: 10; margin: auto 0; text-align: center; max-width: 360px; width: 90%;">
+        <img src="assets/images/halaqah-circle.png" alt="حلقة الطلاب" style="width: 100%; max-height: 240px; object-fit: contain; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.85));" />
+      </div>
+
+      <!-- Bottom Status -->
+      <div style="position: relative; z-index: 10; padding-bottom: 2.75rem; text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 16px; border-radius: 9999px; background: rgba(16, 185, 129, 0.15); border: 1px solid rgba(16, 185, 129, 0.3); color: #6ee7b7; font-size: 0.75rem; font-weight: 700;">
+          <span style="color: #fbbf24;">✨</span>
+          <span>«خَيْرُكُمْ مَنْ تَعَلَّمَ القُرْآنَ وَعَلَّمَهُ»</span>
+        </div>
+        <div class="pre-splash-bar-wrap">
+          <div class="pre-splash-bar"></div>
+        </div>
+        <p style="color: #94a3b8; font-size: 0.7rem; margin-top: 8px;">جاري فتح النظام...</p>
+      </div>
+    </div>
+  </app-root>
 </body>
 </html>

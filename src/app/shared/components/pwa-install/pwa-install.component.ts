@@ -36,7 +36,7 @@ import { PwaService } from '../../../core/services/pwa.service';
           <!-- Icon -->
           <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 p-0.5 shadow-lg shadow-emerald-950/40 flex-shrink-0 flex items-center justify-center">
             <img src="assets/icons/icon-96x96.png"
-                 alt="كُتّاب"
+                 alt="دار أولاد سند"
                  class="w-full h-full object-contain rounded-2xl"
                  (error)="onImgError($event)" />
           </div>
@@ -44,7 +44,7 @@ import { PwaService } from '../../../core/services/pwa.service';
           <!-- Info -->
           <div class="min-w-0">
             <h4 class="text-xs sm:text-sm font-bold text-white truncate flex items-center gap-1.5">
-              <span>تطبيق كُتَّاب</span>
+              <span>دار أولاد سند</span>
               <span class="text-[10px] font-normal px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 PWA
               </span>
@@ -90,9 +90,9 @@ import { PwaService } from '../../../core/services/pwa.service';
 
         <div class="text-center mb-4">
           <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-700 mx-auto mb-3 flex items-center justify-center shadow-lg">
-            <img src="assets/icons/icon-96x96.png" alt="كُتّاب" class="w-12 h-12 object-contain rounded-xl" />
+            <img src="assets/icons/icon-96x96.png" alt="دار أولاد سند" class="w-12 h-12 object-contain rounded-xl" />
           </div>
-          <h3 class="text-base font-bold text-white mb-1">تثبيت تطبيق كُتّاب على الآيفون</h3>
+          <h3 class="text-base font-bold text-white mb-1">تثبيت تطبيق دار أولاد سند</h3>
           <p class="text-xs text-dark-400">اتبع الخطوات البسيطة التالية لإضافة التطبيق لشاشتك الرئيسية:</p>
         </div>
 

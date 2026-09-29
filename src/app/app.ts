@@ -5,12 +5,16 @@ import { UiService } from './core/services/ui.service';
 import { ThemeService } from './core/services/theme.service';
 import { PwaInstallComponent } from './shared/components/pwa-install/pwa-install.component';
 import { OfflineIndicatorComponent } from './shared/components/offline-indicator/offline-indicator.component';
+import { SplashScreenComponent } from './shared/components/splash-screen/splash-screen.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, PwaInstallComponent, OfflineIndicatorComponent],
+  imports: [CommonModule, RouterOutlet, PwaInstallComponent, OfflineIndicatorComponent, SplashScreenComponent],
   template: `
+    <!-- App Splash Screen -->
+    <app-splash-screen />
+
     <router-outlet />
 
     <!-- Offline Mode & Sync Floating Indicator -->
