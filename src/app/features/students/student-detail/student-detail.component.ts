@@ -55,7 +55,9 @@ export class StudentDetailComponent implements OnInit {
       fromSurahId: 1,
       fromAyah: 1,
       toSurahId: 1,
-      toAyah: 1,
+      toAyah: 7,
+      nearRevision: '',
+      distantRevision: '',
       date: new Date().toISOString().split('T')[0],
       notes: ''
     };
@@ -248,6 +250,19 @@ export class StudentDetailComponent implements OnInit {
   }
 
   onAddMemorization() {
+    const fromMax = this.getFromMaxAyah();
+    const toMax = this.getToMaxAyah();
+
+    if (this.newMemRecord.fromAyah < 1 || this.newMemRecord.fromAyah > fromMax) {
+      this.ui.error(`رقم الآية (من) يجب أن يكون بين 1 و ${fromMax} لسورة ${this.getSurahName(this.newMemRecord.fromSurahId)}`);
+      return;
+    }
+
+    if (this.newMemRecord.toAyah < 1 || this.newMemRecord.toAyah > toMax) {
+      this.ui.error(`رقم الآية (إلى) يجب أن يكون بين 1 و ${toMax} لسورة ${this.getSurahName(this.newMemRecord.toSurahId)}`);
+      return;
+    }
+
     this.isSaving.set(true);
     this.memorizationService.add(this.newMemRecord).subscribe({
       next: () => {
@@ -277,6 +292,80 @@ export class StudentDetailComponent implements OnInit {
 
   getSurahName(id: number): string {
     return this.memorizationService.getSurahName(id);
+  }
+
+  getSurahAyahCount(id: number): number {
+    return this.memorizationService.getSurahAyahCount(id);
+  }
+
+  getFromMaxAyah(): number {
+    return this.getSurahAyahCount(this.newMemRecord.fromSurahId);
+  }
+
+  getToMaxAyah(): number {
+    return this.getSurahAyahCount(this.newMemRecord.toSurahId);
+  }
+
+  onFromSurahChange(surahId: number) {
+    this.newMemRecord.fromSurahId = +surahId;
+    const max = this.getFromMaxAyah();
+    if (this.newMemRecord.fromAyah > max) {
+      this.newMemRecord.fromAyah = max;
+    } else if (this.newMemRecord.fromAyah < 1) {
+      this.newMemRecord.fromAyah = 1;
+    }
+  }
+
+  onToSurahChange(surahId: number) {
+    this.newMemRecord.toSurahId = +surahId;
+    const max = this.getToMaxAyah();
+    if (this.newMemRecord.toAyah > max) {
+      this.newMemRecord.toAyah = max;
+    } else if (this.newMemRecord.toAyah < 1) {
+      this.newMemRecord.toAyah = 1;
+    }
+  }
+
+  onAyahInput(event: Event, type: 'from' | 'to') {
+    const input = event.target as HTMLInputElement;
+    const max = type === 'from' ? this.getFromMaxAyah() : this.getToMaxAyah();
+    let val = parseInt(input.value, 10);
+
+    if (!isNaN(val)) {
+      if (val > max) {
+        val = max;
+        input.value = max.toString();
+      } else if (val < 1) {
+        val = 1;
+        input.value = '1';
+      }
+      if (type === 'from') {
+        this.newMemRecord.fromAyah = val;
+      } else {
+        this.newMemRecord.toAyah = val;
+      }
+    }
+  }
+
+  onAyahBlur(type: 'from' | 'to') {
+    const max = type === 'from' ? this.getFromMaxAyah() : this.getToMaxAyah();
+    if (type === 'from') {
+      if (!this.newMemRecord.fromAyah || this.newMemRecord.fromAyah < 1) {
+        this.newMemRecord.fromAyah = 1;
+      } else if (this.newMemRecord.fromAyah > max) {
+        this.newMemRecord.fromAyah = max;
+      }
+    } else {
+      if (!this.newMemRecord.toAyah || this.newMemRecord.toAyah < 1) {
+        this.newMemRecord.toAyah = max;
+      } else if (this.newMemRecord.toAyah > max) {
+        this.newMemRecord.toAyah = max;
+      }
+    }
+  }
+
+  getAyahList(id: number): number[] {
+    return this.memorizationService.getAyahsList(id);
   }
 
   get age(): number | null {

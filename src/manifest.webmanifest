@@ -1,7 +1,7 @@
 {
   "name": "دار أولاد سند",
   "short_name": "دار أولاد سند",
-  "description": "دار أولاد سند لتحفيظ القرآن الكريم والأنشطة التعليمية والإدارية",
+  "description": "دار أولاد سند لتعليم القراءة والكتابة وتحفيظ القرآن الكريم",
   "theme_color": "#030b15",
   "background_color": "#030b15",
   "display": "standalone",
@@ -70,21 +70,36 @@
       "short_name": "الشات",
       "description": "الانتقال المباشر للمحادثات والشات",
       "url": "/chat",
-      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "assets/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "قائمة الطلاب",
       "short_name": "الطلاب",
       "description": "استعراض ومتابعة الطلاب",
       "url": "/students",
-      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "assets/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "الحلقات الدراسية",
       "short_name": "الحلقات",
       "description": "إدارة الحلقات والمجموعات",
       "url": "/groups",
-      "icons": [{ "src": "assets/icons/icon-96x96.png", "sizes": "96x96" }]
+      "icons": [
+        {
+          "src": "assets/icons/icon-96x96.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ]
 }

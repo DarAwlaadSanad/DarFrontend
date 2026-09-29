@@ -1,5 +1,6 @@
 import { Component, OnInit, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
 import { MemorizationService } from '../../../core/services/memorization.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,7 +11,7 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
 @Component({
   selector: 'app-student-profile',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="space-y-6 lg:space-y-8 animate-fade-in" dir="rtl" *ngIf="student() as s">
       <!-- Profile Header -->
@@ -128,25 +129,75 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
                       <span class="text-[8px] font-bold text-primary-400 uppercase leading-none mt-0.5">{{ record.date | date:'MMM' }}</span>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-dark-800/30 border border-dark-700/50 hover:border-dark-600 transition-all duration-300">
-                      <div class="flex-1">
-                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2">
-                           <div class="flex items-center gap-2">
-                              <span class="w-1.5 h-1.5 rounded-full bg-primary-500"></span>
-                              <span class="text-sm font-bold text-white">من {{ getSurahName(record.fromSurahId) }}</span>
-                              <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px] font-mono">آية {{ record.fromAyah }}</span>
-                           </div>
-                           <svg class="w-4 h-4 text-dark-600 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M11 19l-7-7 7-7" /></svg>
-                           <div class="flex items-center gap-2">
-                              <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                              <span class="text-sm font-bold text-white">إلى {{ getSurahName(record.toSurahId) }}</span>
-                              <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px] font-mono">آية {{ record.toAyah }}</span>
-                           </div>
+                    <div class="flex flex-col gap-3 p-4 rounded-2xl bg-dark-800/40 border border-dark-700/60 hover:border-dark-600 transition-all duration-300">
+                      <!-- Top Row: New Memorization & Quran Board Button -->
+                      <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                          <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold flex items-center gap-1.5 shrink-0">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                            الحفظ الجديد:
+                          </span>
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-white">من {{ getSurahName(record.fromSurahId) }}</span>
+                            <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px] font-mono">آية {{ record.fromAyah }}</span>
+                          </div>
+                          <svg class="w-4 h-4 text-dark-500 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7" />
+                          </svg>
+                          <div class="flex items-center gap-2">
+                            <span class="text-sm font-bold text-white">إلى {{ getSurahName(record.toSurahId) }}</span>
+                            <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px] font-mono">آية {{ record.toAyah }}</span>
+                          </div>
                         </div>
-                        <div *ngIf="record.notes" class="mt-2 flex items-center gap-2">
-                           <svg class="w-3 h-3 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" /></svg>
-                           <p class="text-[11px] text-dark-400 italic">{{ record.notes }}</p>
+
+                        <!-- Button to Open Quran Board in Same Tab -->
+                        <a [routerLink]="['/quran-board']"
+                           [queryParams]="{ fromSurah: record.fromSurahId, fromAyah: record.fromAyah, toSurah: record.toSurahId, toAyah: record.toAyah, studentName: s.fullName }"
+                           class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all shadow-sm group">
+                          <span>📖 فتح اللوح القرآني</span>
+                          <svg class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                          </svg>
+                        </a>
+                      </div>
+
+                      <!-- Middle Row: Revisions -->
+                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-dark-700/40">
+                        <!-- الماضي القريب -->
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl border"
+                          [ngClass]="record.nearRevision ? 'bg-blue-500/10 border-blue-500/25 text-blue-200' : 'bg-dark-900/40 border-dark-800 text-dark-500'">
+                          <span class="text-xs font-bold flex items-center gap-1 shrink-0"
+                            [ngClass]="record.nearRevision ? 'text-blue-400' : 'text-dark-400'">
+                            <span>🔹 الماضي القريب:</span>
+                          </span>
+                          <span class="text-xs truncate font-medium">
+                            {{ record.nearRevision || 'لا يوجد' }}
+                          </span>
                         </div>
+
+                        <!-- الماضي البعيد -->
+                        <div class="flex items-center gap-2 px-3 py-2 rounded-xl border"
+                          [ngClass]="record.distantRevision ? 'bg-amber-500/10 border-amber-500/25 text-amber-200' : 'bg-dark-900/40 border-dark-800 text-dark-500'">
+                          <span class="text-xs font-bold flex items-center gap-1 shrink-0"
+                            [ngClass]="record.distantRevision ? 'text-amber-400' : 'text-dark-400'">
+                            <span>🔸 الماضي البعيد:</span>
+                          </span>
+                          <span class="text-xs truncate font-medium">
+                            {{ record.distantRevision || 'لا يوجد' }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <!-- Bottom Row: Notes -->
+                      <div class="flex items-start gap-2 px-3 py-2 rounded-xl border"
+                        [ngClass]="record.notes ? 'bg-primary-500/10 border-primary-500/25 text-white' : 'bg-dark-900/40 border-dark-800 text-dark-500'">
+                        <span class="text-xs font-bold flex items-center gap-1 shrink-0"
+                          [ngClass]="record.notes ? 'text-primary-400' : 'text-dark-400'">
+                          <span>💬 الملاحظات:</span>
+                        </span>
+                        <span class="text-xs leading-relaxed font-medium">
+                          {{ record.notes || 'لا توجد ملاحظات مسجلة' }}
+                        </span>
                       </div>
                     </div>
                   </div>

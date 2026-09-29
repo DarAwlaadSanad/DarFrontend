@@ -16,9 +16,12 @@ export interface MemorizationRecordDTO {
   fromAyah: number;
   toSurahId: number;
   toAyah: number;
+  nearRevision?: string;
+  distantRevision?: string;
   date: string;
   notes?: string;
 }
+
 
 import { AcademicYearViewDTO } from './academic-year.models';
 import { GroupCardDTO } from './group.models';

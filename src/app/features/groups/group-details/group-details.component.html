@@ -162,10 +162,13 @@
                   </a>
                 </div>
               </td>
-              <td *ngFor="let session of sortedSessions()" class="p-1 border-l border-dark-700/30">
-                <div class="flex flex-col items-center justify-center gap-0.5 min-h-[42px] sm:min-h-[46px]">
+              <td *ngFor="let session of sortedSessions()"
+                (click)="openSingleAttendance(student, session)"
+                class="p-1 border-l border-dark-700/30 cursor-pointer hover:bg-primary-500/10 transition-colors group/cell"
+                title="انقر لتسجيل حضور/غياب وتقييم هذا الطالب">
+                <div class="flex flex-col items-center justify-center gap-0.5 min-h-[42px] sm:min-h-[46px] group-hover/cell:scale-110 transition-transform">
                   <div [class]="getStatusClass(student.records[session.sessionId]?.attendance)"
-                    class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs">
+                    class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs shadow-sm">
                     {{ getStatusIcon(student.records[session.sessionId]?.attendance) }}
                   </div>
                   <div *ngIf="student.records[session.sessionId]?.score != null"
@@ -187,17 +190,19 @@
     </div>
 
     <!-- Legend -->
-    <div class="flex flex-wrap gap-3 px-2 text-[10px] text-dark-500 no-print">
-      <span class="flex items-center gap-1"><span
-          class="w-4 h-4 rounded bg-green-500/20 text-green-400 flex items-center justify-center">✓</span> حاضر</span>
-      <span class="flex items-center gap-1"><span
-          class="w-4 h-4 rounded bg-red-500/20 text-red-400 flex items-center justify-center">✕</span> غائب</span>
-      <span class="flex items-center gap-1"><span
-          class="w-4 h-4 rounded bg-yellow-500/20 text-yellow-400 flex items-center justify-center">⏰</span>
-        متأخر</span>
-      <span class="flex items-center gap-1"><span
-          class="w-4 h-4 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">✉</span> بعذر</span>
-      <span class="text-dark-600 hidden sm:inline">• اضغط على التاريخ لتسجيل الحضور</span>
+    <div class="flex flex-wrap items-center justify-between gap-3 px-2 text-[10px] text-dark-500 no-print">
+      <div class="flex flex-wrap gap-3">
+        <span class="flex items-center gap-1"><span
+            class="w-4 h-4 rounded bg-green-500/20 text-green-400 flex items-center justify-center">✓</span> حاضر</span>
+        <span class="flex items-center gap-1"><span
+            class="w-4 h-4 rounded bg-red-500/20 text-red-400 flex items-center justify-center">✕</span> غائب</span>
+        <span class="flex items-center gap-1"><span
+            class="w-4 h-4 rounded bg-yellow-500/20 text-yellow-400 flex items-center justify-center">⏰</span>
+          متأخر</span>
+        <span class="flex items-center gap-1"><span
+            class="w-4 h-4 rounded bg-blue-500/20 text-blue-400 flex items-center justify-center">✉</span> بعذر</span>
+      </div>
+      <span class="text-primary-400/90 font-medium">💡 انقر على خانة أي طالب لتسجيل الحضور والدرجة منفرداً</span>
     </div>
   </div>
 
@@ -418,6 +423,326 @@
   </div>
 </div>
 
+<!-- ── Single Student Attendance Modal (طالب منفصل) ────────────────────────── -->
+<div *ngIf="showSingleAttendanceModal()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+  <div class="absolute inset-0 bg-dark-950/85 backdrop-blur-sm animate-fade-in" (click)="showSingleAttendanceModal.set(false)"></div>
+  <div
+    class="relative bg-dark-900 w-full sm:max-w-lg rounded-t-3xl sm:rounded-2xl border-t sm:border border-dark-700/80 shadow-2xl p-5 sm:p-6 animate-slide-up flex flex-col max-h-[92vh] overflow-y-auto"
+    dir="rtl">
+
+    <!-- Modal Header -->
+    <div class="flex items-center justify-between pb-4 border-b border-dark-800 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-12 h-12 rounded-2xl bg-primary-500/15 border border-primary-500/30 flex items-center justify-center text-primary-400 font-bold text-lg flex-shrink-0 shadow-inner">
+          {{ singleAttendanceStudent()?.studentName?.charAt(0) }}
+        </div>
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">
+            <h3 class="text-base sm:text-lg font-bold text-white truncate">
+              {{ singleAttendanceStudent()?.studentName }}
+            </h3>
+            <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-500/15 text-primary-300 border border-primary-500/30">
+              طالب منفصل
+            </span>
+          </div>
+          <div class="flex items-center gap-2 text-xs text-dark-400 mt-0.5">
+            <span class="inline-flex items-center gap-1 text-emerald-400 font-medium">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              {{ singleAttendanceSession()?.date | date:'EEEE d MMMM y' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <button (click)="showSingleAttendanceModal.set(false)"
+        class="w-9 h-9 flex items-center justify-center text-dark-400 hover:text-white rounded-xl bg-dark-800/60 hover:bg-dark-800 transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Attendance Status Selection (Big, Touch-Friendly Buttons) -->
+    <div class="space-y-2 mb-5">
+      <label class="block text-xs font-bold text-dark-300">تسجيل حالة الحضور:</label>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <!-- Present -->
+        <button type="button" (click)="setSingleStatus(1)"
+          class="p-3 rounded-2xl border-2 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95"
+          [ngClass]="singleAttendanceStatus() === 1
+            ? 'border-emerald-500 bg-emerald-500/20 text-emerald-300 shadow-lg shadow-emerald-950/40 ring-2 ring-emerald-500/30'
+            : 'border-dark-800 bg-dark-800/40 text-dark-400 hover:border-dark-700 hover:text-white'">
+          <span class="text-xl">✓</span>
+          <span>حاضر</span>
+        </button>
+
+        <!-- Absent -->
+        <button type="button" (click)="setSingleStatus(2)"
+          class="p-3 rounded-2xl border-2 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95"
+          [ngClass]="singleAttendanceStatus() === 2
+            ? 'border-rose-500 bg-rose-500/20 text-rose-300 shadow-lg shadow-rose-950/40 ring-2 ring-rose-500/30'
+            : 'border-dark-800 bg-dark-800/40 text-dark-400 hover:border-dark-700 hover:text-white'">
+          <span class="text-xl">✕</span>
+          <span>غائب</span>
+        </button>
+
+        <!-- Late -->
+        <button type="button" (click)="setSingleStatus(4)"
+          class="p-3 rounded-2xl border-2 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95"
+          [ngClass]="singleAttendanceStatus() === 4
+            ? 'border-amber-500 bg-amber-500/20 text-amber-300 shadow-lg shadow-amber-950/40 ring-2 ring-amber-500/30'
+            : 'border-dark-800 bg-dark-800/40 text-dark-400 hover:border-dark-700 hover:text-white'">
+          <span class="text-xl">⏰</span>
+          <span>متأخر</span>
+        </button>
+
+        <!-- Excused -->
+        <button type="button" (click)="setSingleStatus(3)"
+          class="p-3 rounded-2xl border-2 font-bold text-xs flex flex-col items-center justify-center gap-1.5 transition-all active:scale-95"
+          [ngClass]="singleAttendanceStatus() === 3
+            ? 'border-blue-500 bg-blue-500/20 text-blue-300 shadow-lg shadow-blue-950/40 ring-2 ring-blue-500/30'
+            : 'border-dark-800 bg-dark-800/40 text-dark-400 hover:border-dark-700 hover:text-white'">
+          <span class="text-xl">✉</span>
+          <span>غياب بعذر</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Evaluation Score (Optional) -->
+    <div class="space-y-2 mb-4">
+      <div class="flex items-center justify-between">
+        <label class="text-xs font-bold text-dark-300">درجة التسميع / الحفظ (اختياري من 100):</label>
+        <span *ngIf="singleAttendanceScore() !== null" class="text-xs font-bold text-gold-400">
+          {{ singleAttendanceScore() }} / 100
+        </span>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <input type="number" [ngModel]="singleAttendanceScore()" (ngModelChange)="singleAttendanceScore.set($event)" min="0" max="100"
+            class="input-field py-2.5 px-3 text-center text-sm font-bold text-gold-400 bg-dark-950/80 border-dark-700 rounded-xl"
+            placeholder="أدخل الدرجة مثلاً 95">
+        </div>
+        <div class="flex gap-1">
+          <button type="button" (click)="singleAttendanceScore.set(100)"
+            class="px-2.5 py-2 rounded-lg bg-dark-800 hover:bg-gold-500/20 text-dark-300 hover:text-gold-300 text-xs font-bold transition-colors">100</button>
+          <button type="button" (click)="singleAttendanceScore.set(95)"
+            class="px-2.5 py-2 rounded-lg bg-dark-800 hover:bg-gold-500/20 text-dark-300 hover:text-gold-300 text-xs font-bold transition-colors">95</button>
+          <button type="button" (click)="singleAttendanceScore.set(90)"
+            class="px-2.5 py-2 rounded-lg bg-dark-800 hover:bg-gold-500/20 text-dark-300 hover:text-gold-300 text-xs font-bold transition-colors">90</button>
+          <button type="button" (click)="singleAttendanceScore.set(null)"
+            class="px-2 py-2 rounded-lg bg-dark-800 hover:bg-rose-500/20 text-dark-400 hover:text-rose-400 text-xs transition-colors" title="مسح">✕</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Memorization & Revision Section (سجل الحفظ والمراجعة) ─────────────── -->
+    <div class="mb-4 rounded-2xl border transition-all"
+      [ngClass]="recordMemorization() ? 'bg-dark-950/90 border-primary-500/40 p-3.5 shadow-lg' : 'bg-dark-800/30 border-dark-800 p-3'">
+      
+      <!-- Section Toggle Header -->
+      <div class="flex items-center justify-between cursor-pointer select-none"
+        (click)="recordMemorization.set(!recordMemorization())">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-sm"
+            [ngClass]="recordMemorization() ? 'bg-primary-500/20 text-primary-400' : 'bg-dark-700/60 text-dark-400'">
+            📖
+          </div>
+          <div>
+            <h4 class="text-xs sm:text-sm font-bold text-white flex items-center gap-1.5">
+              <span>سجل الحفظ والمراجعة</span>
+              <span *ngIf="recordMemorization()" class="text-[9px] font-bold px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                مفعّل
+              </span>
+            </h4>
+            <p class="text-[10px] text-dark-400">حفظ جديد (مطلوب) + ماضي قريب وماضي بعيد (اختياري)</p>
+          </div>
+        </div>
+
+        <!-- Custom Switch Toggle -->
+        <div class="relative inline-flex items-center h-6 rounded-full w-11 transition-colors"
+          [ngClass]="recordMemorization() ? 'bg-primary-600' : 'bg-dark-700'">
+          <span class="inline-block w-4 h-4 transform transition-transform bg-white rounded-full"
+            [ngClass]="recordMemorization() ? 'translate-x-1' : 'translate-x-6'"></span>
+        </div>
+      </div>
+
+      <!-- Collapsible Memorization Form -->
+      <div *ngIf="recordMemorization()" class="space-y-3 mt-3 pt-3 border-t border-dark-800/80 animate-slide-down">
+        
+        <!-- 1. الحفظ الجديد (مطلوب) -->
+        <div class="p-3 rounded-xl bg-dark-900/90 border border-primary-500/30">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold text-primary-400 flex items-center gap-1">
+              <span>١. الحفظ الجديد</span>
+              <span class="text-[10px] text-rose-400 font-bold">* مطلوب</span>
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- من -->
+            <div class="p-2.5 rounded-lg bg-dark-800/50 border border-dark-700">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] font-bold text-dark-400">من:</span>
+                <span dir="ltr" class="text-[9px] font-bold text-primary-400 font-mono">1 - {{ getGroupFromMaxAyah() }}</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <select [ngModel]="memFromSurahId()" (ngModelChange)="onGroupFromSurahChange($event)"
+                    class="input-field py-1.5 pr-2.5 pl-7 text-xs w-full bg-dark-900 border-dark-700 rounded-lg text-white appearance-none cursor-pointer">
+                    <option *ngFor="let s of surahs" [value]="s.id" class="bg-dark-900 text-white">
+                      {{ s.name }} ({{ s.ayahCount }} آية)
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none text-dark-400">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="relative w-20">
+                  <select [ngModel]="memFromAyah()" (ngModelChange)="memFromAyah.set(+$event)"
+                    class="input-field py-1.5 pr-1.5 pl-6 text-xs text-center font-bold text-white bg-dark-900 border-dark-700 rounded-lg appearance-none cursor-pointer w-full">
+                    <option *ngFor="let a of getAyahList(memFromSurahId())" [value]="a" class="bg-dark-900 text-white">
+                      {{ a }}
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 left-0 flex items-center pl-1.5 pointer-events-none text-dark-400">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- إلى -->
+            <div class="p-2.5 rounded-lg bg-dark-800/50 border border-dark-700">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-[10px] font-bold text-dark-400">إلى:</span>
+                <span dir="ltr" class="text-[9px] font-bold text-green-400 font-mono">1 - {{ getGroupToMaxAyah() }}</span>
+              </div>
+              <div class="flex gap-2">
+                <div class="relative flex-1">
+                  <select [ngModel]="memToSurahId()" (ngModelChange)="onGroupToSurahChange($event)"
+                    class="input-field py-1.5 pr-2.5 pl-7 text-xs w-full bg-dark-900 border-dark-700 rounded-lg text-white appearance-none cursor-pointer">
+                    <option *ngFor="let s of surahs" [value]="s.id" class="bg-dark-900 text-white">
+                      {{ s.name }} ({{ s.ayahCount }} آية)
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none text-dark-400">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+                <div class="relative w-20">
+                  <select [ngModel]="memToAyah()" (ngModelChange)="memToAyah.set(+$event)"
+                    class="input-field py-1.5 pr-1.5 pl-6 text-xs text-center font-bold text-white bg-dark-900 border-dark-700 rounded-lg appearance-none cursor-pointer w-full">
+                    <option *ngFor="let a of getAyahList(memToSurahId())" [value]="a" class="bg-dark-900 text-white">
+                      {{ a }}
+                    </option>
+                  </select>
+                  <div class="absolute inset-y-0 left-0 flex items-center pl-1.5 pointer-events-none text-dark-400">
+                    <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. الماضي القريب والماضي البعيد (اختياري) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <!-- الماضي القريب -->
+          <div class="p-2.5 rounded-xl bg-dark-900/90 border border-blue-500/25">
+            <label class="block text-xs font-bold text-blue-400 mb-1">
+              ٢. الماضي القريب <span class="text-[10px] text-dark-400 font-normal">(اختياري)</span>
+            </label>
+            <input type="text" [ngModel]="memNearRevision()" (ngModelChange)="memNearRevision.set($event)"
+              class="input-field py-1.5 px-2.5 text-xs bg-dark-800/60 border-dark-700 rounded-lg text-white placeholder:text-dark-500 w-full"
+              placeholder="مثال: سورة الواقعة 1-50 أو ربع...">
+          </div>
+
+          <!-- الماضي البعيد -->
+          <div class="p-2.5 rounded-xl bg-dark-900/90 border border-amber-500/25">
+            <label class="block text-xs font-bold text-amber-400 mb-1">
+              ٣. الماضي البعيد <span class="text-[10px] text-dark-400 font-normal">(اختياري)</span>
+            </label>
+            <input type="text" [ngModel]="memDistantRevision()" (ngModelChange)="memDistantRevision.set($event)"
+              class="input-field py-1.5 px-2.5 text-xs bg-dark-800/60 border-dark-700 rounded-lg text-white placeholder:text-dark-500 w-full"
+              placeholder="مثال: الجزء الأول كامل أو سورة كذا...">
+          </div>
+        </div>
+
+        <!-- ملاحظات التسميع والحفظ -->
+        <div class="p-2.5 rounded-xl bg-dark-900/90 border border-dark-700/80">
+          <label class="block text-xs font-bold text-dark-300 mb-1">
+            ٤. ملاحظات الحفظ والتسميع <span class="text-[10px] text-dark-500 font-normal">(اختياري)</span>
+          </label>
+          <input type="text" [ngModel]="memNotes()" (ngModelChange)="memNotes.set($event)"
+            class="input-field py-1.5 px-2.5 text-xs bg-dark-800/60 border-dark-700 rounded-lg text-white placeholder:text-dark-500 w-full"
+            placeholder="مثال: أداء متميز، يحتاج ضبط الأحكام، تم التسميع بنجاح...">
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Comment / Notes -->
+    <div class="space-y-1.5 mb-5">
+      <label class="text-xs font-bold text-dark-300">ملاحظات / سبب الغياب:</label>
+      <input type="text" [ngModel]="singleAttendanceComment()" (ngModelChange)="singleAttendanceComment.set($event)"
+        class="input-field py-2.5 px-3 text-xs bg-dark-950/80 border-dark-700 rounded-xl text-white placeholder:text-dark-500"
+        placeholder="أضف ملاحظة للمعلم أو سبب الغياب...">
+    </div>
+
+    <!-- Student Navigation Shortcuts -->
+    <div class="flex items-center justify-between py-2 text-xs text-dark-400 border-t border-dark-800/80 mb-3">
+      <button type="button" (click)="navigateToPrevStudent()"
+        class="flex items-center gap-1 hover:text-white px-2 py-1 rounded-lg hover:bg-dark-800 transition-colors">
+        <span>➔</span>
+        <span>الطالب السابق</span>
+      </button>
+      <span class="text-[11px] text-dark-500 font-mono">حفظ منفصل فوراً</span>
+      <button type="button" (click)="navigateToNextStudent()"
+        class="flex items-center gap-1 hover:text-white px-2 py-1 rounded-lg hover:bg-dark-800 transition-colors">
+        <span>الطالب التالي</span>
+        <span>←</span>
+      </button>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-2">
+      <!-- Save and Next -->
+      <button type="button" (click)="saveSingleAttendance(true)" [disabled]="isSavingSingle()"
+        class="btn-primary flex-1 py-3 text-xs sm:text-sm font-bold flex items-center justify-center gap-1.5 rounded-xl shadow-lg shadow-primary-900/30 active:scale-95 transition-all">
+        <svg *ngIf="isSavingSingle()" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <span>حفظ والانتقال للتالي</span>
+        <span class="text-xs">←</span>
+      </button>
+
+      <!-- Save Only -->
+      <button type="button" (click)="saveSingleAttendance(false)" [disabled]="isSavingSingle()"
+        class="btn-secondary px-4 py-3 text-xs sm:text-sm font-bold rounded-xl active:scale-95 transition-all">
+        حفظ فقط
+      </button>
+
+      <!-- Cancel -->
+      <button type="button" (click)="showSingleAttendanceModal.set(false)"
+        class="p-3 text-dark-400 hover:text-white hover:bg-dark-800 rounded-xl transition-colors">
+        إلغاء
+      </button>
+    </div>
+
+  </div>
+</div>
+
 <!-- ── Session Editor Modal (Full-screen on mobile) ──────────────────────────── -->
 <div *ngIf="showSessionEditor()" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
   <div class="absolute inset-0 bg-dark-950/85 backdrop-blur-sm" (click)="showSessionEditor.set(false)"></div>
@@ -533,11 +858,19 @@
               <span class="text-white font-semibold text-sm truncate">{{ row.studentName }}</span>
             </div>
 
-            <!-- Status Indicator Badge -->
-            <span *ngIf="row.status === 1" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex-shrink-0">حاضر</span>
-            <span *ngIf="row.status === 2" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30 flex-shrink-0">غائب</span>
-            <span *ngIf="row.status === 4" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30 flex-shrink-0">متأخر</span>
-            <span *ngIf="row.status === 3" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30 flex-shrink-0">بعذر</span>
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              <!-- Status Indicator Badge -->
+              <span *ngIf="row.status === 1" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">حاضر</span>
+              <span *ngIf="row.status === 2" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-400 border border-rose-500/30">غائب</span>
+              <span *ngIf="row.status === 4" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/30">متأخر</span>
+              <span *ngIf="row.status === 3" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-400 border border-blue-500/30">بعذر</span>
+
+              <!-- Individual save button -->
+              <button type="button" (click)="saveSingleRow(row)"
+                class="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-primary-500/20 text-primary-300 border border-primary-500/40 hover:bg-primary-500/30 active:scale-95 transition-all">
+                حفظ منفصل
+              </button>
+            </div>
           </div>
 
           <!-- Status segmented control -->
@@ -580,6 +913,7 @@
             <th class="px-3 py-3 text-center font-semibold">حالة الحضور</th>
             <th class="px-3 py-3 text-center font-semibold w-28">درجة التسميع</th>
             <th class="px-4 py-3 text-right font-semibold">ملاحظة</th>
+            <th class="px-3 py-3 text-center font-semibold w-24">حفظ منفصل</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-dark-800/70">
@@ -610,6 +944,13 @@
               <input type="text" [(ngModel)]="row.comment"
                 class="input-field py-1.5 px-3 text-sm bg-dark-900/90 border-dark-700 focus:border-primary-500 w-full rounded-xl placeholder:text-dark-500"
                 placeholder="ملاحظة...">
+            </td>
+            <td class="px-3 py-2.5 text-center">
+              <button type="button" (click)="saveSingleRow(row)"
+                class="btn-primary py-1 px-3 text-xs font-bold rounded-lg shadow-sm active:scale-95"
+                title="حفظ هذا الطالب منفرداً فوراً">
+                حفظ
+              </button>
             </td>
           </tr>
         </tbody>

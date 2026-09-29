@@ -208,7 +208,18 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/student-portal/change-password/student-change-password.component').then(m => m.StudentChangePasswordComponent),
       },
+      {
+        path: 'quran-board',
+        loadComponent: () =>
+          import('./features/student-portal/quran-board/quran-board.component').then(m => m.QuranBoardComponent),
+      },
     ]
+  },
+  {
+    path: 'quran-board',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/student-portal/quran-board/quran-board.component').then(m => m.QuranBoardComponent),
   },
   {
     path: '',

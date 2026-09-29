@@ -2,6 +2,7 @@ import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 import { catchError, switchMap, throwError, BehaviorSubject, filter, take } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 let isRefreshing = false;
 let refreshTokenSubject: BehaviorSubject<any> = new BehaviorSubject<any>(null);
@@ -10,8 +11,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const authService = inject(AuthService);
   const token = authService.getToken();
 
+  // Only attach JWT token to backend API endpoints, not external third-party APIs
+  const isApiUrl = req.url.startsWith(environment.apiUrl) || (!req.url.startsWith('http://') && !req.url.startsWith('https://'));
+
   let authReq = req;
-  if (token) {
+  if (token && isApiUrl) {
     authReq = req.clone({
       setHeaders: { Authorization: `Bearer ${token}` }
     });

@@ -9,8 +9,10 @@ import { ScheduleService } from '../../../core/services/schedule.service';
 import { AttendanceBatchService } from '../../../core/services/attendance-batch.service';
 import { EvaluationService } from '../../../core/services/evaluation.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { MemorizationService } from '../../../core/services/memorization.service';
 import { OfflineSyncService } from '../../../core/services/offline-sync.service';
 import { GroupDetailsDTO, AttendanceStatus, normalizeAttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
+import { AttendanceRecordDTO } from '../../../core/models/attendance.models';
 import { StudentAddDTO, getGenderLabel } from '../../../core/models/student.models';
 import { GroupScheduleViewDTO, CreateGroupScheduleDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
 import { FeePlanService } from '../../../core/services/fee-plan.service';
@@ -49,11 +51,14 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   private feePlanService = inject(FeePlanService);
   private academicYearService = inject(AcademicYearService);
   private studentFeeService = inject(StudentFeeService);
+  private memorizationService = inject(MemorizationService);
   private ui = inject(UiService);
   private exportService = inject(ExportService);
   private route = inject(ActivatedRoute);
   public authService = inject(AuthService);
   public offlineSync = inject(OfflineSyncService);
+
+  surahs = this.memorizationService.surahs;
 
   private syncSub?: Subscription;
   isWorkingOffline = signal(false);
@@ -107,6 +112,25 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     { value: AttendanceStatus.Late, label: 'متأخر', cls: 'bg-yellow-500' },
     { value: AttendanceStatus.Excused, label: 'غياب بعذر', cls: 'bg-blue-600' },
   ];
+
+  // ── Single Student Attendance Editor ─────────────────────────────────────────
+  showSingleAttendanceModal = signal(false);
+  singleAttendanceStudent = signal<StudentInGroupDTO | null>(null);
+  singleAttendanceSession = signal<SessionViewDTO | null>(null);
+  singleAttendanceStatus = signal<AttendanceStatus>(AttendanceStatus.Present);
+  singleAttendanceScore = signal<number | null>(null);
+  singleAttendanceComment = signal<string>('');
+  isSavingSingle = signal(false);
+
+  // Memorization & Revision in Attendance
+  recordMemorization = signal<boolean>(false);
+  memFromSurahId = signal<number>(1);
+  memFromAyah = signal<number>(1);
+  memToSurahId = signal<number>(1);
+  memToAyah = signal<number>(7);
+  memNearRevision = signal<string>('');
+  memDistantRevision = signal<string>('');
+  memNotes = signal<string>('');
 
   // ── Add Student ─────────────────────────────────────────────────────────────
   showAddStudentModal = signal(false);
@@ -290,6 +314,265 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
       else if (r.status === AttendanceStatus.Excused) excused++;
     }
     return { present, absent, late, excused, total: rows.length };
+  }
+
+  // ── Single Student Attendance Methods ────────────────────────────────────────
+  openSingleAttendance(student: StudentInGroupDTO, session: SessionViewDTO) {
+    if (!this.authService.hasPermission('Permissions.Sessions.Manage') &&
+        !this.authService.hasPermission('Permissions.Attendance.Manage')) {
+      this.ui.error('ليس لديك صلاحية لتعديل سجل الحضور');
+      return;
+    }
+    this.singleAttendanceStudent.set(student);
+    this.singleAttendanceSession.set(session);
+    const rec = student.records[session.sessionId];
+    this.singleAttendanceStatus.set(normalizeAttendanceStatus(rec?.attendance) ?? AttendanceStatus.Present);
+    this.singleAttendanceScore.set(rec?.score != null ? rec.score : null);
+    this.singleAttendanceComment.set(rec?.comment ?? '');
+
+    // Reset memorization for this student
+    this.recordMemorization.set(false);
+    this.memFromSurahId.set(1);
+    this.memFromAyah.set(1);
+    this.memToSurahId.set(1);
+    this.memToAyah.set(7);
+    this.memNearRevision.set('');
+    this.memDistantRevision.set('');
+    this.memNotes.set('');
+
+    this.showSingleAttendanceModal.set(true);
+  }
+
+  getSurahAyahCount(id: number): number {
+    return this.memorizationService.getSurahAyahCount(id);
+  }
+
+  getGroupFromMaxAyah(): number {
+    return this.getSurahAyahCount(this.memFromSurahId());
+  }
+
+  getGroupToMaxAyah(): number {
+    return this.getSurahAyahCount(this.memToSurahId());
+  }
+
+  onGroupFromSurahChange(surahId: number) {
+    this.memFromSurahId.set(+surahId);
+    const max = this.getGroupFromMaxAyah();
+    if (this.memFromAyah() > max) {
+      this.memFromAyah.set(max);
+    } else if (this.memFromAyah() < 1) {
+      this.memFromAyah.set(1);
+    }
+  }
+
+  onGroupToSurahChange(surahId: number) {
+    this.memToSurahId.set(+surahId);
+    const max = this.getGroupToMaxAyah();
+    if (this.memToAyah() > max) {
+      this.memToAyah.set(max);
+    } else if (this.memToAyah() < 1) {
+      this.memToAyah.set(1);
+    }
+  }
+
+  onGroupAyahInput(event: Event, type: 'from' | 'to') {
+    const input = event.target as HTMLInputElement;
+    const max = type === 'from' ? this.getGroupFromMaxAyah() : this.getGroupToMaxAyah();
+    let val = parseInt(input.value, 10);
+
+    if (!isNaN(val)) {
+      if (val > max) {
+        val = max;
+        input.value = max.toString();
+      } else if (val < 1) {
+        val = 1;
+        input.value = '1';
+      }
+      if (type === 'from') {
+        this.memFromAyah.set(val);
+      } else {
+        this.memToAyah.set(val);
+      }
+    }
+  }
+
+  onGroupAyahBlur(type: 'from' | 'to') {
+    const max = type === 'from' ? this.getGroupFromMaxAyah() : this.getGroupToMaxAyah();
+    if (type === 'from') {
+      if (!this.memFromAyah() || this.memFromAyah() < 1) {
+        this.memFromAyah.set(1);
+      } else if (this.memFromAyah() > max) {
+        this.memFromAyah.set(max);
+      }
+    } else {
+      if (!this.memToAyah() || this.memToAyah() < 1) {
+        this.memToAyah.set(max);
+      } else if (this.memToAyah() > max) {
+        this.memToAyah.set(max);
+      }
+    }
+  }
+
+  getAyahList(id: number): number[] {
+    return this.memorizationService.getAyahsList(id);
+  }
+
+  setSingleStatus(status: AttendanceStatus) {
+    this.singleAttendanceStatus.set(status);
+  }
+
+  saveSingleAttendance(andNext: boolean = false) {
+    const student = this.singleAttendanceStudent();
+    const session = this.singleAttendanceSession();
+    if (!student || !session) return;
+
+    let hasMemorization = false;
+    if (this.recordMemorization()) {
+      if (!this.memFromSurahId() || !this.memToSurahId() || !this.memFromAyah() || !this.memToAyah()) {
+        this.ui.error('يرجى تحديد بيانات الحفظ الجديد (السورة ورقم الآية من وإلى)، فهو حقل مطلوب');
+        return;
+      }
+      const fromMax = this.getGroupFromMaxAyah();
+      const toMax = this.getGroupToMaxAyah();
+      if (this.memFromAyah() < 1 || this.memFromAyah() > fromMax) {
+        this.ui.error(`رقم الآية (من) يجب أن يكون بين 1 و ${fromMax} لسورة ${this.memorizationService.getSurahName(this.memFromSurahId())}`);
+        return;
+      }
+      if (this.memToAyah() < 1 || this.memToAyah() > toMax) {
+        this.ui.error(`رقم الآية (إلى) يجب أن يكون بين 1 و ${toMax} لسورة ${this.memorizationService.getSurahName(this.memToSurahId())}`);
+        return;
+      }
+      hasMemorization = true;
+    }
+
+    this.isSavingSingle.set(true);
+    const status = this.singleAttendanceStatus();
+    const score = this.singleAttendanceScore();
+    const comment = this.singleAttendanceComment();
+
+    // 1. Optimistic UI update immediately
+    this.applyOptimisticSingleRecord(session.sessionId, student.studentId, status, score, comment);
+
+    const payload: AttendanceRecordDTO = {
+      sessionId: session.sessionId,
+      studentId: student.studentId,
+      status: normalizeAttendanceStatus(status) ?? AttendanceStatus.Present,
+      notes: comment || undefined,
+      score: score !== null && score !== undefined && score !== ('' as any) ? Number(score) : undefined,
+      comment: comment || undefined,
+      hasMemorization,
+      fromSurahId: hasMemorization ? this.memFromSurahId() : undefined,
+      fromAyah: hasMemorization ? this.memFromAyah() : undefined,
+      toSurahId: hasMemorization ? this.memToSurahId() : undefined,
+      toAyah: hasMemorization ? this.memToAyah() : undefined,
+      nearRevision: hasMemorization && this.memNearRevision() ? this.memNearRevision() : undefined,
+      distantRevision: hasMemorization && this.memDistantRevision() ? this.memDistantRevision() : undefined,
+      memorizationNotes: hasMemorization && this.memNotes() ? this.memNotes() : undefined,
+    };
+
+    this.attendanceSvc.saveRecord(payload).subscribe({
+      next: () => {
+        this.isSavingSingle.set(false);
+        this.groupService.clearDetailsCache();
+        this.ui.success(`تم حفظ سجل الطالب "${student.studentName}" بنجاح`);
+        if (andNext) {
+          this.navigateToNextStudent();
+        } else {
+          this.showSingleAttendanceModal.set(false);
+        }
+      },
+      error: () => {
+        this.isSavingSingle.set(false);
+        this.ui.error('حدث خطأ أثناء الحفظ على الخادم');
+        this.loadDetails(this.details()!.groupId, true);
+      }
+    });
+  }
+
+  navigateToNextStudent() {
+    const current = this.singleAttendanceStudent();
+    const session = this.singleAttendanceSession();
+    if (!current || !session || !this.details()?.students) return;
+
+    const students = this.details()!.students;
+    const currentIndex = students.findIndex(s => s.studentId === current.studentId);
+    if (currentIndex >= 0 && currentIndex < students.length - 1) {
+      const nextStudent = students[currentIndex + 1];
+      this.openSingleAttendance(nextStudent, session);
+    } else {
+      this.showSingleAttendanceModal.set(false);
+      this.ui.success('تم تسجيل الحضور لجميع طلاب الحلقة في هذه الجلسة');
+    }
+  }
+
+  navigateToPrevStudent() {
+    const current = this.singleAttendanceStudent();
+    const session = this.singleAttendanceSession();
+    if (!current || !session || !this.details()?.students) return;
+
+    const students = this.details()!.students;
+    const currentIndex = students.findIndex(s => s.studentId === current.studentId);
+    if (currentIndex > 0) {
+      const prevStudent = students[currentIndex - 1];
+      this.openSingleAttendance(prevStudent, session);
+    }
+  }
+
+  saveSingleRow(row: SessionEditorRow) {
+    const session = this.editingSession();
+    if (!session) return;
+
+    this.applyOptimisticSingleRecord(session.sessionId, row.studentId, row.status, row.score, row.comment);
+
+    const payload: AttendanceRecordDTO = {
+      sessionId: session.sessionId,
+      studentId: row.studentId,
+      status: normalizeAttendanceStatus(row.status) ?? AttendanceStatus.Present,
+      notes: row.comment || undefined,
+      score: row.score !== null && row.score !== undefined && row.score !== ('' as any) ? Number(row.score) : undefined,
+      comment: row.comment || undefined
+    };
+
+    this.attendanceSvc.saveRecord(payload).subscribe({
+      next: () => {
+        this.ui.success(`تم حفظ حضور ${row.studentName}`);
+      },
+      error: () => {
+        this.ui.error(`تعذر حفظ حضور ${row.studentName}`);
+      }
+    });
+  }
+
+  private applyOptimisticSingleRecord(
+    sessionId: number,
+    studentId: number,
+    status: AttendanceStatus,
+    score: number | null,
+    comment: string
+  ) {
+    const current = this.details();
+    if (!current || !current.students) return;
+
+    const st = current.students.find(x => x.studentId === studentId);
+    if (st) {
+      if (!st.records) st.records = {};
+      st.records[sessionId] = {
+        attendance: status,
+        score: score !== null && score !== undefined && score !== ('' as any) ? Number(score) : undefined,
+        comment: comment || undefined
+      };
+      const recList = Object.values(st.records);
+      st.totalPresent = recList.filter(
+        r => r.attendance === AttendanceStatus.Present || r.attendance === AttendanceStatus.Late
+      ).length;
+      const scores = recList
+        .map(r => r.score)
+        .filter((s): s is number => typeof s === 'number');
+      st.totalEvaluation = scores.reduce((sum, v) => sum + v, 0);
+    }
+    const updated = { ...current };
+    this.details.set(updated);
+    this.offlineSync.cacheGroupDetails(current.groupId, updated);
   }
 
   private applyOptimisticRecords(sessionId: number, rows: SessionEditorRow[]) {
