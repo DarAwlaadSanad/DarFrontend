@@ -131,14 +131,13 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
         this.loadSchedules(id);
         this.loadFeePlans(id);
         this.loadAcademicYears();
-        this.loadStudentFees(id);
       }
     });
 
     // Listen for background sync completions to refresh live data
     this.syncSub = this.offlineSync.syncCompleted$.subscribe(result => {
       if (result.successCount > 0 && this.details()) {
-        this.loadDetails(this.details()!.groupId);
+        this.loadDetails(this.details()!.groupId, true);
       }
     });
   }
@@ -151,35 +150,35 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     this.academicYearService.getAll().subscribe(data => this.academicYears.set(data));
   }
 
-  loadDetails(id: number) {
-    this.isLoading.set(true);
+  loadDetails(id: number, silent = false) {
+    if (!silent && !this.details()) {
+      this.isLoading.set(true);
+    }
 
-    // If device is offline, load from local cache if available
-    if (!this.offlineSync.isOnline()) {
+    // Stale-While-Revalidate: render immediately from local cache if we don't have details in memory yet
+    if (!this.details()) {
       const cached = this.offlineSync.getCachedGroupDetails(id);
-      if (cached) {
+      if (cached && cached.details) {
         this.details.set(cached.details);
-        this.isWorkingOffline.set(true);
         this.isLoading.set(false);
-        this.ui.info('أنت تعمل دون اتصال بالإنترنت. يتم عرض النسخة المحفوظة محلياً.');
-        return;
       }
     }
 
-    this.groupService.getDetails(id, this.currentMonth(), this.currentYear()).subscribe({
+    this.groupService.getDetails(id, this.currentMonth(), this.currentYear(), silent).subscribe({
       next: (data) => {
         this.details.set(data);
         this.isWorkingOffline.set(false);
         // Cache group details locally for future offline availability
         this.offlineSync.cacheGroupDetails(id, data);
-        this.loadStudentFees(id); // Reload fees when month/year changes
+        if (!silent) {
+          this.loadStudentFees(id);
+        }
         this.isLoading.set(false);
       },
       error: () => {
         this.isLoading.set(false);
-        // Fallback to locally cached data on connection failure
         const cached = this.offlineSync.getCachedGroupDetails(id);
-        if (cached) {
+        if (cached && !this.details()) {
           this.details.set(cached.details);
           this.isWorkingOffline.set(true);
           this.ui.info('تعذر الاتصال بالخادم. يتم عرض البيانات المحفوظة محلياً.');
@@ -251,6 +250,76 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     this.editorRows.set(this.editorRows().map(r => ({ ...r, status })));
   }
 
+  getActiveOptionClass(status: AttendanceStatus): string {
+    switch (status) {
+      case AttendanceStatus.Present:
+        return 'bg-emerald-600 text-white shadow-sm shadow-emerald-950 font-bold';
+      case AttendanceStatus.Absent:
+        return 'bg-rose-600 text-white shadow-sm shadow-rose-950 font-bold';
+      case AttendanceStatus.Late:
+        return 'bg-amber-500 text-dark-950 shadow-sm shadow-amber-950 font-bold';
+      case AttendanceStatus.Excused:
+        return 'bg-blue-600 text-white shadow-sm shadow-blue-950 font-bold';
+      default:
+        return 'bg-dark-700 text-white';
+    }
+  }
+
+  getStatusDotClass(status: AttendanceStatus): string {
+    switch (status) {
+      case AttendanceStatus.Present:
+        return 'bg-emerald-400';
+      case AttendanceStatus.Absent:
+        return 'bg-rose-400';
+      case AttendanceStatus.Late:
+        return 'bg-amber-400';
+      case AttendanceStatus.Excused:
+        return 'bg-blue-400';
+      default:
+        return 'bg-dark-400';
+    }
+  }
+
+  getAttendanceCounts() {
+    const rows = this.editorRows();
+    let present = 0, absent = 0, late = 0, excused = 0;
+    for (const r of rows) {
+      if (r.status === AttendanceStatus.Present) present++;
+      else if (r.status === AttendanceStatus.Absent) absent++;
+      else if (r.status === AttendanceStatus.Late) late++;
+      else if (r.status === AttendanceStatus.Excused) excused++;
+    }
+    return { present, absent, late, excused, total: rows.length };
+  }
+
+  private applyOptimisticRecords(sessionId: number, rows: SessionEditorRow[]) {
+    const current = this.details();
+    if (!current || !current.students) return;
+
+    for (const row of rows) {
+      const st = current.students.find(x => x.studentId === row.studentId);
+      if (st) {
+        if (!st.records) st.records = {};
+        st.records[sessionId] = {
+          attendance: row.status,
+          score: row.score !== null ? row.score : undefined,
+          comment: row.comment || undefined
+        };
+        const recList = Object.values(st.records);
+        st.totalPresent = recList.filter(
+          r => r.attendance === AttendanceStatus.Present || r.attendance === AttendanceStatus.Late
+        ).length;
+        const scores = recList
+          .map(r => r.score)
+          .filter((s): s is number => typeof s === 'number');
+        st.totalEvaluation = scores.reduce((sum, v) => sum + v, 0);
+      }
+    }
+    const updated = { ...current };
+    this.details.set(updated);
+    this.offlineSync.cacheGroupDetails(current.groupId, updated);
+  }
+
   saveSession() {
     const session = this.editingSession();
     if (!session) return;
@@ -276,23 +345,27 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
         }))
     };
 
+    // 1. Instant optimistic update: update table immediately and close modal without lag!
+    this.applyOptimisticRecords(session.sessionId, this.editorRows());
+    this.showSessionEditor.set(false);
+
     // If completely offline: save to offline sync queue immediately
     if (!this.offlineSync.isOnline()) {
       this.saveSessionOffline(session, attBatch, evalBatch);
       return;
     }
 
-    // If online: attempt API call, with graceful offline fallback on network disconnect
+    // If online: perform API call in background
     forkJoin([
       this.attendanceSvc.saveBatch(attBatch),
       ...(evalBatch.entries.length ? [this.evaluationSvc.saveBatch(evalBatch)] : [])
     ]).subscribe({
       next: () => {
         this.isSaving.set(false);
-        this.showSessionEditor.set(false);
         this.groupService.clearDetailsCache();
         this.ui.success('تم حفظ سجل الجلسة ودرجات التسميع بنجاح');
-        this.loadDetails(this.details()!.groupId);
+        // Silent background refresh to verify server state without any loading spinner!
+        this.loadDetails(this.details()!.groupId, true);
       },
       error: (err) => {
         // If network error occurred, fallback seamlessly to offline queue
@@ -301,6 +374,7 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
         } else {
           this.isSaving.set(false);
           this.ui.error('حدث خطأ أثناء الحفظ على الخادم');
+          this.loadDetails(this.details()!.groupId, true);
         }
       }
     });
@@ -316,26 +390,6 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
       evaluationBatch: evalBatch.entries.length ? evalBatch : undefined,
       editorRows: this.editorRows()
     });
-
-    // Optimistically update the students' records in the active in-memory details
-    const current = this.details();
-    if (current && current.students) {
-      for (const row of this.editorRows()) {
-        const st = current.students.find(x => x.studentId === row.studentId);
-        if (st) {
-          if (!st.records) st.records = {};
-          st.records[session.sessionId] = {
-            attendance: row.status,
-            score: row.score !== null ? row.score : undefined,
-            comment: row.comment || undefined
-          };
-          st.totalPresent = Object.values(st.records).filter(r => r.attendance === AttendanceStatus.Present).length;
-          const scores = Object.values(st.records).map(r => r.score).filter((s): s is number => typeof s === 'number');
-          st.totalEvaluation = scores.reduce((sum, v) => sum + v, 0);
-        }
-      }
-      this.details.set({ ...current });
-    }
 
     this.isSaving.set(false);
     this.showSessionEditor.set(false);

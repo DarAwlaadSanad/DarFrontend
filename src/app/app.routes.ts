@@ -57,6 +57,11 @@ export const routes: Routes = [
           import('./features/warnings/warning-list.component').then(m => m.WarningListComponent),
       },
       {
+        path: 'library',
+        loadComponent: () =>
+          import('./features/library/library-list.component').then(m => m.LibraryListComponent),
+      },
+      {
         path: 'chat',
         loadComponent: () =>
           import('./features/chat/group-chat.component').then(m => m.GroupChatComponent),
@@ -177,6 +182,11 @@ export const routes: Routes = [
         path: 'groups/:id',
         loadComponent: () =>
           import('./features/student-portal/group-details/student-group-details.component').then(m => m.StudentGroupDetailsComponent),
+      },
+      {
+        path: 'library',
+        loadComponent: () =>
+          import('./features/library/library-list.component').then(m => m.LibraryListComponent),
       },
       {
         path: 'chat',

@@ -50,7 +50,8 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
           >
             <div class="w-5 h-5 flex items-center justify-center flex-shrink-0">
               <svg *ngIf="item.icon === 'home'"   class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-              <svg *ngIf="item.icon === 'chat'"   class="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
+              <svg *ngIf="item.icon === 'library'" class="w-5 h-5 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+              <svg *ngIf="item.icon === 'chat'"   class="w-5 h-5 " fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/></svg>
               <svg *ngIf="item.icon === 'alert'"  class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
               <svg *ngIf="item.icon === 'user'"   class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7 7z" /></svg>
               <svg *ngIf="item.icon === 'shield'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
@@ -69,7 +70,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
       </aside>
 
       <!-- Main Content Area -->
-      <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden">
+      <div class="flex-1 flex flex-col h-full min-w-0 overflow-hidden relative">
 
         <!-- Top Navbar -->
         <header class="h-16 lg:h-20 bg-dark-900 border-b border-dark-800 flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-20">
@@ -114,7 +115,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
 
         <!-- Ambient Islamic Artwork Backdrop -->
         <div class="absolute inset-0 pointer-events-none z-0 overflow-hidden select-none">
-          <div class="absolute inset-0 bg-cover bg-center opacity-[0.08] dark:opacity-[0.12] filter blur-[0.5px]"
+          <div class="absolute inset-0 bg-cover bg-center opacity-[0.04] sm:opacity-[0.08] dark:opacity-[0.06] sm:dark:opacity-[0.12] filter blur-[0.5px]"
             style="background-image: url('assets/images/quran-bg.jpg');">
           </div>
           <div class="absolute inset-0 bg-gradient-to-t from-dark-950 via-dark-950/80 to-transparent dark:block hidden"></div>
@@ -122,7 +123,7 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
         </div>
 
         <!-- Page Content -->
-        <main class="flex-1 p-2 sm:p-4 lg:p-8 pb-6 overflow-y-auto overflow-x-hidden relative z-10">
+        <main class="flex-1 p-2 sm:p-4 lg:p-8 pb-6 overflow-y-auto overflow-x-hidden relative">
           <router-outlet></router-outlet>
         </main>
       </div>
@@ -139,6 +140,7 @@ export class StudentLayoutComponent {
 
   navItems = [
     { label: 'الرئيسية وحلقاتي', icon: 'home', route: '/student', exact: true },
+    { label: 'المكتبة والكتب', icon: 'library', route: '/student/library', exact: false },
     { label: 'محادثة الدار', icon: 'chat', route: '/student/chat', exact: false },
     { label: 'سجل الإنذارات', icon: 'alert', route: '/student/warnings', exact: false },
     { label: 'ملفي الشخصي', icon: 'user', route: '/student/profile', exact: false },

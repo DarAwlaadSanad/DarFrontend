@@ -59,6 +59,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.navItems.push({ label: 'الحلقات', icon: 'book', route: '/dashboard/groups' });
     }
 
+    this.navItems.push({ label: 'المكتبة والكتب', icon: 'library', route: '/dashboard/library' });
+
     if (this.authService.hasPermission('Permissions.Fees.View')) {
       this.navItems.push({ label: 'الشهريات', icon: 'cash', route: '/dashboard/fees' });
 
@@ -71,7 +73,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.navItems.push({ label: 'جدول الحصص', icon: 'calendar', route: '/dashboard/timetable' });
     }
     if (this.authService.hasPermission('Permissions.Users.View')) {
-      this.navItems.push({ label: 'المستخدمين', icon: 'shield-lock', route: '/dashboard/users' });
+      this.navItems.push({ label: 'المستخدمين', icon: 'user-cog', route: '/dashboard/users' });
     }
     if (this.authService.hasPermission('Permissions.Roles.View') || this.authService.hasPermission('Permissions.Roles.Manage')) {
       this.navItems.push({ label: 'إدارة الصلاحيات', icon: 'shield-lock', route: '/dashboard/roles' });
@@ -86,13 +88,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.navItems.push({ label: 'تسجيل الحضور', icon: 'check-square', route: '/dashboard/attendance' });
     }
     if (this.authService.hasPermission('Permissions.Competitions.View')) {
-      this.navItems.push({ label: 'المسابقات الجماعية', icon: 'book', route: '/dashboard/competitions' });
+      this.navItems.push({ label: 'المسابقات الجماعية', icon: 'trophy', route: '/dashboard/competitions' });
     }
     if (this.authService.hasPermission('Permissions.Reports.View')) {
       this.navItems.push({ label: 'سجلات الغياب', icon: 'file-text', route: '/dashboard/absences' });
     }
     if (this.authService.hasPermission('Permissions.Rooms.View')) {
-      this.navItems.push({ label: 'الغرف', icon: 'home', route: '/dashboard/rooms' });
+      this.navItems.push({ label: 'الغرف', icon: 'building', route: '/dashboard/rooms' });
     }
     if (this.authService.hasPermission('Permissions.TeacherAttendance.Manage') || this.authService.hasRole('Admin') || this.authService.hasRole('SuperAdmin')) {
       this.navItems.push({ label: 'أماكن تسجيل الحضور', icon: 'map-pin', route: '/dashboard/settings/locations' });
@@ -120,7 +122,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       if (financeChildren.length > 0) {
         this.navItems.push({
           label: 'الإدارة المالية',
-          icon: 'cash',
+          icon: 'bank',
           children: financeChildren
         });
       }
@@ -129,7 +131,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.navItems.push({ label: 'الشات', icon: 'chat', route: '/dashboard/chat' });
 
     if (this.authService.hasPermission('Permissions.AcademicYears.View')) {
-      this.navItems.push({ label: 'السنوات الدراسية', icon: 'calendar', route: '/dashboard/academic-years' });
+      this.navItems.push({ label: 'السنوات الدراسية', icon: 'academic-cap', route: '/dashboard/academic-years' });
     }
 
     // Auto-close sidebar after navigation on mobile & auto-expand active submenus

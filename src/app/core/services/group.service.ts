@@ -18,9 +18,9 @@ export class GroupService {
   }
   private detailsCache = new Map<string, GroupDetailsDTO>();
 
-  getDetails(id: number, month: number, year: number): Observable<GroupDetailsDTO> {
+  getDetails(id: number, month: number, year: number, forceRefresh = false): Observable<GroupDetailsDTO> {
     const cacheKey = `${id}-${month}-${year}`;
-    if (this.detailsCache.has(cacheKey)) {
+    if (!forceRefresh && this.detailsCache.has(cacheKey)) {
       return of(this.detailsCache.get(cacheKey)!);
     }
     return this.http.get<GroupDetailsDTO>(`${this.apiUrl}/${id}?month=${month}&year=${year}`).pipe(

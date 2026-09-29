@@ -708,14 +708,16 @@ html.light .logo-dark,
     background-repeat: no-repeat, no-repeat, no-repeat, repeat;
   }
 
-  .light .bg-mesh {
+  .light .bg-mesh,
+  html.light .bg-mesh {
     background-image:
-      radial-gradient(at 20% 25%, rgba(22, 163, 74, 0.04) 0px, transparent 50%),
-      radial-gradient(at 80% 5%, rgba(16, 185, 129, 0.03) 0px, transparent 50%),
-      radial-gradient(at 60% 80%, rgba(5, 150, 105, 0.02) 0px, transparent 50%),
-      url('assets/images/islamic-pattern.svg');
-    background-size: auto, auto, auto, 80px 80px;
-    background-repeat: no-repeat, no-repeat, no-repeat, repeat;
+      radial-gradient(at 20% 25%, rgba(22, 163, 74, 0.05) 0px, transparent 50%),
+      radial-gradient(at 80% 5%, rgba(217, 119, 6, 0.04) 0px, transparent 50%),
+      radial-gradient(at 60% 80%, rgba(5, 150, 105, 0.03) 0px, transparent 50%),
+      linear-gradient(rgba(240, 244, 248, 0.94), rgba(240, 244, 248, 0.94)),
+      url('assets/images/islamic-pattern-light-320.png');
+    background-size: auto, auto, auto, auto, 110px 110px;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat;
   }
 
   /* ── Dedicated Islamic Patterns & Watermarks ────────────────── */
@@ -725,10 +727,24 @@ html.light .logo-dark,
     background-size: 80px 80px;
   }
 
+  .light .bg-islamic-pattern,
+  html.light .bg-islamic-pattern {
+    background-image: url('assets/images/islamic-pattern-light.png');
+    background-repeat: repeat;
+    background-size: 96px 96px;
+  }
+
   .bg-islamic-pattern-gold {
     background-image: url('assets/images/islamic-pattern-gold.svg');
     background-repeat: repeat;
     background-size: 80px 80px;
+  }
+
+  .light .bg-islamic-pattern-gold,
+  html.light .bg-islamic-pattern-gold {
+    background-image: url('assets/images/islamic-pattern-light.png');
+    background-repeat: repeat;
+    background-size: 96px 96px;
   }
 
   /* Quran Backdrop with deep gradient for text clarity */
@@ -771,6 +787,35 @@ html.light .logo-dark,
     background-position: center top;
     background-attachment: fixed;
     background-repeat: no-repeat;
+  }
+
+  /* Responsive Background Rules for Mobile / Small Screens */
+  @media (max-width: 768px) {
+    .bg-mesh {
+      background-size: auto, auto, auto, 50px 50px;
+    }
+    .light .bg-mesh,
+    html.light .bg-mesh {
+      background-size: auto, auto, auto, auto, 64px 64px;
+    }
+    .bg-islamic-pattern,
+    .bg-islamic-pattern-gold {
+      background-size: 50px 50px;
+    }
+    .light .bg-islamic-pattern,
+    html.light .bg-islamic-pattern,
+    .light .bg-islamic-pattern-gold,
+    html.light .bg-islamic-pattern-gold {
+      background-size: 64px 64px;
+    }
+    .bg-quran-backdrop,
+    .light .bg-quran-backdrop,
+    .bg-halaqah-backdrop,
+    .light .bg-halaqah-backdrop {
+      background-attachment: scroll !important;
+      background-position: center center !important;
+      background-size: cover !important;
+    }
   }
 }
 
