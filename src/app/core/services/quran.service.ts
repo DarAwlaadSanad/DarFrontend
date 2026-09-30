@@ -9,6 +9,8 @@ export interface QuranAyah {
   audio?: string;
   surahNumber: number;
   surahName: string;
+  juz?: number;
+  page?: number;
 }
 
 export interface QuranSurahSection {
@@ -17,6 +19,8 @@ export interface QuranSurahSection {
   englishName: string;
   revelationType: string;
   totalAyahs: number;
+  juz?: number;
+  page?: number;
   ayahs: QuranAyah[];
 }
 
@@ -100,6 +104,13 @@ export class QuranService {
               if (currentSurahNum !== 1 && a.numberInSurah === 1) {
                 text = text.replace(/^[\s\uFEFF\xA0]*ب[\u064B-\u065F\u0670]*س[\u064B-\u065F\u0670]*م[\u064B-\u065F\u0670]*[\s\S]+?ر[\u064B-\u065F\u0670]*ح[\u064B-\u065F\u0670]*ي[\u064B-\u065F\u0670]*م[\u064B-\u065F\u0670]*\s*/u, '').trim();
               }
+              // Format Iqlab: in standard Mushaf, Iqlab replaces the second vowel with a small upright meem
+              text = text.replace(/\u064B\u06E2/g, '\u064E\u06E2'); // fathatan + meem -> fatha + meem
+              text = text.replace(/\u064C\u06E2/g, '\u064F\u06E2'); // dammatan + meem -> damma + meem
+              text = text.replace(/\u064D\u06E2/g, '\u0650\u06E2'); // kasratan + meem -> kasra + meem
+
+              // Clean Quranic Unicode annotation marks that cause browser text-shaping bugs (dotted circles & colliding marks)
+              text = text.replace(/[\u06DF\u06E0\u06ED]/g, '');
               return {
                 number: a.number,
                 numberInSurah: a.numberInSurah,
@@ -107,6 +118,8 @@ export class QuranService {
                 audio: audioEdition?.ayahs?.[i]?.audio,
                 surahNumber: currentSurahNum,
                 surahName: uthmaniEdition.name,
+                juz: a.juz,
+                page: a.page,
               };
             }
           );
@@ -139,6 +152,8 @@ export class QuranService {
               englishName: uthmaniEdition.englishName,
               revelationType: uthmaniEdition.revelationType,
               totalAyahs: uthmaniEdition.numberOfAyahs,
+              juz: filteredAyahs[0]?.juz,
+              page: filteredAyahs[0]?.page,
               ayahs: filteredAyahs,
             });
             totalCount += filteredAyahs.length;
