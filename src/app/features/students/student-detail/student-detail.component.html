@@ -608,9 +608,9 @@
       <!-- Memorization Log (Premium UI) -->
       <div class="glass-card overflow-hidden border-dark-800">
         <!-- Header -->
-        <div class="p-6 border-b border-dark-800 bg-dark-900/50 flex items-center justify-between">
+        <div class="p-5 sm:p-6 border-b border-dark-800 bg-dark-900/50 flex flex-wrap items-center justify-between gap-4">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+            <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 shrink-0">
               <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                   d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -621,13 +621,49 @@
               <p class="text-dark-500 text-[10px] uppercase tracking-wider">تتبع تقدم الطالب في القرآن الكريم</p>
             </div>
           </div>
-          <button (click)="isAddingMemorization.set(!isAddingMemorization())"
-            class="group p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300">
-            <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24"
-              stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-          </button>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <!-- Controls when records exist -->
+            <ng-container *ngIf="totalMemorizationRecords() > 0">
+              <!-- Total Records Badge -->
+              <span class="text-xs bg-dark-800/80 border border-dark-700/60 text-dark-300 px-3 py-1.5 rounded-xl font-bold">
+                إجمالي السجلات: <strong class="text-emerald-400 font-mono">{{ totalMemorizationRecords() }}</strong>
+              </span>
+
+              <!-- Sort Order Toggle -->
+              <button type="button"
+                      (click)="toggleMemorizationSortOrder()"
+                      title="تغيير ترتيب السجلات"
+                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800/80 hover:bg-dark-700/80 border border-dark-700/60 text-dark-300 hover:text-white text-xs font-semibold transition-all">
+                <svg class="w-3.5 h-3.5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                </svg>
+                <span>{{ memorizationSortOrder() === 'desc' ? 'الأحدث أولاً' : 'الأقدم أولاً' }}</span>
+              </button>
+
+              <!-- Page Size Selector -->
+              <div class="flex items-center gap-1.5 text-xs text-dark-400">
+                <span>عرض:</span>
+                <select [ngModel]="memorizationPageSize()" (ngModelChange)="setMemorizationPageSize($event)"
+                        class="bg-dark-800/80 border border-dark-700/60 text-dark-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                  <option [value]="2">2 لكل صفحة</option>
+                  <option [value]="3">3 لكل صفحة</option>
+                  <option [value]="5">5 لكل صفحة</option>
+                  <option [value]="10">10 لكل صفحة</option>
+                </select>
+              </div>
+            </ng-container>
+
+            <!-- Add Record Button -->
+            <button (click)="isAddingMemorization.set(!isAddingMemorization())"
+              title="إضافة سجل جديد"
+              class="group p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300">
+              <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         <!-- Add Form (Premium) -->
@@ -761,11 +797,11 @@
         <!-- Timeline View -->
         <div class="p-6">
           <div class="relative">
-            <div *ngIf="s.memorizationRecords && s.memorizationRecords.length > 0"
+            <div *ngIf="paginatedMemorizationRecords().length > 0"
               class="absolute right-[21px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-500/50 via-dark-700 to-transparent">
             </div>
-            <div class="space-y-8">
-              <div *ngFor="let record of s.memorizationRecords || []" class="relative pr-12 group">
+            <div class="space-y-8" *ngIf="paginatedMemorizationRecords().length > 0">
+              <div *ngFor="let record of paginatedMemorizationRecords()" class="relative pr-12 group">
                 <div
                   class="absolute right-0 top-0 w-11 h-11 rounded-2xl bg-dark-800 border-4 border-dark-900 flex flex-col items-center justify-center shadow-xl z-10">
                   <span class="text-[10px] font-black text-white leading-none">{{ record.date | date:'dd' }}</span>
@@ -858,9 +894,66 @@
                 </div>
               </div>
             </div>
-            <div *ngIf="!s.memorizationRecords || s.memorizationRecords.length === 0" class="py-20 text-center">
+            <div *ngIf="totalMemorizationRecords() === 0" class="py-20 text-center">
               <p class="text-dark-500 italic">لم يتم تسجيل أي حلقات حفظ لهذا الطالب بعد</p>
             </div>
+          </div>
+        </div>
+
+        <!-- Pagination Footer -->
+        <div *ngIf="totalMemorizationRecords() > 0"
+             class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-dark-800 bg-dark-900/60">
+          <div class="text-xs text-dark-400">
+            عرض السجلات
+            <span class="text-white font-bold font-mono">{{ memorizationStartRecordIndex() }} - {{ memorizationEndRecordIndex() }}</span>
+            من إجمالي
+            <span class="text-white font-bold font-mono">{{ totalMemorizationRecords() }}</span>
+            سجل
+          </div>
+
+          <div class="flex items-center gap-1.5">
+            <!-- First Page -->
+            <button type="button"
+                    (click)="goToMemorizationPage(1)"
+                    [disabled]="memorizationCurrentPage() === 1"
+                    title="الصفحة الأولى"
+                    class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+              ««
+            </button>
+            <!-- Prev Page -->
+            <button type="button"
+                    (click)="goToMemorizationPage(memorizationCurrentPage() - 1)"
+                    [disabled]="memorizationCurrentPage() === 1"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+              السابق
+            </button>
+
+            <!-- Page numbers -->
+            <ng-container *ngFor="let p of memorizationPageNumbers()">
+              <button type="button"
+                      (click)="goToMemorizationPage(p)"
+                      [class]="p === memorizationCurrentPage()
+                        ? 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary-600 text-white shadow-md shadow-primary-600/25'
+                        : 'px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700'">
+                {{ p }}
+              </button>
+            </ng-container>
+
+            <!-- Next Page -->
+            <button type="button"
+                    (click)="goToMemorizationPage(memorizationCurrentPage() + 1)"
+                    [disabled]="memorizationCurrentPage() === totalMemorizationPages()"
+                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+              التالي
+            </button>
+            <!-- Last Page -->
+            <button type="button"
+                    (click)="goToMemorizationPage(totalMemorizationPages())"
+                    [disabled]="memorizationCurrentPage() === totalMemorizationPages()"
+                    title="الصفحة الأخيرة"
+                    class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+              »»
+            </button>
           </div>
         </div>
       </div>

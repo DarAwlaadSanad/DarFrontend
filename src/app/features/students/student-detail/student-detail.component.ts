@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
@@ -61,6 +61,71 @@ export class StudentDetailComponent implements OnInit {
       date: new Date().toISOString().split('T')[0],
       notes: ''
     };
+  }
+
+  memorizationCurrentPage = signal(1);
+  memorizationPageSize = signal(3);
+  memorizationSortOrder = signal<'desc' | 'asc'>('desc');
+
+  sortedMemorizationRecords = computed(() => {
+    const records = this.student()?.memorizationRecords || [];
+    const order = this.memorizationSortOrder();
+    return [...records].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      if (!isNaN(timeA) && !isNaN(timeB) && timeB !== timeA) {
+        return order === 'desc' ? timeB - timeA : timeA - timeB;
+      }
+      return order === 'desc' ? (b.id || 0) - (a.id || 0) : (a.id || 0) - (b.id || 0);
+    });
+  });
+
+  totalMemorizationRecords = computed(() => this.sortedMemorizationRecords().length);
+
+  totalMemorizationPages = computed(() => {
+    const total = Math.ceil(this.totalMemorizationRecords() / this.memorizationPageSize());
+    return total > 0 ? total : 1;
+  });
+
+  paginatedMemorizationRecords = computed(() => {
+    const page = Math.min(this.memorizationCurrentPage(), this.totalMemorizationPages());
+    const start = (page - 1) * this.memorizationPageSize();
+    return this.sortedMemorizationRecords().slice(start, start + this.memorizationPageSize());
+  });
+
+  memorizationPageNumbers = computed(() => {
+    const total = this.totalMemorizationPages();
+    const current = this.memorizationCurrentPage();
+    const delta = 2;
+    const pages: number[] = [];
+    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+      pages.push(i);
+    }
+    return pages;
+  });
+
+  memorizationStartRecordIndex = computed(() => {
+    if (this.totalMemorizationRecords() === 0) return 0;
+    return (this.memorizationCurrentPage() - 1) * this.memorizationPageSize() + 1;
+  });
+
+  memorizationEndRecordIndex = computed(() => {
+    return Math.min(this.memorizationCurrentPage() * this.memorizationPageSize(), this.totalMemorizationRecords());
+  });
+
+  goToMemorizationPage(page: number) {
+    const clamped = Math.max(1, Math.min(page, this.totalMemorizationPages()));
+    this.memorizationCurrentPage.set(clamped);
+  }
+
+  setMemorizationPageSize(size: any) {
+    this.memorizationPageSize.set(+size);
+    this.memorizationCurrentPage.set(1);
+  }
+
+  toggleMemorizationSortOrder() {
+    this.memorizationSortOrder.update(curr => curr === 'desc' ? 'asc' : 'desc');
+    this.memorizationCurrentPage.set(1);
   }
 
   student = signal<StudentDetailsDTO | null>(null);
@@ -270,6 +335,7 @@ export class StudentDetailComponent implements OnInit {
         this.isAddingMemorization.set(false);
         this.newMemRecord = this.getInitialMemRecord();
         this.newMemRecord.studentId = this.student()?.id || 0;
+        this.memorizationCurrentPage.set(1);
         this.loadStudent();
       },
       error: () => {

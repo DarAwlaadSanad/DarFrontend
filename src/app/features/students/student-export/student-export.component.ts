@@ -2,13 +2,14 @@ import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Router } from '@angular/router';
+import { forkJoin, Observable } from 'rxjs';
 import * as XLSX from 'xlsx';
 
 import { StudentService } from '../../../core/services/student.service';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { GroupService } from '../../../core/services/group.service';
 import { UiService } from '../../../core/services/ui.service';
-import { StudentDetailsDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
+import { StudentDetailsDTO, StudentPagedResultDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupCardDTO } from '../../../core/models/group.models';
 
@@ -130,7 +131,7 @@ interface ExportColumnOption {
         </div>
 
         <!-- Filter Controls -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-xs">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-xs">
           <!-- Search -->
           <div>
             <label class="block text-[10px] font-bold text-dark-400 uppercase mb-1 mr-1">بحث</label>
@@ -190,6 +191,30 @@ interface ExportColumnOption {
               <option [ngValue]="true">نشط فقط</option>
               <option [ngValue]="false">معلق فقط</option>
             </select>
+          </div>
+
+          <!-- Sort Filter -->
+          <div>
+            <label class="block text-[10px] font-bold text-emerald-400 uppercase mb-1 mr-1 flex items-center justify-between">
+              <span>ترتيب حسب</span>
+              <span class="text-[9px] text-dark-400 font-mono">{{ sortDirection() === 'asc' ? '(أ ⬅ ي)' : '(ي ⬅ أ)' }}</span>
+            </label>
+            <div class="flex items-center gap-1">
+              <select [ngModel]="sortBy()" 
+                      (ngModelChange)="sortBy.set($event)" 
+                      class="input-field py-2 text-xs flex-1 border-emerald-500/30 focus:border-emerald-500">
+                <option value="studentName">اسم الطالب</option>
+                <option value="guardianName">اسم ولي الأمر</option>
+                <option value="fullName">الاسم بالكامل</option>
+                <option value="code">كود الطالب</option>
+              </select>
+              <button type="button" 
+                      (click)="toggleSortDirection()"
+                      class="px-2.5 py-2 rounded-xl bg-dark-800 hover:bg-dark-750 text-emerald-400 border border-dark-700/80 font-bold text-xs shrink-0 transition-colors"
+                      [title]="sortDirection() === 'asc' ? 'ترتيب تصاعدي (اضغط للتحويل لتنازلي)' : 'ترتيب تنازلي (اضغط للتحويل لتصاعدي)'">
+                <span>{{ sortDirection() === 'asc' ? '↑' : '↓' }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -252,8 +277,30 @@ interface ExportColumnOption {
                          (change)="toggleAllPage($event)"
                          class="rounded border-dark-700 bg-dark-900 text-emerald-500 focus:ring-emerald-500/30 cursor-pointer">
                 </th>
-                <th class="py-3 px-4">كود الطالب</th>
-                <th class="py-3 px-4">اسم الطالب</th>
+                <th class="py-3 px-4 cursor-pointer hover:text-white transition-colors" (click)="setSort('code')">
+                  <div class="flex items-center gap-1.5">
+                    <span>كود الطالب</span>
+                    <span *ngIf="sortBy() === 'code'" class="text-emerald-400 font-mono text-xs">
+                      {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </div>
+                </th>
+                <th class="py-3 px-4 cursor-pointer hover:text-white transition-colors" (click)="setSort('studentName')">
+                  <div class="flex items-center gap-1.5">
+                    <span>اسم الطالب</span>
+                    <span *ngIf="sortBy() === 'studentName'" class="text-emerald-400 font-mono text-xs">
+                      {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </div>
+                </th>
+                <th class="py-3 px-4 cursor-pointer hover:text-white transition-colors" (click)="setSort('guardianName')">
+                  <div class="flex items-center gap-1.5">
+                    <span>اسم ولي الأمر (الأب)</span>
+                    <span *ngIf="sortBy() === 'guardianName'" class="text-emerald-400 font-mono text-xs">
+                      {{ sortDirection() === 'asc' ? '▲' : '▼' }}
+                    </span>
+                  </div>
+                </th>
                 <th class="py-3 px-4">النوع</th>
                 <th class="py-3 px-4">السنة الدراسية</th>
                 <th class="py-3 px-4">الحلقة</th>
@@ -265,7 +312,7 @@ interface ExportColumnOption {
               
               <!-- Empty State -->
               <tr *ngIf="displayedStudents().length === 0">
-                <td colspan="8" class="py-12 text-center text-dark-400">
+                <td colspan="9" class="py-12 text-center text-dark-400">
                   <div class="max-w-sm mx-auto space-y-2">
                     <p class="text-3xl">📋</p>
                     <p class="font-bold text-sm text-dark-200">
@@ -297,17 +344,25 @@ interface ExportColumnOption {
                   #{{ s.code }}
                 </td>
 
-                <!-- Full Name -->
+                <!-- Student First Name & Full Name Preview -->
                 <td class="py-3 px-4">
                   <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700/80 flex items-center justify-center font-bold text-xs"
+                    <div class="w-8 h-8 rounded-full bg-dark-800 border border-dark-700/80 flex items-center justify-center font-bold text-xs shrink-0"
                          [ngClass]="isMale(s.gender) ? 'text-sky-400' : 'text-pink-400'">
                       {{ s.fullName.charAt(0) }}
                     </div>
                     <div>
-                      <p class="font-bold text-dark-50 dark:text-white">{{ s.fullName }}</p>
-                      <p class="text-[10px] text-dark-500 font-mono" *ngIf="s.ssn">{{ s.ssn }}</p>
+                      <p class="font-bold text-dark-50 dark:text-white">{{ getStudentFirstName(s.fullName) }}</p>
+                      <p class="text-[10px] text-dark-400 truncate max-w-[140px]" [title]="s.fullName">{{ s.fullName }}</p>
                     </div>
+                  </div>
+                </td>
+
+                <!-- Guardian Name (Father / Family) -->
+                <td class="py-3 px-4">
+                  <div>
+                    <p class="font-medium text-emerald-400/90">{{ getGuardianName(s.fullName) }}</p>
+                    <p class="text-[10px] text-dark-500 font-mono" *ngIf="s.ssn">{{ s.ssn }}</p>
                   </div>
                 </td>
 
@@ -360,44 +415,59 @@ interface ExportColumnOption {
           </table>
         </div>
 
-        <!-- Pagination Bar (Only in 'all' tab) -->
-        <div *ngIf="activeTab() === 'all' && totalCount() > 0" 
+        <!-- Pagination Bar -->
+        <div *ngIf="totalItemsCount() > 0" 
              class="p-4 border-t border-dark-800 bg-dark-850/40 flex items-center justify-between flex-wrap gap-4 text-xs text-dark-400">
-          <div>
-            عرض من <span class="font-bold text-dark-200">{{ ((currentPage() - 1) * pageSize()) + 1 }}</span> إلى 
-            <span class="font-bold text-dark-200">{{ getEndIndex() }}</span> من إجمالي 
-            <span class="font-bold text-dark-200">{{ totalCount() }}</span> طالب
+          <div class="flex items-center gap-3">
+            <span>
+              عرض <span class="font-bold text-dark-200">{{ currentStartIndex() }}</span> إلى 
+              <span class="font-bold text-dark-200">{{ currentEndIndex() }}</span> من إجمالي 
+              <span class="font-bold text-emerald-400">{{ totalItemsCount() }}</span> طالب (مرتبين أبجدياً بالكامل)
+            </span>
           </div>
 
-          <div class="flex items-center gap-2">
+          <div class="flex items-center gap-3">
             <!-- Page Size Selector -->
-            <div class="flex items-center gap-1.5 ml-3">
-              <span class="text-[11px] text-dark-500">عرض:</span>
-              <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set($event); onFilterChange()" 
+            <div class="flex items-center gap-1.5">
+              <span class="text-[11px] text-dark-500">لكل صفحة:</span>
+              <select [ngModel]="pageSize()" (ngModelChange)="pageSize.set(+$event); currentPage.set(1)" 
                       class="bg-dark-900 border border-dark-700 rounded-lg px-2 py-1 text-xs text-dark-200 focus:outline-none">
-                <option [ngValue]="20">20</option>
-                <option [ngValue]="50">50</option>
-                <option [ngValue]="100">100</option>
-                <option [ngValue]="200">200</option>
+                <option [value]="25">25 طالب</option>
+                <option [value]="50">50 طالب</option>
+                <option [value]="100">100 طالب</option>
+                <option [value]="250">250 طالب</option>
+                <option [value]="-1">عرض جميع الطلاب بدون صفحات</option>
               </select>
             </div>
 
-            <!-- Page Buttons -->
-            <button (click)="changePage(currentPage() - 1)" 
-                    [disabled]="currentPage() === 1"
-                    class="p-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            <span class="px-2 font-mono font-bold text-dark-200">{{ currentPage() }} / {{ totalPages }}</span>
-            <button (click)="changePage(currentPage() + 1)" 
-                    [disabled]="currentPage() === totalPages"
-                    class="p-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed">
-              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+            <!-- Page Buttons (When not showing all) -->
+            <div class="flex items-center gap-1" *ngIf="pageSize() !== -1 && totalPages() > 1">
+              <button (click)="changePage(1)" 
+                      [disabled]="currentPage() === 1"
+                      class="px-2 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 disabled:opacity-30 disabled:cursor-not-allowed text-[11px]">
+                « الأولى
+              </button>
+              <button (click)="changePage(currentPage() - 1)" 
+                      [disabled]="currentPage() === 1"
+                      class="p-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              <span class="px-2 font-mono font-bold text-dark-200">{{ currentPage() }} / {{ totalPages() }}</span>
+              <button (click)="changePage(currentPage() + 1)" 
+                      [disabled]="currentPage() === totalPages()"
+                      class="p-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 disabled:opacity-40 disabled:cursor-not-allowed">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <button (click)="changePage(totalPages())" 
+                      [disabled]="currentPage() === totalPages()"
+                      class="px-2 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 disabled:opacity-30 disabled:cursor-not-allowed text-[11px]">
+                الأخيرة »
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -490,15 +560,19 @@ export class StudentExportComponent implements OnInit {
 
   // Pagination & Filters
   currentPage = signal(1);
-  pageSize = signal(50);
+  pageSize = signal<number>(50);
   searchQuery = signal('');
   selectedYearFilter = signal<number | null>(null);
   selectedGroupFilter = signal<number | null>(null);
   genderFilter = signal<number | null>(null);
   statusFilter = signal<boolean | null>(null);
 
+  // Sorting
+  sortBy = signal<'studentName' | 'guardianName' | 'fullName' | 'code'>('studentName');
+  sortDirection = signal<'asc' | 'desc'>('asc');
+
   totalCount = signal(0);
-  pageStudents = signal<StudentDetailsDTO[]>([]);
+  allStudents = signal<StudentDetailsDTO[]>([]);
 
   academicYears = signal<AcademicYearViewDTO[]>([]);
   groups = signal<GroupCardDTO[]>([]);
@@ -527,6 +601,8 @@ export class StudentExportComponent implements OnInit {
   // Export Columns Options
   exportColumns = signal<ExportColumnOption[]>([
     { key: 'code', label: 'كود الطالب', selected: true },
+    { key: 'studentFirstName', label: 'اسم الطالب (الأول)', selected: true },
+    { key: 'guardianName', label: 'اسم ولي الأمر (الأب / العائلة)', selected: true },
     { key: 'fullName', label: 'اسم الطالب بالكامل', selected: true },
     { key: 'ssn', label: 'الرقم القومي', selected: true },
     { key: 'gender', label: 'النوع (ذكر/أنثى)', selected: true },
@@ -550,6 +626,69 @@ export class StudentExportComponent implements OnInit {
     this.exportColumns.update(cols => cols.map(c => ({ ...c, selected: target })));
   }
 
+  // Helper Name Extractors
+  getStudentFirstName(fullName?: string): string {
+    if (!fullName) return '';
+    const parts = fullName.trim().split(/\s+/);
+    return parts[0] || '';
+  }
+
+  getGuardianName(fullName?: string): string {
+    if (!fullName) return '';
+    const parts = fullName.trim().split(/\s+/);
+    return parts.length > 1 ? parts.slice(1).join(' ') : '—';
+  }
+
+  setSort(field: 'studentName' | 'guardianName' | 'fullName' | 'code') {
+    if (this.sortBy() === field) {
+      this.toggleSortDirection();
+    } else {
+      this.sortBy.set(field);
+      this.sortDirection.set('asc');
+    }
+    this.currentPage.set(1);
+  }
+
+  toggleSortDirection() {
+    this.sortDirection.update(d => d === 'asc' ? 'desc' : 'asc');
+    this.currentPage.set(1);
+  }
+
+  // Sorts a list of students based on current sortBy and sortDirection signals
+  sortStudentsList(list: StudentDetailsDTO[]): StudentDetailsDTO[] {
+    const field = this.sortBy();
+    const direction = this.sortDirection();
+    const modifier = direction === 'asc' ? 1 : -1;
+
+    return [...list].sort((a, b) => {
+      if (field === 'studentName') {
+        const firstA = this.getStudentFirstName(a.fullName);
+        const firstB = this.getStudentFirstName(b.fullName);
+        const cmp = firstA.localeCompare(firstB, 'ar', { sensitivity: 'base' });
+        if (cmp !== 0) return cmp * modifier;
+        const guardA = this.getGuardianName(a.fullName);
+        const guardB = this.getGuardianName(b.fullName);
+        return guardA.localeCompare(guardB, 'ar', { sensitivity: 'base' }) * modifier;
+      }
+      if (field === 'guardianName') {
+        const guardA = this.getGuardianName(a.fullName);
+        const guardB = this.getGuardianName(b.fullName);
+        const cmp = guardA.localeCompare(guardB, 'ar', { sensitivity: 'base' });
+        if (cmp !== 0) return cmp * modifier;
+        const firstA = this.getStudentFirstName(a.fullName);
+        const firstB = this.getStudentFirstName(b.fullName);
+        return firstA.localeCompare(firstB, 'ar', { sensitivity: 'base' }) * modifier;
+      }
+      if (field === 'fullName') {
+        return (a.fullName || '').localeCompare(b.fullName || '', 'ar', { sensitivity: 'base' }) * modifier;
+      }
+      if (field === 'code') {
+        return (a.code || '').localeCompare(b.code || '', undefined, { numeric: true }) * modifier;
+      }
+      return 0;
+    });
+  }
+
   ngOnInit() {
     this.loadFiltersData();
     this.loadStudents();
@@ -567,21 +706,41 @@ export class StudentExportComponent implements OnInit {
     });
   }
 
+  // Loads ALL matching students into memory so sorting and filtering apply to EVERY name globally
   loadStudents() {
     this.isLoading.set(true);
-    this.studentService.getStudents(
-      this.currentPage(),
-      this.pageSize(),
-      this.selectedYearFilter() || undefined,
-      this.selectedGroupFilter() || undefined,
-      this.searchQuery() || undefined,
-      this.statusFilter() === null ? undefined : this.statusFilter()!,
-      this.genderFilter() === null ? undefined : this.genderFilter()!
-    ).subscribe({
+    const yearId = this.selectedYearFilter() || undefined;
+    const groupId = this.selectedGroupFilter() || undefined;
+    const search = this.searchQuery() || undefined;
+    const status = this.statusFilter() === null ? undefined : this.statusFilter()!;
+    const gender = this.genderFilter() === null ? undefined : this.genderFilter()!;
+
+    this.studentService.getStudents(1, 3000, yearId, groupId, search, status, gender).subscribe({
       next: (res) => {
-        this.pageStudents.set(res.items);
+        const items = [...res.items];
         this.totalCount.set(res.totalCount);
-        this.isLoading.set(false);
+
+        if (res.totalCount > items.length) {
+          const totalPagesNeeded = Math.ceil(res.totalCount / 3000);
+          const requests: Observable<StudentPagedResultDTO>[] = [];
+          for (let p = 2; p <= totalPagesNeeded; p++) {
+            requests.push(this.studentService.getStudents(p, 3000, yearId, groupId, search, status, gender));
+          }
+          forkJoin(requests).subscribe({
+            next: (responses) => {
+              responses.forEach(r => items.push(...r.items));
+              this.allStudents.set(items);
+              this.isLoading.set(false);
+            },
+            error: () => {
+              this.allStudents.set(items);
+              this.isLoading.set(false);
+            }
+          });
+        } else {
+          this.allStudents.set(items);
+          this.isLoading.set(false);
+        }
       },
       error: () => {
         this.ui.error('تعذر تحميل بيانات الطلاب');
@@ -595,26 +754,53 @@ export class StudentExportComponent implements OnInit {
     this.loadStudents();
   }
 
-  changePage(page: number) {
-    if (page < 1 || page > this.totalPages) return;
-    this.currentPage.set(page);
-    this.loadStudents();
-  }
-
-  get totalPages(): number {
-    return Math.max(1, Math.ceil(this.totalCount() / this.pageSize()));
-  }
-
-  getEndIndex(): number {
-    return Math.min(this.currentPage() * this.pageSize(), this.totalCount());
-  }
-
-  displayedStudents = computed(() => {
+  // All students sorted globally across all results
+  allSortedStudents = computed(() => {
+    let list: StudentDetailsDTO[];
     if (this.activeTab() === 'selected') {
-      return Array.from(this.selectedStudentsMap().values());
+      list = Array.from(this.selectedStudentsMap().values());
+    } else {
+      list = this.allStudents();
     }
-    return this.pageStudents();
+    return this.sortStudentsList(list);
   });
+
+  totalItemsCount = computed(() => this.allSortedStudents().length);
+
+  totalPages = computed(() => {
+    const size = this.pageSize();
+    if (size <= 0) return 1;
+    return Math.max(1, Math.ceil(this.totalItemsCount() / size));
+  });
+
+  currentStartIndex = computed(() => {
+    if (this.totalItemsCount() === 0) return 0;
+    const size = this.pageSize();
+    if (size <= 0) return 1;
+    return ((this.currentPage() - 1) * size) + 1;
+  });
+
+  currentEndIndex = computed(() => {
+    const size = this.pageSize();
+    if (size <= 0) return this.totalItemsCount();
+    return Math.min(this.currentPage() * size, this.totalItemsCount());
+  });
+
+  // Displayed slice on current page (from the globally sorted list)
+  displayedStudents = computed(() => {
+    const sorted = this.allSortedStudents();
+    const size = this.pageSize();
+    if (size <= 0) {
+      return sorted;
+    }
+    const start = (this.currentPage() - 1) * size;
+    return sorted.slice(start, start + size);
+  });
+
+  changePage(page: number) {
+    if (page < 1 || page > this.totalPages()) return;
+    this.currentPage.set(page);
+  }
 
   // Selection Logic
   isSelected(studentId: number): boolean {
@@ -664,35 +850,16 @@ export class StudentExportComponent implements OnInit {
     });
   }
 
+  // Selects ALL matching students globally across the entire database
   selectAllAcrossResults() {
-    if (this.totalCount() === 0) return;
-    this.isLoading.set(true);
-    this.ui.info('جاري جلب وتحديد جميع الطلاب المطابقين...');
-
-    // Fetch all matching students in one batch (up to 2000)
-    this.studentService.getStudents(
-      1,
-      Math.min(this.totalCount(), 2000),
-      this.selectedYearFilter() || undefined,
-      this.selectedGroupFilter() || undefined,
-      this.searchQuery() || undefined,
-      this.statusFilter() === null ? undefined : this.statusFilter()!,
-      this.genderFilter() === null ? undefined : this.genderFilter()!
-    ).subscribe({
-      next: (res) => {
-        this.selectedStudentsMap.update(map => {
-          const copy = new Map(map);
-          res.items.forEach(s => copy.set(s.id, s));
-          return copy;
-        });
-        this.isLoading.set(false);
-        this.ui.success(`تم بنجاح تحديد ${res.items.length} طالب`);
-      },
-      error: () => {
-        this.ui.error('تعذر جلب جميع الطلاب');
-        this.isLoading.set(false);
-      }
+    const all = this.allSortedStudents();
+    if (all.length === 0) return;
+    this.selectedStudentsMap.update(map => {
+      const copy = new Map(map);
+      all.forEach(s => copy.set(s.id, s));
+      return copy;
     });
+    this.ui.success(`تم بنجاح تحديد جميع الطلاب بالكامل (${all.length} طالب)`);
   }
 
   clearAllSelections() {
@@ -707,15 +874,24 @@ export class StudentExportComponent implements OnInit {
       return;
     }
 
+    // Sort selected students according to chosen sort criteria before generating Excel
+    const sortedSelected = this.sortStudentsList(selected);
+
     const cols = this.exportColumns();
-    const rows = selected.map(s => {
+    const rows = sortedSelected.map(s => {
       const row: Record<string, any> = {};
 
       if (this.isColSelected('code')) {
         row['كود الطالب'] = s.code || '';
       }
+      if (this.isColSelected('studentFirstName')) {
+        row['اسم الطالب'] = this.getStudentFirstName(s.fullName);
+      }
+      if (this.isColSelected('guardianName')) {
+        row['اسم ولي الأمر'] = this.getGuardianName(s.fullName);
+      }
       if (this.isColSelected('fullName')) {
-        row['اسم الطالب'] = s.fullName || '';
+        row['اسم الطالب بالكامل'] = s.fullName || '';
       }
       if (this.isColSelected('ssn')) {
         row['الرقم القومي'] = s.ssn || '';
@@ -774,7 +950,10 @@ export class StudentExportComponent implements OnInit {
       XLSX.utils.book_append_sheet(wb, ws, 'الطلاب');
 
       const dateStr = new Date().toISOString().slice(0, 10);
-      const fileName = `بيانات_الطلاب_المحددين_${dateStr}.xlsx`;
+      const sortLabel = this.sortBy() === 'guardianName'
+        ? 'حسب_ولي_الأمر'
+        : (this.sortBy() === 'studentName' ? 'حسب_اسم_الطالب' : 'مرتب');
+      const fileName = `بيانات_الطلاب_${sortLabel}_${dateStr}.xlsx`;
 
       XLSX.writeFile(wb, fileName);
       this.ui.success(`تم استخراج وتنزيل ملف Excel لـ ${selected.length} طالب بنجاح!`);

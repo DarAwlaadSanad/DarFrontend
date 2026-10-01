@@ -1,6 +1,7 @@
-import { Component, OnInit, signal, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { StudentService } from '../../../core/services/student.service';
 import { MemorizationService } from '../../../core/services/memorization.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -11,7 +12,7 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
 @Component({
   selector: 'app-student-profile',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, FormsModule],
   template: `
     <div class="space-y-6 lg:space-y-8 animate-fade-in" dir="rtl" *ngIf="student() as s">
       <!-- Profile Header -->
@@ -102,9 +103,9 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
 
           <!-- Memorization Log (Premium Portal View) -->
           <div class="glass-card overflow-hidden border-dark-800">
-            <div class="p-6 border-b border-dark-800 bg-dark-900/50 flex items-center justify-between">
+            <div class="p-5 sm:p-6 border-b border-dark-800 bg-dark-900/50 flex flex-wrap items-center justify-between gap-4">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+                <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 shrink-0">
                   <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                   </svg>
@@ -114,15 +115,45 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
                   <p class="text-dark-500 text-[10px] uppercase tracking-wider">مسيرتك في حفظ القرآن الكريم</p>
                 </div>
               </div>
+
+              <!-- Controls / Badges / Page Size -->
+              <div *ngIf="totalRecords() > 0" class="flex flex-wrap items-center gap-2.5">
+                <!-- Total Count Badge -->
+                <span class="text-xs bg-dark-800/80 border border-dark-700/60 text-dark-300 px-3 py-1.5 rounded-xl font-bold">
+                  إجمالي السجلات: <strong class="text-emerald-400 font-mono">{{ totalRecords() }}</strong>
+                </span>
+
+                <!-- Sort Order Toggle -->
+                <button (click)="toggleSortOrder()"
+                        title="تغيير ترتيب السجلات"
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800/80 hover:bg-dark-700/80 border border-dark-700/60 text-dark-300 hover:text-white text-xs font-semibold transition-all">
+                  <svg class="w-3.5 h-3.5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+                  </svg>
+                  <span>{{ sortOrder() === 'desc' ? 'الأحدث أولاً' : 'الأقدم أولاً' }}</span>
+                </button>
+
+                <!-- Page Size Dropdown -->
+                <div class="flex items-center gap-1.5 text-xs text-dark-400">
+                  <span>عرض:</span>
+                  <select [ngModel]="pageSize()" (ngModelChange)="setPageSize($event)"
+                          class="bg-dark-800/80 border border-dark-700/60 text-dark-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                    <option [value]="2">2 لكل صفحة</option>
+                    <option [value]="3">3 لكل صفحة</option>
+                    <option [value]="5">5 لكل صفحة</option>
+                    <option [value]="10">10 لكل صفحة</option>
+                  </select>
+                </div>
+              </div>
             </div>
 
             <div class="p-6">
               <div class="relative">
                 <!-- Vertical Line -->
-                <div *ngIf="s.memorizationRecords && s.memorizationRecords.length > 0" class="absolute right-[21px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-500/50 via-dark-700 to-transparent"></div>
+                <div *ngIf="paginatedMemorizationRecords().length > 0" class="absolute right-[21px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-500/50 via-dark-700 to-transparent"></div>
 
-                <div class="space-y-8">
-                  <div *ngFor="let record of s.memorizationRecords || []" class="relative pr-12">
+                <div class="space-y-8" *ngIf="paginatedMemorizationRecords().length > 0">
+                  <div *ngFor="let record of paginatedMemorizationRecords()" class="relative pr-12">
                     <!-- Timeline Dot -->
                     <div class="absolute right-0 top-0 w-11 h-11 rounded-2xl bg-dark-800 border-4 border-dark-900 flex flex-col items-center justify-center shadow-xl z-10">
                       <span class="text-[10px] font-black text-white leading-none">{{ record.date | date:'dd' }}</span>
@@ -204,12 +235,64 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
                 </div>
 
                 <!-- Empty State -->
-                <div *ngIf="!s.memorizationRecords || s.memorizationRecords.length === 0" class="py-16 text-center">
+                <div *ngIf="totalRecords() === 0" class="py-16 text-center">
                   <div class="w-16 h-16 mx-auto rounded-2xl bg-dark-800 flex items-center justify-center mb-4 text-dark-600">
                      <svg class="w-8 h-8 opacity-20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>
                   </div>
                   <p class="text-dark-500 italic text-sm">لم يتم تسجيل أي حلقات حفظ لك بعد</p>
                 </div>
+              </div>
+            </div>
+
+            <!-- Pagination Footer -->
+            <div *ngIf="totalRecords() > 0"
+                 class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-dark-800 bg-dark-900/60">
+              <div class="text-xs text-dark-400">
+                عرض السجلات
+                <span class="text-white font-bold font-mono">{{ startRecordIndex() }} - {{ endRecordIndex() }}</span>
+                من إجمالي
+                <span class="text-white font-bold font-mono">{{ totalRecords() }}</span>
+                سجل
+              </div>
+
+              <div class="flex items-center gap-1.5">
+                <!-- First Page -->
+                <button (click)="goToPage(1)"
+                        [disabled]="currentPage() === 1"
+                        title="الصفحة الأولى"
+                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                  ««
+                </button>
+                <!-- Prev Page -->
+                <button (click)="goToPage(currentPage() - 1)"
+                        [disabled]="currentPage() === 1"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                  السابق
+                </button>
+
+                <!-- Page numbers -->
+                <ng-container *ngFor="let p of pageNumbers()">
+                  <button (click)="goToPage(p)"
+                          [class]="p === currentPage()
+                            ? 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary-600 text-white shadow-md shadow-primary-600/25'
+                            : 'px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700'">
+                    {{ p }}
+                  </button>
+                </ng-container>
+
+                <!-- Next Page -->
+                <button (click)="goToPage(currentPage() + 1)"
+                        [disabled]="currentPage() === totalPages()"
+                        class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                  التالي
+                </button>
+                <!-- Last Page -->
+                <button (click)="goToPage(totalPages())"
+                        [disabled]="currentPage() === totalPages()"
+                        title="الصفحة الأخيرة"
+                        class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                  »»
+                </button>
               </div>
             </div>
           </div>
@@ -312,6 +395,71 @@ export class StudentProfileComponent implements OnInit {
   student = signal<StudentDetailsDTO | null>(null);
   examResults = signal<ExamResultDTO[]>([]);
   isLoading = signal(false);
+
+  currentPage = signal(1);
+  pageSize = signal(3);
+  sortOrder = signal<'desc' | 'asc'>('desc');
+
+  sortedMemorizationRecords = computed(() => {
+    const records = this.student()?.memorizationRecords || [];
+    const order = this.sortOrder();
+    return [...records].sort((a, b) => {
+      const timeA = new Date(a.date).getTime();
+      const timeB = new Date(b.date).getTime();
+      if (!isNaN(timeA) && !isNaN(timeB) && timeB !== timeA) {
+        return order === 'desc' ? timeB - timeA : timeA - timeB;
+      }
+      return order === 'desc' ? (b.id || 0) - (a.id || 0) : (a.id || 0) - (b.id || 0);
+    });
+  });
+
+  totalRecords = computed(() => this.sortedMemorizationRecords().length);
+
+  totalPages = computed(() => {
+    const total = Math.ceil(this.totalRecords() / this.pageSize());
+    return total > 0 ? total : 1;
+  });
+
+  paginatedMemorizationRecords = computed(() => {
+    const page = Math.min(this.currentPage(), this.totalPages());
+    const start = (page - 1) * this.pageSize();
+    return this.sortedMemorizationRecords().slice(start, start + this.pageSize());
+  });
+
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const delta = 2;
+    const pages: number[] = [];
+    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+      pages.push(i);
+    }
+    return pages;
+  });
+
+  startRecordIndex = computed(() => {
+    if (this.totalRecords() === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize() + 1;
+  });
+
+  endRecordIndex = computed(() => {
+    return Math.min(this.currentPage() * this.pageSize(), this.totalRecords());
+  });
+
+  goToPage(page: number) {
+    const clamped = Math.max(1, Math.min(page, this.totalPages()));
+    this.currentPage.set(clamped);
+  }
+
+  setPageSize(size: any) {
+    this.pageSize.set(+size);
+    this.currentPage.set(1);
+  }
+
+  toggleSortOrder() {
+    this.sortOrder.update(curr => curr === 'desc' ? 'asc' : 'desc');
+    this.currentPage.set(1);
+  }
 
   ngOnInit() {
     this.loadProfile();

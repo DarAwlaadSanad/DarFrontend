@@ -92,6 +92,14 @@ export class ChatService {
         this.handleIncomingMessage(message);
       });
 
+      this.hubConnection.on('MessageEdited', (message: ChatMessageDTO) => {
+        this.handleMessageEdited(message);
+      });
+
+      this.hubConnection.on('MessageDeleted', (data: { id: number; roomId: number }) => {
+        this.handleMessageDeleted(data.id, data.roomId);
+      });
+
       this.hubConnection.onreconnecting(() => {
         this.isConnected.set(false);
         this.isConnecting.set(true);
@@ -145,9 +153,9 @@ export class ChatService {
     this.stopAutoPolling();
     if (this.hubConnection) {
       if (this.currentJoinedRoomId) {
-        this.hubConnection.invoke('LeaveRoom', this.currentJoinedRoomId).catch(() => {});
+        this.hubConnection.invoke('LeaveRoom', this.currentJoinedRoomId).catch(() => { });
       }
-      this.hubConnection.stop().catch(() => {});
+      this.hubConnection.stop().catch(() => { });
       this.hubConnection = null;
       this.isConnected.set(false);
       this.isConnecting.set(false);
@@ -223,7 +231,7 @@ export class ChatService {
           }
         }
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -290,7 +298,7 @@ export class ChatService {
         });
         this.studentRooms.set(this.sortRoomsByLatest(mapped));
       },
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -334,6 +342,50 @@ export class ChatService {
 
     // Always update room's last message and sort to top immediately
     this.updateRoomLastMessage(message.roomId, message);
+  }
+
+  handleMessageEdited(message: ChatMessageDTO) {
+    const normalized: ChatMessageDTO = {
+      id: (message as any).id ?? (message as any).Id,
+      roomId: (message as any).roomId ?? (message as any).RoomId,
+      senderName: (message as any).senderName ?? (message as any).SenderName ?? 'مستخدم',
+      senderId: (message as any).senderId ?? (message as any).SenderId,
+      studentSenderId: (message as any).studentSenderId ?? (message as any).StudentSenderId,
+      isStudent: (message as any).isStudent ?? (message as any).IsStudent ?? false,
+      content: (message as any).content ?? (message as any).Content ?? '',
+      sentAt: normalizeUtcString((message as any).sentAt ?? (message as any).SentAt),
+      isRead: (message as any).isRead ?? (message as any).IsRead ?? false,
+      isEdited: true
+    };
+
+    this.messages.update(list => list.map(m => m.id === normalized.id ? { ...m, content: normalized.content, isEdited: true } : m));
+    if (this.activeRoom() && this.activeRoom()!.id === normalized.roomId) {
+      this.offlineSync.cacheRoomMessages(normalized.roomId, this.messages());
+    }
+    this.studentRooms.update(rooms => rooms.map(r => {
+      if (r.lastMessage && r.lastMessage.id === normalized.id) {
+        return {
+          ...r,
+          lastMessage: { ...r.lastMessage, content: normalized.content, isEdited: true }
+        };
+      }
+      return r;
+    }));
+  }
+
+  handleMessageDeleted(messageId: number, roomId: number) {
+    this.messages.update(list => list.filter(m => m.id !== messageId));
+    if (this.activeRoom() && this.activeRoom()!.id === roomId) {
+      this.offlineSync.cacheRoomMessages(roomId, this.messages());
+    }
+    this.studentRooms.update(rooms => rooms.map(r => {
+      if (r.lastMessage && r.lastMessage.id === messageId) {
+        const remaining = this.messages().filter(m => m.roomId === r.id);
+        const newLast = remaining.length > 0 ? remaining[remaining.length - 1] : undefined;
+        return { ...r, lastMessage: newLast };
+      }
+      return r;
+    }));
   }
 
   // ─── HTTP API ─────────────────────────────────────────────────────────────
@@ -490,6 +542,90 @@ export class ChatService {
 
   markAsRead(roomId: number): Observable<any> {
     return this.http.put(`${this.apiUrl}/${roomId}/read`, {});
+  }
+
+  // ─── Edit & Delete Messages (Within 30 Seconds) ───────────────────────────
+
+  async editMessage(messageId: number, content: string): Promise<boolean> {
+    const trimmed = content.trim();
+    if (!trimmed) return false;
+
+    // 0. If temporary negative ID (offline pending)
+    if (messageId < 0) {
+      this.messages.update(list => list.map(m => m.id === messageId ? { ...m, content: trimmed, isEdited: true } : m));
+      const room = this.activeRoom();
+      if (room) {
+        this.offlineSync.cacheRoomMessages(room.id, this.messages());
+      }
+      return true;
+    }
+
+    // 1. Try SignalR
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      try {
+        await this.hubConnection.invoke('EditMessage', messageId, trimmed);
+        this.messages.update(list => list.map(m => m.id === messageId ? { ...m, content: trimmed, isEdited: true } : m));
+        if (this.activeRoom()) {
+          this.offlineSync.cacheRoomMessages(this.activeRoom()!.id, this.messages());
+        }
+        return true;
+      } catch (err) {
+        console.warn('SignalR edit failed, falling back to HTTP:', err);
+      }
+    }
+
+    // 2. HTTP Fallback
+    try {
+      const result = await firstValueFrom(
+        this.http.put<ChatMessageDTO>(`${this.apiUrl}/messages/${messageId}`, { content: trimmed })
+      );
+      if (result) {
+        this.handleMessageEdited(result);
+      } else {
+        this.messages.update(list => list.map(m => m.id === messageId ? { ...m, content: trimmed, isEdited: true } : m));
+      }
+      return true;
+    } catch (err) {
+      console.error('Failed to edit message:', err);
+      throw err;
+    }
+  }
+
+  async deleteMessage(messageId: number): Promise<boolean> {
+    const room = this.activeRoom();
+    const roomId = room?.id || 0;
+
+    // 0. If temporary negative ID (offline pending)
+    if (messageId < 0) {
+      this.messages.update(list => list.filter(m => m.id !== messageId));
+      if (room) {
+        this.offlineSync.cacheRoomMessages(roomId, this.messages());
+      }
+      return true;
+    }
+
+    // 1. Try SignalR
+    if (this.hubConnection && this.hubConnection.state === signalR.HubConnectionState.Connected) {
+      try {
+        await this.hubConnection.invoke('DeleteMessage', messageId);
+        this.handleMessageDeleted(messageId, roomId);
+        return true;
+      } catch (err) {
+        console.warn('SignalR delete failed, falling back to HTTP:', err);
+      }
+    }
+
+    // 2. HTTP Fallback
+    try {
+      await firstValueFrom(
+        this.http.delete(`${this.apiUrl}/messages/${messageId}`)
+      );
+      this.handleMessageDeleted(messageId, roomId);
+      return true;
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+      throw err;
+    }
   }
 
   // ─── Student Chat Support ─────────────────────────────────────────────────

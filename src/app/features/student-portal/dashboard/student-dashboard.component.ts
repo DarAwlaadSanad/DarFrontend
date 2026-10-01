@@ -13,6 +13,8 @@ import { ExamResultDTO } from '../../../core/models/exam.models';
 import { GroupScheduleViewDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
 import { StudentWarningService } from '../../../core/services/student-warning.service';
 import { StudentWarningViewDTO } from '../../../core/models/student-warning.models';
+import { MemorizationService } from '../../../core/services/memorization.service';
+import { MemorizationRecordDTO } from '../../../core/models/student.models';
 
 interface TodaySession {
   groupId: number;
@@ -187,6 +189,200 @@ interface TodaySession {
             <span>الانتقال لصفحة الإنذارات</span>
             <svg class="w-3.5 h-3.5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
           </a>
+        </div>
+
+        <!-- Latest Memorization & Revision Record -->
+        <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-dark-900 via-dark-850 to-emerald-950/40 border border-emerald-500/25 p-5 sm:p-7 shadow-xl backdrop-blur-xl">
+          <!-- Background glow -->
+          <div class="absolute -top-16 -left-16 w-56 h-56 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <!-- Section Header -->
+          <div class="relative z-10 flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-dark-700/60">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-md shadow-emerald-500/10 shrink-0">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <h2 class="text-lg sm:text-xl font-black text-white">آخر سجل للحفظ والمراجعة</h2>
+                  <span class="bg-emerald-500/15 text-emerald-400 text-[11px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-500/25">
+                    الورد الحالي
+                  </span>
+                </div>
+                <p class="text-xs text-dark-300 mt-0.5">
+                  متابعة آخر تكليف قرآني تم رصده وتحديثه من قِبل شيخ الحلقة
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-2.5">
+              <a *ngIf="latestMemorization()"
+                 [routerLink]="['/quran-board']"
+                 [queryParams]="{ fromSurah: latestMemorization()!.fromSurahId, fromAyah: latestMemorization()!.fromAyah, toSurah: latestMemorization()!.toSurahId, toAyah: latestMemorization()!.toAyah, studentName: authService.currentUser()?.fullName || latestMemorization()!.studentName }"
+                 class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold transition-all shadow-md shadow-emerald-500/20 group">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>فتح اللوح القرآني</span>
+              </a>
+
+              <a routerLink="/student/profile"
+                 class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-dark-800/80 hover:bg-dark-700/80 border border-dark-700 text-dark-300 hover:text-white text-xs font-semibold transition-all">
+                <span>سجل المحفوظات كامل</span>
+                <svg class="w-3.5 h-3.5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+          </div>
+
+          <!-- When a record exists -->
+          <div *ngIf="latestMemorization(); else noRecordTpl" class="relative z-10 space-y-4">
+            
+            <!-- Record Meta Bar (Date & Student Name) -->
+            <div class="flex items-center justify-between flex-wrap gap-2 text-xs text-dark-400">
+              <span class="inline-flex items-center gap-1.5 bg-dark-800/60 px-3 py-1 rounded-lg border border-dark-700/50">
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                تاريخ التسجيل: <strong class="text-white">{{ formatDate(latestMemorization()!.date) }}</strong>
+              </span>
+
+              <span *ngIf="latestMemorization()!.studentName" class="text-dark-400">
+                الطالب: <span class="text-dark-200 font-medium">{{ latestMemorization()!.studentName }}</span>
+              </span>
+            </div>
+
+            <!-- New Memorization Card -->
+            <div class="p-4 sm:p-5 rounded-2xl bg-dark-850/80 border border-emerald-500/30 hover:border-emerald-500/50 transition-all shadow-inner">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-2">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-xs font-black">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    الحفظ الجديد
+                  </div>
+                  
+                  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 text-white">
+                    <div class="flex items-center gap-2">
+                      <span class="text-dark-400 text-xs">من سورة:</span>
+                      <span class="text-base font-black text-emerald-300">{{ getSurahName(latestMemorization()!.fromSurahId) }}</span>
+                      <span class="px-2 py-0.5 rounded-md bg-dark-800 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
+                        آية {{ latestMemorization()!.fromAyah }}
+                      </span>
+                    </div>
+
+                    <svg class="w-4 h-4 text-dark-500 hidden sm:block rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                    </svg>
+
+                    <div class="flex items-center gap-2">
+                      <span class="text-dark-400 text-xs">إلى سورة:</span>
+                      <span class="text-base font-black text-emerald-300">{{ getSurahName(latestMemorization()!.toSurahId) }}</span>
+                      <span class="px-2 py-0.5 rounded-md bg-dark-800 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
+                        آية {{ latestMemorization()!.toAyah }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <a [routerLink]="['/quran-board']"
+                   [queryParams]="{ fromSurah: latestMemorization()!.fromSurahId, fromAyah: latestMemorization()!.fromAyah, toSurah: latestMemorization()!.toSurahId, toAyah: latestMemorization()!.toAyah, studentName: authService.currentUser()?.fullName || latestMemorization()!.studentName }"
+                   class="self-start sm:self-center shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-500/20 hover:bg-emerald-500 border border-emerald-500/35 text-emerald-300 hover:text-white text-xs font-bold transition-all shadow-sm group">
+                  <span>📖 فتح الآيات في اللوح</span>
+                  <svg class="w-3.5 h-3.5 rotate-180 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
+
+            <!-- Revision Cards (Near & Distant) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+              <!-- الماضي القريب -->
+              <div class="p-4 rounded-2xl border transition-all"
+                   [ngClass]="latestMemorization()!.nearRevision ? 'bg-blue-500/10 border-blue-500/30' : 'bg-dark-800/40 border-dark-700/60'">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center"
+                       [ngClass]="latestMemorization()!.nearRevision ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : 'bg-dark-700 text-dark-400'">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <span class="text-xs font-bold"
+                        [ngClass]="latestMemorization()!.nearRevision ? 'text-blue-300' : 'text-dark-400'">
+                    الماضي القريب
+                  </span>
+                </div>
+                <p class="text-sm font-semibold"
+                   [ngClass]="latestMemorization()!.nearRevision ? 'text-white' : 'text-dark-500 italic'">
+                  {{ latestMemorization()!.nearRevision || 'لا يوجد ماضي قريب مسجل' }}
+                </p>
+              </div>
+
+              <!-- الماضي البعيد -->
+              <div class="p-4 rounded-2xl border transition-all"
+                   [ngClass]="latestMemorization()!.distantRevision ? 'bg-amber-500/10 border-amber-500/30' : 'bg-dark-800/40 border-dark-700/60'">
+                <div class="flex items-center gap-2 mb-2">
+                  <div class="w-7 h-7 rounded-lg flex items-center justify-center"
+                       [ngClass]="latestMemorization()!.distantRevision ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-dark-700 text-dark-400'">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </div>
+                  <span class="text-xs font-bold"
+                        [ngClass]="latestMemorization()!.distantRevision ? 'text-amber-300' : 'text-dark-400'">
+                    الماضي البعيد
+                  </span>
+                </div>
+                <p class="text-sm font-semibold"
+                   [ngClass]="latestMemorization()!.distantRevision ? 'text-white' : 'text-dark-500 italic'">
+                  {{ latestMemorization()!.distantRevision || 'لا يوجد ماضي بعيد مسجل' }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div *ngIf="latestMemorization()!.notes"
+                 class="p-4 rounded-2xl bg-primary-500/10 border border-primary-500/25 flex items-start gap-3">
+              <div class="w-7 h-7 rounded-lg bg-primary-500/20 border border-primary-500/30 text-primary-400 flex items-center justify-center shrink-0 mt-0.5">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                </svg>
+              </div>
+              <div class="min-w-0">
+                <span class="text-xs font-bold text-primary-300 block mb-0.5">توجيهات وملاحظات الشيخ:</span>
+                <p class="text-xs sm:text-sm text-dark-200 leading-relaxed font-medium">
+                  {{ latestMemorization()!.notes }}
+                </p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Empty State -->
+          <ng-template #noRecordTpl>
+            <div class="py-8 sm:py-10 text-center relative z-10 flex flex-col items-center justify-center">
+              <div class="w-14 h-14 rounded-2xl bg-dark-800/80 border border-dark-700/60 flex items-center justify-center text-dark-400 mb-3 shadow-inner">
+                <svg class="w-7 h-7 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <h3 class="text-white font-bold text-sm sm:text-base mb-1">لم يتم تسجيل أي ورد حفظ أو مراجعة بعد</h3>
+              <p class="text-xs text-dark-400 max-w-md mb-4 leading-relaxed">
+                سيظهر هنا آخر واجب قرآني وورد للمراجعة بمجرد اعتماده وتسجيله من قِبل شيخ الحلقة.
+              </p>
+              <a routerLink="/quran-board"
+                 class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-dark-800 hover:bg-dark-700 border border-dark-700 text-emerald-400 hover:text-emerald-300 text-xs font-bold transition-all">
+                <span>📖 تصفح المصحف واللوح القرآني</span>
+                <svg class="w-3.5 h-3.5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
+            </div>
+          </ng-template>
+
         </div>
 
         <!-- Today's Sessions -->
@@ -413,6 +609,7 @@ export class StudentDashboardComponent implements OnInit {
   private competitionService = inject(CompetitionService);
   private scheduleService = inject(ScheduleService);
   private warningService = inject(StudentWarningService);
+  private memorizationService = inject(MemorizationService);
   authService = inject(AuthService);
 
   groups = signal<GroupCardDTO[]>([]);
@@ -420,6 +617,7 @@ export class StudentDashboardComponent implements OnInit {
   competitions = signal<StudentCompetitionResult[]>([]);
   todaySessions = signal<TodaySession[]>([]);
   warnings = signal<StudentWarningViewDTO[]>([]);
+  latestMemorization = signal<MemorizationRecordDTO | null>(null);
   isLoading = signal(true);
 
   readonly todayDateStr = new Date().toLocaleDateString('ar-EG', {
@@ -457,20 +655,43 @@ export class StudentDashboardComponent implements OnInit {
         return of([] as StudentWarningViewDTO[]);
       })
     );
+    const studentDetailsObs = studentId
+      ? this.studentService.getStudent(studentId).pipe(catchError(() => of(null)))
+      : of(null);
 
     forkJoin({
       exams: examsObs,
       comps: compsObs,
-      warns: warnsObs
+      warns: warnsObs,
+      studentData: studentDetailsObs
     }).subscribe({
-      next: ({ exams, comps, warns }) => {
+      next: ({ exams, comps, warns, studentData }) => {
         this.examResults.set(exams);
         this.competitions.set(comps);
         this.warnings.set(warns);
+
+        if (studentData?.memorizationRecords && studentData.memorizationRecords.length > 0) {
+          const sorted = [...studentData.memorizationRecords].sort((a, b) => {
+            const timeA = new Date(a.date).getTime();
+            const timeB = new Date(b.date).getTime();
+            if (!isNaN(timeA) && !isNaN(timeB) && timeB !== timeA) {
+              return timeB - timeA;
+            }
+            return (b.id || 0) - (a.id || 0);
+          });
+          this.latestMemorization.set(sorted[0]);
+        } else {
+          this.latestMemorization.set(null);
+        }
+
         this.isLoading.set(false);
       },
       error: () => this.isLoading.set(false)
     });
+  }
+
+  getSurahName(id: number): string {
+    return this.memorizationService.getSurahName(id);
   }
 
   private detectTodaySessions(groups: GroupCardDTO[]) {

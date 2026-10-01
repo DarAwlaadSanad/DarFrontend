@@ -15,6 +15,7 @@ import { FormsModule } from '@angular/forms';
 import { ChatService } from '../../core/services/chat.service';
 import { AuthService } from '../../core/services/auth.service';
 import { StudentService } from '../../core/services/student.service';
+import { UiService } from '../../core/services/ui.service';
 import { ChatMessageDTO, ChatRoomDTO } from '../../core/models/chat.models';
 import { StudentDetailsDTO } from '../../core/models/student.models';
 import { formatEgyptTime, formatEgyptDateKey, parseServerDate } from '../../core/utils/date-time.util';
@@ -36,12 +37,23 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   public chatService = inject(ChatService);
   public authService = inject(AuthService);
   public studentService = inject(StudentService);
+  public ui = inject(UiService);
 
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef<HTMLDivElement>;
   @ViewChild('messageInput') private messageInput!: ElementRef<HTMLTextAreaElement>;
 
   private isNearBottom = true;
   private previousMessageCount = 0;
+  private timerInterval: any = null;
+
+  // Real-time ticking signal for 30s countdown
+  now = signal<number>(Date.now());
+
+  // Edit / Delete states
+  editingMessage = signal<ChatMessageDTO | null>(null);
+  messageToDelete = signal<ChatMessageDTO | null>(null);
+  isSavingEdit = signal<boolean>(false);
+  isDeleting = signal<boolean>(false);
 
   constructor() {
     effect(() => {
@@ -172,6 +184,11 @@ export class GroupChatComponent implements OnInit, OnDestroy {
     if (this.canViewStudentChats()) {
       this.chatService.getStudentRooms().subscribe();
     }
+
+    // 4. Timer for 30s countdown updates
+    this.timerInterval = setInterval(() => {
+      this.now.set(Date.now());
+    }, 1000);
   }
 
   loadStaffRoom() {
@@ -192,7 +209,12 @@ export class GroupChatComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+  }
 
   // ─── Tab Switching ────────────────────────────────────────────────────────
 
@@ -284,9 +306,115 @@ export class GroupChatComponent implements OnInit, OnDestroy {
 
   // ─── Actions ─────────────────────────────────────────────────────────────
 
+  canEditOrDelete(msg: ChatMessageDTO): boolean {
+    if (!msg || !this.isMyMessage(msg)) return false;
+    if (msg.id < 0) return true; // offline pending message
+    const sentTime = parseServerDate(msg.sentAt).getTime();
+    if (isNaN(sentTime)) return false;
+    const diffSeconds = (this.now() - sentTime) / 1000;
+    return diffSeconds >= 0 && diffSeconds <= 60;
+  }
+
+  getRemainingSeconds(msg: ChatMessageDTO): number {
+    if (msg.id < 0) return 60;
+    const sentTime = parseServerDate(msg.sentAt).getTime();
+    if (isNaN(sentTime)) return 0;
+    const diffSeconds = (this.now() - sentTime) / 1000;
+    const remaining = Math.ceil(60 - diffSeconds);
+    return remaining > 0 ? remaining : 0;
+  }
+
+  startEdit(msg: ChatMessageDTO) {
+    if (!this.canEditOrDelete(msg)) {
+      this.ui.error('انتهت مهلة الـ 60 ثانية لتعديل الرسالة');
+      return;
+    }
+    this.editingMessage.set(msg);
+    this.inputText.set(msg.content);
+    setTimeout(() => {
+      if (this.messageInput) {
+        this.messageInput.nativeElement.focus();
+        this.messageInput.nativeElement.select();
+      }
+    }, 50);
+  }
+
+  cancelEdit() {
+    this.editingMessage.set(null);
+    this.inputText.set('');
+  }
+
+  async saveEdit() {
+    const msg = this.editingMessage();
+    if (!msg) return;
+
+    if (!this.canEditOrDelete(msg)) {
+      this.ui.error('انتهت مهلة الـ 60 ثانية لتعديل الرسالة');
+      this.cancelEdit();
+      return;
+    }
+
+    const newText = this.inputText().trim();
+    if (!newText) return;
+
+    this.isSavingEdit.set(true);
+    try {
+      await this.chatService.editMessage(msg.id, newText);
+      this.ui.success('تم تعديل الرسالة بنجاح');
+      this.cancelEdit();
+    } catch (err: any) {
+      this.ui.error(err?.error?.message || 'تعذر تعديل الرسالة، قد تكون مهلة الـ 60 ثانية قد انتهت');
+    } finally {
+      this.isSavingEdit.set(false);
+    }
+  }
+
+  confirmDelete(msg: ChatMessageDTO) {
+    if (!this.canEditOrDelete(msg)) {
+      this.ui.error('انتهت مهلة الـ 60 ثانية لحذف الرسالة');
+      return;
+    }
+    this.messageToDelete.set(msg);
+  }
+
+  cancelDelete() {
+    this.messageToDelete.set(null);
+  }
+
+  async executeDelete() {
+    const msg = this.messageToDelete();
+    if (!msg) return;
+
+    if (!this.canEditOrDelete(msg)) {
+      this.ui.error('انتهت مهلة الـ 60 ثانية لحذف الرسالة');
+      this.cancelDelete();
+      return;
+    }
+
+    this.isDeleting.set(true);
+    try {
+      await this.chatService.deleteMessage(msg.id);
+      this.ui.success('تم حذف الرسالة بنجاح');
+      if (this.editingMessage()?.id === msg.id) {
+        this.cancelEdit();
+      }
+      this.cancelDelete();
+    } catch (err: any) {
+      this.ui.error(err?.error?.message || 'تعذر حذف الرسالة، قد تكون مهلة الـ 60 ثانية قد انتهت');
+    } finally {
+      this.isDeleting.set(false);
+    }
+  }
+
   async onSendMessage() {
     const text = this.inputText().trim();
     if (!text) return;
+
+    // If we are currently editing a message, save edit instead of sending new
+    if (this.editingMessage()) {
+      await this.saveEdit();
+      return;
+    }
 
     let room = this.chatService.activeRoom();
     if (!room) {
@@ -323,6 +451,12 @@ export class GroupChatComponent implements OnInit, OnDestroy {
   }
 
   onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape' && this.editingMessage()) {
+      event.preventDefault();
+      this.cancelEdit();
+      return;
+    }
+
     if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       this.onSendMessage();

@@ -8,6 +8,7 @@ export interface ChatMessageDTO {
   content: string;
   sentAt: string;
   isRead: boolean;
+  isEdited?: boolean;
 }
 
 export interface ChatRoomDTO {
@@ -21,5 +22,9 @@ export interface ChatRoomDTO {
 }
 
 export interface SendMessageDTO {
+  content: string;
+}
+
+export interface EditMessageDTO {
   content: string;
 }

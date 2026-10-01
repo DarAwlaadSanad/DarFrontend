@@ -302,21 +302,61 @@
 
               <!-- ── Case 1: My Message (Sent by me / staff) ── -->
               <ng-container *ngIf="isMyMessage(msg)">
-                <div class="my-message-bubble max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-bl-sm p-3.5 shadow-md">
+                <div class="my-message-bubble group relative max-w-[85%] sm:max-w-[70%] rounded-2xl rounded-bl-sm p-3.5 shadow-md">
                   <p class="text-sm leading-relaxed whitespace-pre-wrap select-text font-normal text-white">
                     {{ msg.content }}
                   </p>
-                  <div class="flex items-center justify-end gap-1.5 mt-1.5 text-[10px] text-emerald-100/80">
-                    <span>{{ formatTime(msg.sentAt) }}</span>
-                    <!-- Pending offline indicator -->
-                    <span *ngIf="msg.id < 0" class="inline-flex items-center gap-1 text-amber-200" title="تم الحفظ محلياً - قيد الإرسال عند عودة الاتصال">
-                      <span class="animate-pulse">⏳</span>
-                      <span class="text-[9px]">قيد الإرسال</span>
-                    </span>
-                    <!-- Sent checkmark -->
-                    <svg *ngIf="msg.id >= 0" class="w-3.5 h-3.5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                    </svg>
+
+                  <!-- Bottom metadata row -->
+                  <div class="flex items-center justify-between gap-3 mt-1.5 text-[10px] text-emerald-100/80">
+                    
+                    <!-- 30-Second Edit & Delete Quick Actions -->
+                    <div *ngIf="canEditOrDelete(msg)"
+                         class="flex items-center gap-1.5 bg-black/25 backdrop-blur-sm px-2 py-0.5 rounded-full border border-emerald-400/25 text-white animate-fade-in shadow-sm">
+                      <span class="inline-flex items-center gap-0.5 text-[10px] font-mono font-bold text-amber-300">
+                        <span>⏱️</span>
+                        <span>{{ getRemainingSeconds(msg) }}ث</span>
+                      </span>
+                      <span class="text-white/20 text-[9px]">|</span>
+                      <!-- Edit button -->
+                      <button (click)="startEdit(msg)"
+                              type="button"
+                              class="p-0.5 hover:text-amber-300 transition-colors"
+                              title="تعديل الرسالة (متبقي {{ getRemainingSeconds(msg) }} ثانية)">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <!-- Delete button -->
+                      <button (click)="confirmDelete(msg)"
+                              type="button"
+                              class="p-0.5 hover:text-rose-300 transition-colors"
+                              title="حذف الرسالة (متبقي {{ getRemainingSeconds(msg) }} ثانية)">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    <span *ngIf="!canEditOrDelete(msg)"></span>
+
+                    <!-- Time & status -->
+                    <div class="flex items-center gap-1.5 flex-shrink-0">
+                      <span *ngIf="msg.isEdited" class="text-[9px] text-emerald-200/70 font-medium">(معدلة)</span>
+                      <span>{{ formatTime(msg.sentAt) }}</span>
+                      <!-- Pending offline indicator -->
+                      <span *ngIf="msg.id < 0" class="inline-flex items-center gap-1 text-amber-200" title="تم الحفظ محلياً - قيد الإرسال عند عودة الاتصال">
+                        <span class="animate-pulse">⏳</span>
+                        <span class="text-[9px]">قيد الإرسال</span>
+                      </span>
+                      <!-- Sent checkmark -->
+                      <svg *ngIf="msg.id >= 0" class="w-3.5 h-3.5 text-emerald-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+
                   </div>
                 </div>
               </ng-container>
@@ -392,6 +432,40 @@
         </button>
       </div>
 
+      <!-- ── Editing Message Banner ──────────────────────────────────── -->
+      <div *ngIf="editingMessage()" 
+           class="edit-banner px-4 py-2 bg-amber-500/10 border-t border-amber-500/30 flex items-center justify-between gap-3 text-xs animate-fade-in z-20">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-7 h-7 rounded-lg bg-amber-500/20 text-amber-300 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-amber-300">تعديل الرسالة</span>
+              <span class="text-[10px] bg-amber-500/20 text-amber-200 px-2 py-0.5 rounded-full font-mono font-bold animate-pulse">
+                ⏱️ متبقي {{ getRemainingSeconds(editingMessage()!) }}ث
+              </span>
+            </div>
+            <p class="text-[11px] text-dark-300 truncate max-w-xs sm:max-w-md mt-0.5">
+              "{{ editingMessage()?.content }}"
+            </p>
+          </div>
+        </div>
+
+        <button (click)="cancelEdit()" 
+                type="button"
+                class="p-1.5 rounded-lg text-dark-400 hover:text-white hover:bg-dark-800 transition-colors flex items-center gap-1 text-[11px] font-medium"
+                title="إلغاء التعديل (Esc)">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span class="hidden sm:inline">إلغاء</span>
+        </button>
+      </div>
+
       <!-- ── Message Composer Bottom Bar ───────────────────────────────── -->
       <footer class="chat-footer p-3 sm:p-4 border-t flex-shrink-0 z-10">
         <form (ngSubmit)="onSendMessage()" class="flex items-end gap-2 sm:gap-3">
@@ -409,27 +483,35 @@
           </button>
 
           <!-- Input Box -->
-          <div class="chat-input-container flex-1 rounded-2xl border transition-all flex items-center p-1.5 sm:p-2 relative">
+          <div class="chat-input-container flex-1 rounded-2xl border transition-all flex items-center p-1.5 sm:p-2 relative"
+               [class.border-amber-500]="editingMessage()">
             <textarea #messageInput
                       [ngModel]="inputText()"
                       (ngModelChange)="inputText.set($event)"
                       (keydown)="onKeyDown($event)"
                       name="message"
                       rows="1"
-                      [placeholder]="activeTab() === 'group' ? 'اكتب رسالتك للموظفين والمعلمين... (Enter للإرسال)' : 'اكتب ردك للطالب... (Enter للإرسال)'"
+                      [placeholder]="editingMessage() ? 'اكتب التعديل الجديد واضغط Enter للحفظ...' : (activeTab() === 'group' ? 'اكتب رسالتك للموظفين والمعلمين... (Enter للإرسال)' : 'اكتب ردك للطالب... (Enter للإرسال)')"
                       class="w-full bg-transparent border-0 text-sm text-dark-100 placeholder-dark-500 focus:outline-none focus:ring-0 resize-none max-h-32 px-2 py-1 leading-relaxed">
             </textarea>
           </div>
 
-          <!-- Send Button -->
+          <!-- Send / Save Edit Button -->
           <button type="submit"
-                  [disabled]="!inputText().trim() || chatService.isSending()"
+                  [disabled]="!inputText().trim() || chatService.isSending() || isSavingEdit()"
                   class="send-btn inline-flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl text-white shadow-lg transition-all flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed active:scale-95"
-                  title="إرسال الرسالة">
-            <svg *ngIf="!chatService.isSending()" class="w-5 h-5 -rotate-90 transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  [class.bg-amber-600]="editingMessage()"
+                  [title]="editingMessage() ? 'حفظ التعديل' : 'إرسال الرسالة'">
+            <!-- Normal Send Icon -->
+            <svg *ngIf="!chatService.isSending() && !isSavingEdit() && !editingMessage()" class="w-5 h-5 -rotate-90 transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            <div *ngIf="chatService.isSending()" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            <!-- Save Edit Checkmark Icon -->
+            <svg *ngIf="!isSavingEdit() && editingMessage()" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+            <!-- Spinner -->
+            <div *ngIf="chatService.isSending() || isSavingEdit()" class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
           </button>
 
         </form>
@@ -497,6 +579,51 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
           </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Delete Message Confirmation Modal ─────────────────────────────── -->
+  <div *ngIf="messageToDelete()" 
+       class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-fade-in">
+    <div class="bg-dark-900 border border-dark-700/80 rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl flex flex-col p-5">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white">حذف الرسالة</h3>
+          <p class="text-xs text-rose-300 font-mono mt-0.5">
+            ⏱️ متبقي {{ getRemainingSeconds(messageToDelete()!) }} ثانية للحذف
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-dark-950/70 border border-dark-800 rounded-2xl p-3 my-2 text-xs text-dark-300 leading-relaxed max-h-28 overflow-y-auto">
+        "{{ messageToDelete()?.content }}"
+      </div>
+
+      <p class="text-xs text-dark-400 mb-5 leading-relaxed">
+        هل أنت متأكد من حذف هذه الرسالة نهائياً؟ سيتم حذفها لجميع المشاركين في المحادثة.
+      </p>
+
+      <div class="flex items-center justify-end gap-2.5">
+        <button (click)="cancelDelete()" 
+                [disabled]="isDeleting()"
+                type="button"
+                class="px-4 py-2 rounded-xl text-xs font-semibold text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+          إلغاء
+        </button>
+        <button (click)="executeDelete()" 
+                [disabled]="isDeleting()"
+                type="button"
+                class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-900/30 flex items-center gap-1.5 transition-all">
+          <div *ngIf="isDeleting()" class="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+          <span>{{ isDeleting() ? 'جارِ الحذف...' : 'تأكيد الحذف' }}</span>
         </button>
       </div>
     </div>
