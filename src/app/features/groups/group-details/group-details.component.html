@@ -10,9 +10,13 @@
         </svg>
       </a>
       <div>
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <h1 class="text-lg lg:text-2xl font-bold text-white leading-tight">{{ data.groupName }}</h1>
-          <span class="badge-green hidden sm:inline-flex">{{ data.students.length }} طالب</span>
+          <span class="badge-green hidden sm:inline-flex">{{ activeStudents().length }} طالب نشط</span>
+          <span *ngIf="archivedStudents().length > 0"
+            class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+            {{ archivedStudents().length }} منقطع
+          </span>
           <span
             class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center gap-1">{{
             data.maleCount || 0 }} ذكر</span>
@@ -98,23 +102,57 @@
       </button>
     </div>
 
-    <!-- Filters -->
-    <div class="flex items-center gap-2 justify-end no-print flex-wrap">
-      <select [(ngModel)]="currentMonth" (change)="onMonthYearChange()" class="input-field py-2 px-3 text-sm w-auto">
-        <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
-      </select>
-      <select [(ngModel)]="currentYear" (change)="onMonthYearChange()" class="input-field py-2 px-3 text-sm w-auto">
-        <option [value]="2025">2025</option>
-        <option [value]="2026">2026</option>
-      </select>
-      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportAttendance()"
-        class="px-3 py-2 rounded-xl font-bold bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-white transition-all flex items-center gap-1.5 text-sm">
-        <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-        </svg>
-        <span>إكسيل الغياب</span>
-      </button>
+    <!-- Filters & Student Separation -->
+    <div class="flex items-center justify-between gap-3 no-print flex-wrap">
+      <!-- Separation Tabs: النشطون / المنقطعون / الكل -->
+      <div class="flex items-center p-1 bg-dark-900/90 rounded-2xl border border-dark-800 gap-1 shadow-inner">
+        <button type="button" (click)="studentTabFilter.set('active')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="studentTabFilter() === 'active'
+            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm'
+            : 'text-dark-400 hover:text-white'">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          <span>الطلاب النشطون</span>
+          <span class="px-1.5 py-0.2 rounded-full bg-dark-800 text-[10px]">{{ activeStudents().length }}</span>
+        </button>
+
+        <button type="button" (click)="studentTabFilter.set('archived')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="studentTabFilter() === 'archived'
+            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm'
+            : 'text-dark-400 hover:text-white'">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>الطلاب المنقطعون</span>
+          <span class="px-1.5 py-0.2 rounded-full bg-dark-800 text-[10px]">{{ archivedStudents().length }}</span>
+        </button>
+
+        <button type="button" (click)="studentTabFilter.set('all')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5"
+          [ngClass]="studentTabFilter() === 'all'
+            ? 'bg-dark-700 text-white shadow-sm'
+            : 'text-dark-400 hover:text-white'">
+          <span>الكل (مفصولين)</span>
+          <span class="px-1.5 py-0.2 rounded-full bg-dark-800 text-[10px]">{{ (data.students || []).length }}</span>
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <select [(ngModel)]="currentMonth" (change)="onMonthYearChange()" class="input-field py-2 px-3 text-sm w-auto">
+          <option *ngFor="let m of months" [value]="m.value">{{ m.label }}</option>
+        </select>
+        <select [(ngModel)]="currentYear" (change)="onMonthYearChange()" class="input-field py-2 px-3 text-sm w-auto">
+          <option [value]="2025">2025</option>
+          <option [value]="2026">2026</option>
+        </select>
+        <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportAttendance()"
+          class="px-3 py-2 rounded-xl font-bold bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500 hover:text-white transition-all flex items-center gap-1.5 text-sm">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>إكسيل الغياب</span>
+        </button>
+      </div>
     </div>
 
     <!-- Pivot Table (horizontal scroll on mobile) -->
@@ -148,44 +186,146 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-dark-800">
-            <tr *ngFor="let student of data.students" class="hover:bg-dark-800/40 transition-colors group">
-              <td
-                class="px-2.5 sm:px-3 lg:px-4 py-2.5 sm:py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
+
+            <!-- 1. Active Students Header (when All is selected) -->
+            <tr *ngIf="studentTabFilter() === 'all' && activeStudents().length > 0"
+                class="bg-emerald-950/20 border-y border-emerald-500/25">
+              <td [attr.colspan]="sortedSessions().length + 3" class="px-3 sm:px-4 py-2 text-xs font-bold text-emerald-400">
                 <div class="flex items-center gap-2">
-                  <div
-                    class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0">
-                    {{ student.studentName.charAt(0) }}</div>
-                  <a [routerLink]="['/dashboard/students', student.studentId]"
-                    class="text-white font-medium text-xs sm:text-sm truncate max-w-[135px] sm:max-w-[165px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
-                    [title]="student.studentName">
-                    {{ student.studentName }}
-                  </a>
+                  <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>الطلاب النشطون في الحلقة ({{ activeStudents().length }})</span>
                 </div>
-              </td>
-              <td *ngFor="let session of sortedSessions()"
-                (click)="openSingleAttendance(student, session)"
-                class="p-1 border-l border-dark-700/30 cursor-pointer hover:bg-primary-500/10 transition-colors group/cell"
-                title="انقر لتسجيل حضور/غياب وتقييم هذا الطالب">
-                <div class="flex flex-col items-center justify-center gap-0.5 min-h-[42px] sm:min-h-[46px] group-hover/cell:scale-110 transition-transform">
-                  <div [class]="getStatusClass(student.records[session.sessionId]?.attendance)"
-                    class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs shadow-sm">
-                    {{ getStatusIcon(student.records[session.sessionId]?.attendance) }}
-                  </div>
-                  <div *ngIf="student.records[session.sessionId]?.score != null"
-                    class="text-[9px] font-bold text-gold-400 px-0.5 rounded leading-none">
-                    {{ student.records[session.sessionId]?.score }}
-                  </div>
-                </div>
-              </td>
-              <td class="w-10 sm:w-11 lg:w-12 px-1 py-2.5 sm:py-3 text-center border-l border-dark-700/30">
-                <span class="text-xs sm:text-sm font-bold text-primary-400">{{ student.totalPresent }}</span>
-              </td>
-              <td class="w-10 sm:w-11 lg:w-12 px-1 py-2.5 sm:py-3 text-center">
-                <span class="text-xs sm:text-sm font-bold text-gold-400">{{ student.totalEvaluation }}</span>
               </td>
             </tr>
+
+            <!-- Active Students Rows (when viewing All or Active) -->
+            <ng-container *ngIf="studentTabFilter() !== 'archived'">
+              <tr *ngFor="let student of activeStudents()" class="hover:bg-dark-800/40 transition-colors group">
+                <td
+                  class="px-2.5 sm:px-3 lg:px-4 py-2.5 sm:py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0">
+                      {{ student.studentName.charAt(0) }}</div>
+                    <a [routerLink]="['/dashboard/students', student.studentId]"
+                      class="text-white font-medium text-xs sm:text-sm truncate max-w-[135px] sm:max-w-[165px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
+                      [title]="student.studentName">
+                      {{ student.studentName }}
+                    </a>
+                  </div>
+                </td>
+                <td *ngFor="let session of sortedSessions()"
+                  (click)="openSingleAttendance(student, session)"
+                  class="p-1 border-l border-dark-700/30 cursor-pointer hover:bg-primary-500/10 transition-colors group/cell"
+                  title="انقر لتسجيل حضور/غياب وتقييم هذا الطالب">
+                  <div class="flex flex-col items-center justify-center gap-0.5 min-h-[42px] sm:min-h-[46px] group-hover/cell:scale-110 transition-transform">
+                    <div [class]="getStatusClass(student.records[session.sessionId]?.attendance)"
+                      class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs shadow-sm">
+                      {{ getStatusIcon(student.records[session.sessionId]?.attendance) }}
+                    </div>
+                    <div *ngIf="student.records[session.sessionId]?.score != null"
+                      class="text-[9px] font-bold text-gold-400 px-0.5 rounded leading-none">
+                      {{ student.records[session.sessionId]?.score }}
+                    </div>
+                  </div>
+                </td>
+                <td class="w-10 sm:w-11 lg:w-12 px-1 py-2.5 sm:py-3 text-center border-l border-dark-700/30">
+                  <span class="text-xs sm:text-sm font-bold text-primary-400">{{ student.totalPresent }}</span>
+                </td>
+                <td class="w-10 sm:w-11 lg:w-12 px-1 py-2.5 sm:py-3 text-center">
+                  <span class="text-xs sm:text-sm font-bold text-gold-400">{{ student.totalEvaluation }}</span>
+                </td>
+              </tr>
+              <tr *ngIf="studentTabFilter() === 'active' && activeStudents().length === 0">
+                <td [attr.colspan]="sortedSessions().length + 3" class="py-8 text-center text-dark-500 text-xs">
+                  لا يوجد طلاب نشطون حالياً في هذه الحلقة
+                </td>
+              </tr>
+            </ng-container>
+
+            <!-- 2. Archived Students Header (when All is selected) -->
+            <tr *ngIf="studentTabFilter() === 'all' && archivedStudents().length > 0"
+                class="bg-amber-950/25 border-y border-amber-500/30">
+              <td [attr.colspan]="sortedSessions().length + 3" class="px-3 sm:px-4 py-2 text-xs font-bold text-amber-400">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                    <span>الطلاب المنقطعون / المحذوفون ({{ archivedStudents().length }})</span>
+                  </div>
+                  <span class="text-[11px] text-amber-300/80 font-normal">السجلات التاريخية للغياب والدرجات محفوظة</span>
+                </div>
+              </td>
+            </tr>
+
+            <!-- Archived Students Rows (when viewing All or Archived) -->
+            <ng-container *ngIf="studentTabFilter() !== 'active'">
+              <tr *ngFor="let student of archivedStudents()"
+                  class="hover:bg-amber-950/25 bg-amber-950/10 transition-colors group border-b border-dark-800/60">
+                <td
+                  class="px-2.5 sm:px-3 lg:px-4 py-2.5 sm:py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
+                  <div class="flex items-center gap-2">
+                    <div
+                      class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0 border border-amber-500/40">
+                      {{ student.studentName.charAt(0) }}</div>
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <a [routerLink]="['/dashboard/students', student.studentId]"
+                          class="text-white font-medium text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[150px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
+                          [title]="student.studentName">
+                          {{ student.studentName }}
+                        </a>
+                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                          منقطع
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td *ngFor="let session of sortedSessions()"
+                  (click)="openSingleAttendance(student, session)"
+                  class="p-1 border-l border-dark-700/30 cursor-pointer hover:bg-primary-500/10 transition-colors group/cell"
+                  title="انقر لتسجيل حضور/غياب وتقييم هذا الطالب">
+                  <div class="flex flex-col items-center justify-center gap-0.5 min-h-[42px] sm:min-h-[46px] group-hover/cell:scale-110 transition-transform">
+                    <div [class]="getStatusClass(student.records[session.sessionId]?.attendance)"
+                      class="w-6 h-6 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-[10px] lg:text-xs shadow-sm">
+                      {{ getStatusIcon(student.records[session.sessionId]?.attendance) }}
+                    </div>
+                    <div *ngIf="student.records[session.sessionId]?.score != null"
+                      class="text-[9px] font-bold text-gold-400 px-0.5 rounded leading-none">
+                      {{ student.records[session.sessionId]?.score }}
+                    </div>
+                  </div>
+                </td>
+                <td class="w-10 sm:w-11 lg:w-12 px-1 py-2.5 sm:py-3 text-center border-l border-dark-700/30">
+                  <span class="text-xs sm:text-sm font-bold text-primary-400">{{ student.totalPresent }}</span>
+                </td>
+                <td class="w-10 sm:w-11 lg:w-12 px-1 py-2.5 sm:py-3 text-center">
+                  <span class="text-xs sm:text-sm font-bold text-gold-400">{{ student.totalEvaluation }}</span>
+                </td>
+              </tr>
+              <tr *ngIf="studentTabFilter() === 'archived' && archivedStudents().length === 0">
+                <td [attr.colspan]="sortedSessions().length + 3" class="py-8 text-center text-dark-500 text-xs">
+                  لا يوجد طلاب منقطعون في هذه الحلقة
+                </td>
+              </tr>
+            </ng-container>
+
           </tbody>
         </table>
+      </div>
+
+      <!-- Bottom helper note if active tab is selected and archived students exist -->
+      <div *ngIf="studentTabFilter() === 'active' && archivedStudents().length > 0"
+        class="p-3 bg-dark-900/70 border-t border-dark-800 flex items-center justify-between text-xs text-dark-400 px-4">
+        <div class="flex items-center gap-2">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>يوجد <strong>{{ archivedStudents().length }}</strong> طلاب منقطعون في هذه الحلقة (سجلاتهم محفوظة).</span>
+        </div>
+        <button type="button" (click)="studentTabFilter.set('archived')"
+          class="text-amber-400 hover:text-amber-300 font-bold hover:underline flex items-center gap-1">
+          <span>عرض الطلاب المنقطعين</span>
+          <span>←</span>
+        </button>
       </div>
     </div>
 
@@ -331,13 +471,40 @@
   <!-- ── Student Fees Tab ──────────────────────────────────────────────────────── -->
   <div *ngIf="activeTab() === 'student-fees'" class="space-y-4">
     <div class="flex flex-wrap items-center justify-between mb-4 gap-4">
-      <h3 class="text-xl font-bold text-white flex items-center gap-2">
-        <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        الرسوم المستحقة على طلاب المجموعة
-      </h3>
+      <div class="flex items-center gap-3 flex-wrap">
+        <h3 class="text-xl font-bold text-white flex items-center gap-2">
+          <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          الرسوم المستحقة على طلاب المجموعة
+        </h3>
+
+        <!-- Fee Student Separation Toggle -->
+        <div class="flex items-center p-0.5 bg-dark-900 rounded-xl border border-dark-800 text-xs font-bold">
+          <button type="button" (click)="studentFeeFilter.set('active')"
+            class="px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1.5"
+            [ngClass]="studentFeeFilter() === 'active' ? 'bg-primary-500/20 text-primary-300 border border-primary-500/30' : 'text-dark-400 hover:text-white'">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>النشطون</span>
+            <span class="text-[10px] text-dark-500">({{ activeStudentFees().length }})</span>
+          </button>
+          <button type="button" (click)="studentFeeFilter.set('archived')"
+            class="px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1.5"
+            [ngClass]="studentFeeFilter() === 'archived' ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'text-dark-400 hover:text-white'">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+            <span>المنقطعون</span>
+            <span class="text-[10px] text-dark-500">({{ archivedStudentFees().length }})</span>
+          </button>
+          <button type="button" (click)="studentFeeFilter.set('all')"
+            class="px-2.5 py-1 rounded-lg transition-colors flex items-center gap-1.5"
+            [ngClass]="studentFeeFilter() === 'all' ? 'bg-dark-700 text-white' : 'text-dark-400 hover:text-white'">
+            <span>الكل</span>
+            <span class="text-[10px] text-dark-500">({{ studentFees().length }})</span>
+          </button>
+        </div>
+      </div>
+
       <button *ngIf="authService.hasPermission('Permissions.GroupFees.Manage')" (click)="generateFees()"
         [disabled]="isSaving()" class="btn-primary flex items-center gap-2">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -361,9 +528,17 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-dark-800">
-            <tr *ngFor="let fee of studentFees()" class="hover:bg-dark-800/40 transition-colors">
+            <tr *ngFor="let fee of displayedStudentFees()"
+                class="transition-colors"
+                [class]="fee.isStudentActive === false ? 'hover:bg-amber-950/20 bg-amber-950/10' : 'hover:bg-dark-800/40'">
               <td class="px-4 lg:px-6 py-4">
-                <span class="text-white font-medium text-sm">{{ fee.studentName }}</span>
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="text-white font-medium text-sm">{{ fee.studentName }}</span>
+                  <span *ngIf="fee.isStudentActive === false"
+                    class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">
+                    منقطع
+                  </span>
+                </div>
               </td>
               <td class="px-4 py-4 text-center text-dark-300 font-bold">{{ fee.requiredAmount }} جنيه</td>
               <td class="px-4 py-4 text-center">
@@ -404,10 +579,10 @@
                   class="text-dark-600 text-xs italic">—</span>
               </td>
             </tr>
-            <tr *ngIf="studentFees().length === 0">
+            <tr *ngIf="displayedStudentFees().length === 0">
               <td colspan="6" class="px-6 py-12 text-center text-dark-500">
-                <p class="mb-3">لم يتم توليد رسوم لهذا الشهر بعد</p>
-                <button (click)="generateFees()" class="text-primary-400 hover:underline text-sm font-bold">توليد الرسوم
+                <p class="mb-3">لا توجد رسوم في هذا القسم</p>
+                <button *ngIf="studentFees().length === 0" (click)="generateFees()" class="text-primary-400 hover:underline text-sm font-bold">توليد الرسوم
                   الآن</button>
               </td>
             </tr>
@@ -856,6 +1031,7 @@
                 #{{ i + 1 }}
               </span>
               <span class="text-white font-semibold text-sm truncate">{{ row.studentName }}</span>
+              <span *ngIf="row.isActive === false" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">منقطع</span>
             </div>
 
             <div class="flex items-center gap-1.5 flex-shrink-0">
@@ -917,12 +1093,17 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-dark-800/70">
-          <tr *ngFor="let row of editorRows(); let i = index" class="hover:bg-dark-800/30 transition-colors group">
+          <tr *ngFor="let row of editorRows(); let i = index"
+              [class]="row.isActive === false ? 'bg-amber-950/15 hover:bg-amber-950/25' : 'hover:bg-dark-800/30'"
+              class="transition-colors group">
             <td class="px-4 lg:px-6 py-2.5 text-center text-xs text-dark-500 font-mono">
               {{ i + 1 }}
             </td>
             <td class="px-4 py-2.5">
-              <span class="text-white font-medium text-sm group-hover:text-primary-300 transition-colors">{{ row.studentName }}</span>
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-white font-medium text-sm group-hover:text-primary-300 transition-colors">{{ row.studentName }}</span>
+                <span *ngIf="row.isActive === false" class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">منقطع</span>
+              </div>
             </td>
             <td class="px-3 py-2.5">
               <div class="flex justify-center">

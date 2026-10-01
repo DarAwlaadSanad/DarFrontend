@@ -46,6 +46,7 @@ export interface StudentInGroupDTO {
   studentId: number;
   studentName: string;
   gender?: number | null;
+  isActive?: boolean;
   records: { [key: number]: SessionRecordDTO };
   totalPresent: number;
   totalEvaluation: number;

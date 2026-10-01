@@ -78,6 +78,14 @@ export class StudentService {
     return this.http.delete<void>(`${this.apiUrl}/${id}`);
   }
 
+  permanentDeleteStudent(id: number): Observable<any> {
+    return this.http.delete<any>(`${this.apiUrl}/${id}/permanent`);
+  }
+
+  restoreStudent(id: number): Observable<any> {
+    return this.http.post<any>(`${this.apiUrl}/${id}/restore`, {});
+  }
+
   addImage(studentId: number, files: File[]): Observable<any> {
     const formData = new FormData();
     files.forEach(file => formData.append('files', file, file.name));

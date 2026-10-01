@@ -5,7 +5,7 @@ import { RouterLink } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { GroupService } from '../../../core/services/group.service';
-import { StudentAddDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
+import { StudentAddDTO, StudentUpdateDTO, StudentDetailsDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { UiService } from '../../../core/services/ui.service';
@@ -31,12 +31,23 @@ export class StudentListComponent implements OnInit {
   isSaving = signal(false);
   showAddModal = signal(false);
 
-  // Pagination & Filtering
+  // Edit Student Modal
+  showEditModal = signal(false);
+  editingStudentId = signal<number | null>(null);
+  editData: StudentUpdateDTO = {
+    fullName: '',
+    ssn: '',
+    notes: '',
+    gender: 1,
+    academicYearId: undefined
+  };
+
+  // Pagination & Filtering (12 students per page)
   currentPage = signal(1);
-  pageSize = signal(10);
+  pageSize = signal(12);
   selectedYearFilter = signal<number | null>(null);
   selectedGroupFilter = signal<number | null>(null);
-  statusFilter = signal<boolean | null>(null);
+  statusFilter = signal<boolean | null>(true);
   genderFilter = signal<number | null>(null);
   
   totalCount = this.studentService.totalCount;
@@ -294,5 +305,115 @@ export class StudentListComponent implements OnInit {
       case 2: return 'أخرى';
       default: return 'غير محدد';
     }
+  }
+
+  // ── Edit Student ──────────────────────────────────────────────
+  openEditModal(student: StudentDetailsDTO, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.editingStudentId.set(student.id);
+    this.editData = {
+      fullName: student.fullName,
+      ssn: student.ssn || '',
+      notes: student.notes || '',
+      gender: normalizeGender(student.gender) ?? 1,
+      academicYearId: student.academicYear?.id
+    };
+    this.showEditModal.set(true);
+  }
+
+  closeEditModal() {
+    this.showEditModal.set(false);
+    this.editingStudentId.set(null);
+  }
+
+  submitEdit() {
+    const id = this.editingStudentId();
+    if (!id || !this.editData.fullName || !this.editData.academicYearId) {
+      this.ui.error('يرجى ملء البيانات الأساسية (الاسم والسنة الدراسية)');
+      return;
+    }
+
+    this.isSaving.set(true);
+    const s = this.students().find(st => st.id === id);
+    const ssnChanged = s && this.editData.ssn && this.editData.ssn !== s.ssn;
+
+    if (ssnChanged && this.editData.ssn) {
+      this.studentService.validateSSN(this.editData.ssn).subscribe({
+        next: (res) => {
+          if (res.isValid) {
+            this.ui.error('الرقم القومي مسجل مسبقاً لطالب آخر');
+            this.isSaving.set(false);
+          } else {
+            this.executeSubmitEdit(id);
+          }
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.ui.error('حدث خطأ أثناء التحقق من الرقم القومي');
+        }
+      });
+    } else {
+      this.executeSubmitEdit(id);
+    }
+  }
+
+  private executeSubmitEdit(studentId: number) {
+    this.studentService.updateStudent(studentId, this.editData).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.closeEditModal();
+        this.ui.success('تم تعديل بيانات الطالب بنجاح');
+        this.loadStudents();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.ui.error('حدث خطأ أثناء تعديل بيانات الطالب');
+      }
+    });
+  }
+
+  // ── Delete / Archive Student ───────────────────────────────────
+  async deleteStudent(student: StudentDetailsDTO, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!await this.ui.confirm(`هل أنت متأكد من حذف ونقل الطالب "${student.fullName}" إلى قائمة المنقطعين / المحذوفين؟ سيتم الحفاظ على كافة سجلات الغياب والمدفوعات والمحفوظات.`)) return;
+
+    this.isLoading.set(true);
+    this.studentService.deleteStudent(student.id).subscribe({
+      next: () => {
+        this.ui.success(`تم نقل الطالب "${student.fullName}" إلى قائمة المنقطعين بنجاح`);
+        this.loadStudents();
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.ui.error('حدث خطأ أثناء حذف الطالب');
+      }
+    });
+  }
+
+  // ── Restore Student ───────────────────────────────────────────
+  async restoreStudent(student: StudentDetailsDTO, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (!await this.ui.confirm(`هل تريد استعادة وتنشيط الطالب "${student.fullName}" وإعادته لقائمة الطلاب النشطين؟`)) return;
+
+    this.isLoading.set(true);
+    this.studentService.restoreStudent(student.id).subscribe({
+      next: () => {
+        this.ui.success(`تم استعادة وتنشيط الطالب "${student.fullName}" بنجاح`);
+        this.loadStudents();
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.ui.error('حدث خطأ أثناء استعادة الطالب');
+      }
+    });
   }
 }

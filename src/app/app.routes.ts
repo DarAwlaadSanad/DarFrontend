@@ -52,6 +52,11 @@ export const routes: Routes = [
           import('./features/students/student-export/student-export.component').then(m => m.StudentExportComponent),
       },
       {
+        path: 'students/archived',
+        loadComponent: () =>
+          import('./features/students/archived-students/archived-students.component').then(m => m.ArchivedStudentsComponent),
+      },
+      {
         path: 'students/:id',
         loadComponent: () =>
           import('./features/students/student-detail/student-detail.component').then(m => m.StudentDetailComponent),

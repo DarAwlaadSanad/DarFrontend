@@ -34,6 +34,173 @@ export class GroupListComponent implements OnInit {
   rooms = signal<RoomViewDTO[]>([]);
   isLoading = signal(false);
   isSaving = signal(false);
+
+  // ── Filters & Search ────────────────────────────────────────────────────────
+  searchQuery = signal<string>('');
+  selectedTeacherId = signal<string>('all');
+  selectedType = signal<'all' | 'online' | 'in-person'>('all');
+  selectedRoomId = signal<number | 'all'>('all');
+  sortBy = signal<'default' | 'name-asc' | 'name-desc' | 'students-desc' | 'students-asc'>('default');
+
+  // ── Pagination ──────────────────────────────────────────────────────────────
+  currentPage = signal<number>(1);
+  pageSize = signal<number>(12);
+  readonly pageSizeOptions = [12, 24, 36, 48];
+
+  // Helper: check if any filter is active
+  hasActiveFilters = computed(() => {
+    return !!this.searchQuery().trim() ||
+      this.selectedTeacherId() !== 'all' ||
+      this.selectedType() !== 'all' ||
+      this.selectedRoomId() !== 'all' ||
+      this.sortBy() !== 'default';
+  });
+
+  // Unique list of teachers that appear in groups or registered teachers
+  availableTeachers = computed(() => {
+    const teacherMap = new Map<string, string>();
+    for (const t of this.teachers()) {
+      if (t.id && t.fullName) teacherMap.set(t.id, t.fullName);
+    }
+    for (const g of this.groups()) {
+      if (g.teacherId && g.teacherName) teacherMap.set(g.teacherId, g.teacherName);
+    }
+    return Array.from(teacherMap.entries()).map(([id, name]) => ({ id, name }));
+  });
+
+  // Filtered & Sorted groups
+  filteredGroups = computed(() => {
+    let result = this.groups();
+
+    // 1. Search Query (name, description, teacher, room)
+    const q = this.searchQuery().trim().toLowerCase();
+    if (q) {
+      result = result.filter(g =>
+        (g.name && g.name.toLowerCase().includes(q)) ||
+        (g.description && g.description.toLowerCase().includes(q)) ||
+        (g.teacherName && g.teacherName.toLowerCase().includes(q)) ||
+        (g.roomName && g.roomName.toLowerCase().includes(q))
+      );
+    }
+
+    // 2. Teacher Filter
+    const teacherId = this.selectedTeacherId();
+    if (teacherId !== 'all') {
+      result = result.filter(g => g.teacherId === teacherId);
+    }
+
+    // 3. Type Filter
+    const type = this.selectedType();
+    if (type === 'online') {
+      result = result.filter(g => g.isOnline);
+    } else if (type === 'in-person') {
+      result = result.filter(g => !g.isOnline);
+    }
+
+    // 4. Room Filter
+    const roomId = this.selectedRoomId();
+    if (roomId !== 'all') {
+      result = result.filter(g => g.roomId === roomId);
+    }
+
+    // 5. Sorting
+    const sort = this.sortBy();
+    if (sort !== 'default') {
+      result = [...result].sort((a, b) => {
+        switch (sort) {
+          case 'name-asc':
+            return (a.name || '').localeCompare(b.name || '', 'ar');
+          case 'name-desc':
+            return (b.name || '').localeCompare(a.name || '', 'ar');
+          case 'students-desc':
+            return (b.studentCount || 0) - (a.studentCount || 0);
+          case 'students-asc':
+            return (a.studentCount || 0) - (b.studentCount || 0);
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return result;
+  });
+
+  // Total pages
+  totalPages = computed(() => Math.max(1, Math.ceil(this.filteredGroups().length / this.pageSize())));
+
+  // Paged items
+  pagedGroups = computed(() => {
+    const page = Math.min(this.currentPage(), this.totalPages());
+    const start = (page - 1) * this.pageSize();
+    return this.filteredGroups().slice(start, start + this.pageSize());
+  });
+
+  // Page numbers for UI pagination
+  pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const delta = 2;
+    const pages: number[] = [];
+    for (let i = Math.max(1, current - delta); i <= Math.min(total, current + delta); i++) {
+      pages.push(i);
+    }
+    return pages;
+  });
+
+  startIndex = computed(() => {
+    if (this.filteredGroups().length === 0) return 0;
+    return (this.currentPage() - 1) * this.pageSize() + 1;
+  });
+
+  endIndex = computed(() => {
+    return Math.min(this.currentPage() * this.pageSize(), this.filteredGroups().length);
+  });
+
+  // Filter & Pagination Actions
+  onSearchChange(query: string) {
+    this.searchQuery.set(query);
+    this.currentPage.set(1);
+  }
+
+  onTeacherChange(teacherId: string) {
+    this.selectedTeacherId.set(teacherId);
+    this.currentPage.set(1);
+  }
+
+  onTypeChange(type: 'all' | 'online' | 'in-person') {
+    this.selectedType.set(type);
+    this.currentPage.set(1);
+  }
+
+  onRoomChange(roomId: any) {
+    this.selectedRoomId.set(roomId === 'all' ? 'all' : +roomId);
+    this.currentPage.set(1);
+  }
+
+  onSortChange(sort: any) {
+    this.sortBy.set(sort);
+    this.currentPage.set(1);
+  }
+
+  setPage(page: number) {
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  setPageSize(size: number) {
+    this.pageSize.set(size);
+    this.currentPage.set(1);
+  }
+
+  resetFilters() {
+    this.searchQuery.set('');
+    this.selectedTeacherId.set('all');
+    this.selectedType.set('all');
+    this.selectedRoomId.set('all');
+    this.sortBy.set('default');
+    this.currentPage.set(1);
+  }
   
   // Modal state
   showModal = signal(false);

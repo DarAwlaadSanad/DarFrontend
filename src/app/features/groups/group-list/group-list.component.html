@@ -149,6 +149,98 @@
     </div>
   </div>
 
+  <!-- Filters & Search -->
+  <div *ngIf="!isLoading() && groups().length > 0" class="card p-4 sm:p-5 space-y-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+      <!-- Search Input -->
+      <div class="sm:col-span-2 lg:col-span-2">
+        <label class="block text-[11px] font-bold text-dark-400 uppercase mb-1.5 mr-1">بحث عن حلقة</label>
+        <div class="relative">
+          <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-dark-500">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+          <input type="text" [ngModel]="searchQuery()" (ngModelChange)="onSearchChange($event)"
+            placeholder="اسم الحلقة، المعلم، الغرفة، الوصف..."
+            class="input-field pr-10 pl-9 py-2 text-sm w-full">
+          <button *ngIf="searchQuery()" (click)="onSearchChange('')"
+            class="absolute inset-y-0 left-0 flex items-center pl-3 text-dark-400 hover:text-white transition-colors"
+            title="مسح البحث">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Teacher Filter -->
+      <div>
+        <label class="block text-[11px] font-bold text-dark-400 uppercase mb-1.5 mr-1">المعلم</label>
+        <select [ngModel]="selectedTeacherId()" (ngModelChange)="onTeacherChange($event)"
+          class="input-field py-2 text-sm w-full">
+          <option value="all">جميع المعلمين</option>
+          <option *ngFor="let t of availableTeachers()" [value]="t.id">{{ t.name }}</option>
+        </select>
+      </div>
+
+      <!-- Type Filter -->
+      <div>
+        <label class="block text-[11px] font-bold text-dark-400 uppercase mb-1.5 mr-1">نوع الحلقة</label>
+        <select [ngModel]="selectedType()" (ngModelChange)="onTypeChange($event)"
+          class="input-field py-2 text-sm w-full">
+          <option value="all">الكل (حضوري وأونلاين)</option>
+          <option value="in-person">حضوري بالدار</option>
+          <option value="online">أونلاين</option>
+        </select>
+      </div>
+
+      <!-- Room Filter -->
+      <div>
+        <label class="block text-[11px] font-bold text-dark-400 uppercase mb-1.5 mr-1">الغرفة</label>
+        <select [ngModel]="selectedRoomId()" (ngModelChange)="onRoomChange($event)"
+          class="input-field py-2 text-sm w-full">
+          <option value="all">جميع الغرف</option>
+          <option *ngFor="let r of rooms()" [value]="r.id">{{ r.name }}</option>
+        </select>
+      </div>
+
+      <!-- Sorting -->
+      <div>
+        <label class="block text-[11px] font-bold text-dark-400 uppercase mb-1.5 mr-1">الترتيب</label>
+        <select [ngModel]="sortBy()" (ngModelChange)="onSortChange($event)"
+          class="input-field py-2 text-sm w-full">
+          <option value="default">الترتيب الافتراضي</option>
+          <option value="students-desc">الأكثر طلاباً</option>
+          <option value="students-asc">الأقل طلاباً</option>
+          <option value="name-asc">الاسم (أ - ي)</option>
+          <option value="name-desc">الاسم (ي - أ)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Filters Summary Bar -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-dark-800 text-xs">
+      <div class="flex items-center gap-2 text-dark-400">
+        <span>النتائج:</span>
+        <span class="font-bold text-primary-400">{{ filteredGroups().length }}</span>
+        <span>حلقة من إجمالي</span>
+        <span class="font-bold text-white">{{ groups().length }}</span>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button *ngIf="hasActiveFilters()" (click)="resetFilters()"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-700 text-red-400 hover:text-red-300 transition-colors text-xs font-medium">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span>إعادة ضبط الفلاتر</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Modal -->
   <div *ngIf="showModal()" class="modal-overlay" (click.self)="closeModal()">
     <div class="modal-box" (click)="$event.stopPropagation()">
@@ -245,8 +337,8 @@
   </div>
 
   <!-- Groups Grid -->
-  <div *ngIf="!isLoading() && groups().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-    <div *ngFor="let group of groups()"
+  <div *ngIf="!isLoading() && pagedGroups().length > 0" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    <div *ngFor="let group of pagedGroups()"
       class="card group-card relative flex flex-col overflow-hidden cursor-pointer transition-all duration-300"
       style="background: linear-gradient(135deg, rgba(15,23,42,0.95) 0%, rgba(10,16,30,0.98) 100%);"
       [routerLink]="['/dashboard/groups', group.id]">
@@ -346,6 +438,94 @@
           </svg>
         </span>
       </div>
+    </div>
+  </div>
+
+  <!-- No Filter Results State -->
+  <div *ngIf="!isLoading() && groups().length > 0 && filteredGroups().length === 0" class="card p-12 text-center">
+    <div class="w-14 h-14 rounded-2xl bg-dark-800 flex items-center justify-center mx-auto mb-4 text-dark-500">
+      <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </div>
+    <h3 class="text-base sm:text-lg font-bold text-white mb-2">لا توجد حلقات مطابقة لخيارات البحث أو الفلترة</h3>
+    <p class="text-dark-400 text-xs sm:text-sm mb-5">يرجى تعديل معايير البحث أو تصفير الفلاتر لعرض الحلقات</p>
+    <button (click)="resetFilters()" class="btn-secondary px-5 py-2 text-xs font-semibold mx-auto inline-flex items-center gap-2">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <span>إعادة ضبط وتصفير الفلاتر</span>
+    </button>
+  </div>
+
+  <!-- Pagination Controls -->
+  <div *ngIf="!isLoading() && filteredGroups().length > 0"
+       class="card p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+    
+    <!-- Count details -->
+    <div class="text-xs sm:text-sm text-dark-400 order-2 sm:order-1 text-center sm:text-right">
+      عرض <span class="font-bold text-white">{{ startIndex() }}</span> إلى 
+      <span class="font-bold text-white">{{ endIndex() }}</span> من أصل 
+      <span class="font-bold text-primary-400">{{ filteredGroups().length }}</span> حلقة
+      <span *ngIf="hasActiveFilters()" class="text-dark-500 mr-1">(تمت تصفيتها من إجمالي {{ groups().length }})</span>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="flex items-center gap-1.5 order-1 sm:order-2" *ngIf="totalPages() > 1">
+      <!-- First Page -->
+      <button (click)="setPage(1)" [disabled]="currentPage() === 1"
+        title="الصفحة الأولى"
+        class="w-9 h-9 rounded-xl bg-dark-800 text-dark-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all">
+        <svg class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <!-- Previous Page (In RTL, previous points right) -->
+      <button (click)="setPage(currentPage() - 1)" [disabled]="currentPage() === 1"
+        title="السابق"
+        class="w-9 h-9 rounded-xl bg-dark-800 text-dark-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <!-- Page Numbers -->
+      <div class="flex items-center gap-1">
+        <button *ngFor="let p of pageNumbers()" (click)="setPage(p)"
+          [class]="p === currentPage() ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/20 font-bold' : 'bg-dark-800 text-dark-400 hover:text-white'"
+          class="w-9 h-9 rounded-xl text-sm transition-all flex items-center justify-center">
+          {{ p }}
+        </button>
+      </div>
+
+      <!-- Next Page (In RTL, next points left) -->
+      <button (click)="setPage(currentPage() + 1)" [disabled]="currentPage() === totalPages()"
+        title="التالي"
+        class="w-9 h-9 rounded-xl bg-dark-800 text-dark-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all">
+        <svg class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+
+      <!-- Last Page -->
+      <button (click)="setPage(totalPages())" [disabled]="currentPage() === totalPages()"
+        title="الصفحة الأخيرة"
+        class="w-9 h-9 rounded-xl bg-dark-800 text-dark-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center transition-all">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Page Size Selector -->
+    <div class="flex items-center gap-2 order-3">
+      <span class="text-xs text-dark-400">عرض في الصفحة:</span>
+      <select [ngModel]="pageSize()" (ngModelChange)="setPageSize(+$event)"
+        class="bg-dark-800 border border-dark-700 text-white text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary-500">
+        <option *ngFor="let opt of pageSizeOptions" [value]="opt">{{ opt }}</option>
+      </select>
     </div>
   </div>
 

@@ -30,6 +30,7 @@ interface SessionEditorRow {
   studentId: number;
   studentName: string;
   gender?: number | null;
+  isActive?: boolean;
   status: AttendanceStatus;
   notes: string;
   score: number | null;
@@ -79,6 +80,35 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
       new Date(a.date).getTime() - new Date(b.date).getTime()
     )
   );
+
+  // Separation of active and archived/discontinued students
+  studentTabFilter = signal<'all' | 'active' | 'archived'>('all');
+
+  activeStudents = computed(() =>
+    (this.details()?.students ?? []).filter(s => s.isActive !== false)
+  );
+
+  archivedStudents = computed(() =>
+    (this.details()?.students ?? []).filter(s => s.isActive === false)
+  );
+
+  // Fee separation filters
+  studentFeeFilter = signal<'all' | 'active' | 'archived'>('all');
+
+  activeStudentFees = computed(() =>
+    this.studentFees().filter(f => f.isStudentActive !== false)
+  );
+
+  archivedStudentFees = computed(() =>
+    this.studentFees().filter(f => f.isStudentActive === false)
+  );
+
+  displayedStudentFees = computed(() => {
+    const f = this.studentFeeFilter();
+    if (f === 'active') return this.activeStudentFees();
+    if (f === 'archived') return this.archivedStudentFees();
+    return this.studentFees();
+  });
 
   // Schedules
   schedules = signal<GroupScheduleViewDTO[]>([]);
@@ -248,13 +278,21 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     this.editingSession.set(session);
     const students = this.details()?.students ?? [];
 
-    const rows: SessionEditorRow[] = students.map(s => {
+    // Sort: active students first, then archived students
+    const sorted = [...students].sort((a, b) => {
+      const aAct = a.isActive !== false ? 1 : 0;
+      const bAct = b.isActive !== false ? 1 : 0;
+      return bAct - aAct;
+    });
+
+    const rows: SessionEditorRow[] = sorted.map(s => {
       const rec = s.records[session.sessionId];
       return {
         studentId: s.studentId,
         studentName: s.studentName,
         gender: s.gender,
-        status: normalizeAttendanceStatus(rec?.attendance) ?? AttendanceStatus.Present,
+        isActive: s.isActive !== false,
+        status: normalizeAttendanceStatus(rec?.attendance) ?? (s.isActive !== false ? AttendanceStatus.Present : AttendanceStatus.Absent),
         notes: '',
         score: rec?.score ?? null,
         comment: rec?.comment ?? '',
@@ -271,7 +309,11 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   }
 
   markAll(status: AttendanceStatus) {
-    this.editorRows.set(this.editorRows().map(r => ({ ...r, status })));
+    this.editorRows.set(this.editorRows().map(r => {
+      // Do not overwrite discontinued students when clicking mark-all
+      if (r.isActive === false) return r;
+      return { ...r, status };
+    }));
   }
 
   getActiveOptionClass(status: AttendanceStatus): string {
@@ -305,7 +347,7 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   }
 
   getAttendanceCounts() {
-    const rows = this.editorRows();
+    const rows = this.editorRows().filter(r => r.isActive !== false);
     let present = 0, absent = 0, late = 0, excused = 0;
     for (const r of rows) {
       if (r.status === AttendanceStatus.Present) present++;
@@ -494,14 +536,15 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     const session = this.singleAttendanceSession();
     if (!current || !session || !this.details()?.students) return;
 
-    const students = this.details()!.students;
+    const list = this.studentTabFilter() === 'archived' ? this.archivedStudents() : this.activeStudents();
+    const students = list.length > 0 ? list : this.details()!.students;
     const currentIndex = students.findIndex(s => s.studentId === current.studentId);
     if (currentIndex >= 0 && currentIndex < students.length - 1) {
       const nextStudent = students[currentIndex + 1];
       this.openSingleAttendance(nextStudent, session);
     } else {
       this.showSingleAttendanceModal.set(false);
-      this.ui.success('تم تسجيل الحضور لجميع طلاب الحلقة في هذه الجلسة');
+      this.ui.success('تم تسجيل الحضور لجميع طلاب القائمة في هذه الجلسة');
     }
   }
 
@@ -510,7 +553,8 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     const session = this.singleAttendanceSession();
     if (!current || !session || !this.details()?.students) return;
 
-    const students = this.details()!.students;
+    const list = this.studentTabFilter() === 'archived' ? this.archivedStudents() : this.activeStudents();
+    const students = list.length > 0 ? list : this.details()!.students;
     const currentIndex = students.findIndex(s => s.studentId === current.studentId);
     if (currentIndex > 0) {
       const prevStudent = students[currentIndex - 1];

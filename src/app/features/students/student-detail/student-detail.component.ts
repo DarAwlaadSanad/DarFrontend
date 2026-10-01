@@ -463,19 +463,61 @@ export class StudentDetailComponent implements OnInit {
     return age;
   }
 
-  // ── Delete Student ──────────────────────────────────────────────────────────
+  // ── Delete / Archive Student ────────────────────────────────────────────────
   async deleteStudent() {
     const s = this.student();
-    if (!s || !await this.ui.confirm('هل أنت متأكد من حذف هذا الطالب بالكامل؟ لا يمكن التراجع عن هذا الإجراء.')) return;
+    if (!s || !await this.ui.confirm('هل أنت متأكد من نقل هذا الطالب إلى قائمة المنقطعين / المحذوفين؟ سيتم الاحتفاظ بكامل سجلات الغياب والمدفوعات والمحفوظات للرجوع إليها في أي وقت.')) return;
     this.isLoading.set(true);
     this.studentService.deleteStudent(s.id).subscribe({
       next: () => {
-        this.ui.success('تم حذف الطالب بنجاح');
-        this.router.navigate(['/dashboard/students']);
+        this.ui.success('تم نقل الطالب إلى قائمة المنقطعين بنجاح مع الاحتفاظ بكافة سجلاته');
+        this.router.navigate(['/dashboard/students/archived']);
       },
       error: () => {
         this.isLoading.set(false);
-        this.ui.error('حدث خطأ أثناء الحذف');
+        this.ui.error('حدث خطأ أثناء تنفيذ الإجراء');
+      }
+    });
+  }
+
+  // ── Restore Student ─────────────────────────────────────────────────────────
+  async restoreStudent() {
+    const s = this.student();
+    if (!s || !await this.ui.confirm(`هل تريد استعادة وتنشيط الطالب "${s.fullName}" وإعادته لقائمة الطلاب النشطين؟`)) return;
+    this.isLoading.set(true);
+    this.studentService.restoreStudent(s.id).subscribe({
+      next: () => {
+        this.ui.success(`تم استعادة وتنشيط الطالب "${s.fullName}" بنجاح.`);
+        this.loadStudent();
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.ui.error('حدث خطأ أثناء استعادة الطالب.');
+      }
+    });
+  }
+
+  // ── Permanent Delete Student ───────────────────────────────────────────────
+  async permanentDeleteStudent() {
+    const s = this.student();
+    if (!s) return;
+
+    const confirmed = await this.ui.confirm(
+      `تحذير شديد الخطورة: هل أنت متأكد من حذف الطالب "${s.fullName}" نهائياً من قاعدة البيانات؟\n\n` +
+      `سيتم مسح كافة سجلات الطالب والغياب والمدفوعات والمحفوظات نهائياً ولا يمكن التراجع عن هذا الإجراء.`
+    );
+    if (!confirmed) return;
+
+    this.isLoading.set(true);
+    this.studentService.permanentDeleteStudent(s.id).subscribe({
+      next: () => {
+        this.ui.success(`تم حذف الطالب "${s.fullName}" نهائياً بنجاح`);
+        this.router.navigate(['/dashboard/students']);
+      },
+      error: (err) => {
+        this.isLoading.set(false);
+        const msg = err?.error?.message || 'حدث خطأ أثناء حذف الطالب نهائياً';
+        this.ui.error(msg);
       }
     });
   }
