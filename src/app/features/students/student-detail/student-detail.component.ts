@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
 import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
-import { MemorizationService, MemorizationRecordCreateDTO } from '../../../core/services/memorization.service';
+import { MemorizationService, MemorizationRecordCreateDTO, QuranSurah } from '../../../core/services/memorization.service';
 import { GroupService } from '../../../core/services/group.service';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { ExamService } from '../../../core/services/exam.service';
@@ -46,6 +46,18 @@ export class StudentDetailComponent implements OnInit {
   private warningService = inject(StudentWarningService);
 
   surahs = this.memorizationService.surahs;
+  allJuzs = this.memorizationService.getAllJuzs();
+  selectedFromJuz = 1;
+  selectedToJuz = 1;
+
+  get fromSurahsList(): QuranSurah[] {
+    return this.memorizationService.getSurahsByJuz(this.selectedFromJuz);
+  }
+
+  get toSurahsList(): QuranSurah[] {
+    return this.memorizationService.getSurahsByJuz(this.selectedToJuz);
+  }
+
   isAddingMemorization = signal(false);
   newMemRecord: MemorizationRecordCreateDTO = this.getInitialMemRecord();
 
@@ -335,6 +347,8 @@ export class StudentDetailComponent implements OnInit {
         this.isAddingMemorization.set(false);
         this.newMemRecord = this.getInitialMemRecord();
         this.newMemRecord.studentId = this.student()?.id || 0;
+        this.selectedFromJuz = 1;
+        this.selectedToJuz = 1;
         this.memorizationCurrentPage.set(1);
         this.loadStudent();
       },
@@ -360,6 +374,15 @@ export class StudentDetailComponent implements OnInit {
     return this.memorizationService.getSurahName(id);
   }
 
+  getMemPageRange(record: any): string {
+    return this.memorizationService.getPageRange(
+      record.fromSurahId,
+      record.fromAyah,
+      record.toSurahId,
+      record.toAyah
+    ).label;
+  }
+
   getSurahAyahCount(id: number): number {
     return this.memorizationService.getSurahAyahCount(id);
   }
@@ -372,23 +395,64 @@ export class StudentDetailComponent implements OnInit {
     return this.getSurahAyahCount(this.newMemRecord.toSurahId);
   }
 
-  onFromSurahChange(surahId: number) {
-    this.newMemRecord.fromSurahId = +surahId;
+  onFromJuzChange(juzId: any) {
+    const jId = Number(juzId);
+    this.selectedFromJuz = jId;
+    const surahsInJuz = this.memorizationService.getSurahsByJuz(jId);
+    if (surahsInJuz.length > 0) {
+      const exists = surahsInJuz.some(s => s.id === this.newMemRecord.fromSurahId);
+      if (!exists) {
+        this.onFromSurahChange(surahsInJuz[0].id);
+      }
+    }
+  }
+
+  onToJuzChange(juzId: any) {
+    const jId = Number(juzId);
+    this.selectedToJuz = jId;
+    const surahsInJuz = this.memorizationService.getSurahsByJuz(jId);
+    if (surahsInJuz.length > 0) {
+      const exists = surahsInJuz.some(s => s.id === this.newMemRecord.toSurahId);
+      if (!exists) {
+        this.onToSurahChange(surahsInJuz[0].id);
+      }
+    }
+  }
+
+  onFromSurahChange(surahId: any) {
+    const sId = Number(surahId);
+    this.newMemRecord.fromSurahId = sId;
+
+    const surahJuz = this.memorizationService.getJuzForSurah(sId);
+    if (this.selectedFromJuz !== 0 && this.selectedFromJuz !== surahJuz) {
+      this.selectedFromJuz = surahJuz;
+    }
+
     const max = this.getFromMaxAyah();
     if (this.newMemRecord.fromAyah > max) {
       this.newMemRecord.fromAyah = max;
     } else if (this.newMemRecord.fromAyah < 1) {
       this.newMemRecord.fromAyah = 1;
     }
+
+    // Automatically set ending Surah (إلى) to the same Surah as requested by user
+    this.newMemRecord.toSurahId = sId;
+    this.selectedToJuz = this.selectedFromJuz;
+    this.newMemRecord.toAyah = this.getToMaxAyah();
   }
 
-  onToSurahChange(surahId: number) {
-    this.newMemRecord.toSurahId = +surahId;
+  onToSurahChange(surahId: any) {
+    const sId = Number(surahId);
+    this.newMemRecord.toSurahId = sId;
+
+    const surahJuz = this.memorizationService.getJuzForSurah(sId);
+    if (this.selectedToJuz !== 0 && this.selectedToJuz !== surahJuz) {
+      this.selectedToJuz = surahJuz;
+    }
+
     const max = this.getToMaxAyah();
-    if (this.newMemRecord.toAyah > max) {
+    if (this.newMemRecord.toAyah > max || this.newMemRecord.toAyah < 1) {
       this.newMemRecord.toAyah = max;
-    } else if (this.newMemRecord.toAyah < 1) {
-      this.newMemRecord.toAyah = 1;
     }
   }
 

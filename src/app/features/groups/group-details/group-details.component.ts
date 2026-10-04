@@ -9,7 +9,7 @@ import { ScheduleService } from '../../../core/services/schedule.service';
 import { AttendanceBatchService } from '../../../core/services/attendance-batch.service';
 import { EvaluationService } from '../../../core/services/evaluation.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { MemorizationService } from '../../../core/services/memorization.service';
+import { MemorizationService, QuranSurah } from '../../../core/services/memorization.service';
 import { OfflineSyncService } from '../../../core/services/offline-sync.service';
 import { GroupDetailsDTO, AttendanceStatus, normalizeAttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
 import { AttendanceRecordDTO } from '../../../core/models/attendance.models';
@@ -153,7 +153,10 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   isSavingSingle = signal(false);
 
   // Memorization & Revision in Attendance
+  allJuzs = this.memorizationService.getAllJuzs();
   recordMemorization = signal<boolean>(false);
+  memFromJuzId = signal<number>(1);
+  memToJuzId = signal<number>(1);
   memFromSurahId = signal<number>(1);
   memFromAyah = signal<number>(1);
   memToSurahId = signal<number>(1);
@@ -161,6 +164,14 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   memNearRevision = signal<string>('');
   memDistantRevision = signal<string>('');
   memNotes = signal<string>('');
+
+  get groupFromSurahsList(): QuranSurah[] {
+    return this.memorizationService.getSurahsByJuz(this.memFromJuzId());
+  }
+
+  get groupToSurahsList(): QuranSurah[] {
+    return this.memorizationService.getSurahsByJuz(this.memToJuzId());
+  }
 
   // ── Add Student ─────────────────────────────────────────────────────────────
   showAddStudentModal = signal(false);
@@ -374,6 +385,8 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
 
     // Reset memorization for this student
     this.recordMemorization.set(false);
+    this.memFromJuzId.set(1);
+    this.memToJuzId.set(1);
     this.memFromSurahId.set(1);
     this.memFromAyah.set(1);
     this.memToSurahId.set(1);
@@ -397,23 +410,60 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     return this.getSurahAyahCount(this.memToSurahId());
   }
 
-  onGroupFromSurahChange(surahId: number) {
-    this.memFromSurahId.set(+surahId);
+  onGroupFromJuzChange(juzId: any) {
+    const jId = Number(juzId);
+    this.memFromJuzId.set(jId);
+    const surahsInJuz = this.memorizationService.getSurahsByJuz(jId);
+    if (surahsInJuz.length > 0) {
+      const exists = surahsInJuz.some(s => s.id === this.memFromSurahId());
+      if (!exists) {
+        this.onGroupFromSurahChange(surahsInJuz[0].id);
+      }
+    }
+  }
+
+  onGroupToJuzChange(juzId: any) {
+    const jId = Number(juzId);
+    this.memToJuzId.set(jId);
+    const surahsInJuz = this.memorizationService.getSurahsByJuz(jId);
+    if (surahsInJuz.length > 0) {
+      const exists = surahsInJuz.some(s => s.id === this.memToSurahId());
+      if (!exists) {
+        this.onGroupToSurahChange(surahsInJuz[0].id);
+      }
+    }
+  }
+
+  onGroupFromSurahChange(surahId: any) {
+    const sId = Number(surahId);
+    this.memFromSurahId.set(sId);
+    const surahJuz = this.memorizationService.getJuzForSurah(sId);
+    if (this.memFromJuzId() !== 0 && this.memFromJuzId() !== surahJuz) {
+      this.memFromJuzId.set(surahJuz);
+    }
     const max = this.getGroupFromMaxAyah();
     if (this.memFromAyah() > max) {
       this.memFromAyah.set(max);
     } else if (this.memFromAyah() < 1) {
       this.memFromAyah.set(1);
     }
+
+    // Auto set ending point to same surah
+    this.memToSurahId.set(sId);
+    this.memToJuzId.set(this.memFromJuzId());
+    this.memToAyah.set(this.getGroupToMaxAyah());
   }
 
-  onGroupToSurahChange(surahId: number) {
-    this.memToSurahId.set(+surahId);
+  onGroupToSurahChange(surahId: any) {
+    const sId = Number(surahId);
+    this.memToSurahId.set(sId);
+    const surahJuz = this.memorizationService.getJuzForSurah(sId);
+    if (this.memToJuzId() !== 0 && this.memToJuzId() !== surahJuz) {
+      this.memToJuzId.set(surahJuz);
+    }
     const max = this.getGroupToMaxAyah();
-    if (this.memToAyah() > max) {
+    if (this.memToAyah() > max || this.memToAyah() < 1) {
       this.memToAyah.set(max);
-    } else if (this.memToAyah() < 1) {
-      this.memToAyah.set(1);
     }
   }
 

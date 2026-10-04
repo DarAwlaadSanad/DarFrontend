@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { MemorizationRecordDTO } from '../models/student.models';
+import { getPageForVerse, toArabicNumber, QuranJuzItem, QURAN_JUZ_LIST, getJuzForSurah } from '../constants/mushaf-metadata';
 
 export interface MemorizationRecordCreateDTO {
   studentId: number;
@@ -173,5 +174,38 @@ export class MemorizationService {
   getAyahsList(id: number): number[] {
     const count = this.getSurahAyahCount(id);
     return Array.from({ length: count }, (_, i) => i + 1);
+  }
+
+  getPageForAyah(surahId: number, ayahNumber: number): number {
+    return getPageForVerse(surahId, ayahNumber);
+  }
+
+  getPageRange(fromSurahId: number, fromAyah: number, toSurahId: number, toAyah: number): { fromPage: number; toPage: number; pageCount: number; label: string } {
+    const fromPage = getPageForVerse(fromSurahId, fromAyah);
+    const toPage = getPageForVerse(toSurahId, toAyah);
+    const minPage = Math.min(fromPage, toPage);
+    const maxPage = Math.max(fromPage, toPage);
+    const pageCount = maxPage - minPage + 1;
+    const label = minPage === maxPage
+      ? `صفحة ${toArabicNumber(minPage)}`
+      : `صفحة ${toArabicNumber(minPage)} إلى ${toArabicNumber(maxPage)}`;
+    return { fromPage: minPage, toPage: maxPage, pageCount, label };
+  }
+
+  getAllJuzs(): QuranJuzItem[] {
+    return QURAN_JUZ_LIST;
+  }
+
+  getSurahsByJuz(juzId: number): QuranSurah[] {
+    if (!juzId || juzId === 0) {
+      return this.surahs;
+    }
+    const juz = QURAN_JUZ_LIST.find(j => j.id === juzId);
+    if (!juz) return this.surahs;
+    return this.surahs.filter(s => juz.surahIds.includes(s.id));
+  }
+
+  getJuzForSurah(surahId: number): number {
+    return getJuzForSurah(surahId);
   }
 }

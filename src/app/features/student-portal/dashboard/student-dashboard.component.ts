@@ -283,6 +283,9 @@ interface TodaySession {
                       <span class="px-2 py-0.5 rounded-md bg-dark-800 text-emerald-400 text-xs font-mono font-bold border border-emerald-500/20">
                         آية {{ latestMemorization()!.toAyah }}
                       </span>
+                      <span class="px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 text-xs font-bold font-sans">
+                        📖 {{ getMemPageRange(latestMemorization()!) }}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -770,5 +773,14 @@ export class StudentDashboardComponent implements OnInit {
     if (pct >= 85) return 'bg-emerald-500';
     if (pct >= 60) return 'bg-amber-500';
     return 'bg-red-500';
+  }
+
+  getMemPageRange(record: MemorizationRecordDTO): string {
+    return this.memorizationService.getPageRange(
+      record.fromSurahId,
+      record.fromAyah,
+      record.toSurahId,
+      record.toAyah
+    ).label;
   }
 }
