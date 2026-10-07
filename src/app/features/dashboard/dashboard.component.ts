@@ -35,6 +35,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   isNotificationOpen = signal(false);
   isMobile = signal(window.innerWidth < 1024);
   openSubmenus = signal<{ [key: string]: boolean }>({});
+  currentPageTitle = signal<string>('الرئيسية');
 
   formatEgyptDateTime = formatEgyptDateTime;
 
@@ -134,13 +135,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       this.navItems.push({ label: 'السنوات الدراسية', icon: 'academic-cap', route: '/dashboard/academic-years' });
     }
 
-    // Auto-close sidebar after navigation on mobile & auto-expand active submenus
+    // Auto-close sidebar after navigation on mobile & auto-expand active submenus & update title
     this.router.events.subscribe(e => {
       if (e instanceof NavigationEnd) {
         if (this.isMobile()) {
           this.isSidebarOpen.set(false);
         }
         this.checkActiveSubmenus();
+        this.updateCurrentPageTitle();
       }
     });
   }
@@ -178,8 +180,124 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
+  public updateCurrentPageTitle(): void {
+    const rawUrl = this.router.url.split('?')[0].split('#')[0];
+    const url = rawUrl.endsWith('/') && rawUrl.length > 1 ? rawUrl.slice(0, -1) : rawUrl;
+
+    // Specific sub-routes
+    if (url === '/dashboard' || url === '/dashboard/home') {
+      this.currentPageTitle.set('الرئيسية');
+      return;
+    }
+    if (url === '/dashboard/students/waiting-list') {
+      this.currentPageTitle.set('قائمة الانتظار والتقديمات');
+      return;
+    }
+    if (url === '/dashboard/students/archived') {
+      this.currentPageTitle.set('الطلاب المنقطعون');
+      return;
+    }
+    if (url === '/dashboard/students/export') {
+      this.currentPageTitle.set('تصدير بيانات الطلاب');
+      return;
+    }
+    if (url.startsWith('/dashboard/students/') && url !== '/dashboard/students') {
+      this.currentPageTitle.set('تفاصيل الطالب');
+      return;
+    }
+    if (url === '/dashboard/students') {
+      this.currentPageTitle.set('الطلاب');
+      return;
+    }
+    if (url.includes('/exams/') && !url.endsWith('/exams')) {
+      this.currentPageTitle.set('نتائج الاختبار');
+      return;
+    }
+    if (url.includes('/exams')) {
+      this.currentPageTitle.set('اختبارات الحلقة');
+      return;
+    }
+    if (url.startsWith('/dashboard/groups/') && url !== '/dashboard/groups') {
+      this.currentPageTitle.set('تفاصيل الحلقة');
+      return;
+    }
+    if (url === '/dashboard/groups') {
+      this.currentPageTitle.set('الحلقات');
+      return;
+    }
+    if (url.startsWith('/dashboard/competitions/') && url !== '/dashboard/competitions') {
+      this.currentPageTitle.set('تفاصيل المسابقة');
+      return;
+    }
+    if (url === '/dashboard/competitions') {
+      this.currentPageTitle.set('المسابقات الجماعية');
+      return;
+    }
+    if (url === '/dashboard/roles/create') {
+      this.currentPageTitle.set('إضافة دور جديد');
+      return;
+    }
+    if (url.startsWith('/dashboard/roles/edit')) {
+      this.currentPageTitle.set('تعديل الدور والصلاحيات');
+      return;
+    }
+    if (url === '/dashboard/roles') {
+      this.currentPageTitle.set('إدارة الصلاحيات');
+      return;
+    }
+
+    // Direct match against sidebar navigation items and submenus
+    for (const item of this.navItems) {
+      if (item.children) {
+        for (const child of item.children) {
+          if (url === child.route || url.startsWith(child.route + '/')) {
+            this.currentPageTitle.set(child.label);
+            return;
+          }
+        }
+      }
+      if (item.route && (url === item.route || url.startsWith(item.route + '/'))) {
+        this.currentPageTitle.set(item.label);
+        return;
+      }
+    }
+
+    // Additional known routes
+    const fallbacks: { [path: string]: string } = {
+      '/dashboard/library': 'المكتبة والكتب',
+      '/dashboard/fees': 'الشهريات',
+      '/dashboard/warnings': 'الإنذارات',
+      '/dashboard/timetable': 'جدول الحصص',
+      '/dashboard/users': 'المستخدمين',
+      '/dashboard/attendance': 'تسجيل الحضور',
+      '/dashboard/absences': 'سجلات الغياب',
+      '/dashboard/rooms': 'الغرف',
+      '/dashboard/settings/locations': 'أماكن تسجيل الحضور',
+      '/dashboard/locations': 'أماكن تسجيل الحضور',
+      '/dashboard/chat': 'الشات',
+      '/dashboard/academic-years': 'السنوات الدراسية',
+      '/dashboard/profile': 'الملف الشخصي',
+      '/dashboard/finance/center-expenses': 'المصروفات العامة',
+      '/dashboard/finance/center-incomes': 'تبرعات وإيرادات',
+      '/dashboard/finance/monthly-report': 'التقرير المالي',
+      '/dashboard/finance/payroll': 'رواتب الموظفين',
+      '/dashboard/finance/contracts': 'عقود الموظفين',
+      '/dashboard/finance/settings': 'الإعدادات المالية'
+    };
+
+    for (const [route, label] of Object.entries(fallbacks)) {
+      if (url === route || url.startsWith(route)) {
+        this.currentPageTitle.set(label);
+        return;
+      }
+    }
+
+    this.currentPageTitle.set('الرئيسية');
+  }
+
   ngOnInit() {
     this.checkActiveSubmenus();
+    this.updateCurrentPageTitle();
     this.notificationService.startConnection();
     this.chatService.startConnection();
   }

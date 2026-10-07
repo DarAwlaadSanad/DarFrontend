@@ -64,6 +64,10 @@ module.exports = {
         shimmer: { '0%': { backgroundPosition: '-200% 0' }, '100%': { backgroundPosition: '200% 0' } },
       },
       backdropBlur: { xs: '2px' },
+      spacing: {
+        '4.5': '1.125rem',
+        '5.5': '1.375rem',
+      },
     },
   },
   plugins: [require('@tailwindcss/forms')],

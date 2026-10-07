@@ -344,52 +344,88 @@
         </div>
 
         <!-- Add Phone Form -->
-        <div *ngIf="isAddingPhone()" class="mb-4 animate-slide-down">
-          <div class="flex gap-2">
-            <input type="text" [(ngModel)]="newPhoneNumber" placeholder="رقم الهاتف الجديد..."
-              class="input-field py-1.5 text-xs flex-1" maxlength="11">
+        <div *ngIf="isAddingPhone()" class="mb-4 p-3 rounded-xl bg-dark-900/80 border border-primary-500/30 space-y-2.5 animate-slide-down">
+          <div class="text-xs font-bold text-primary-400 flex items-center gap-1.5">
+            <span>+</span>
+            <span>إضافة رقم تواصل جديد</span>
+          </div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <input type="text" [(ngModel)]="newPhoneNumber" placeholder="رقم الهاتف (11 رقم)..."
+              class="input-field py-1.5 text-xs flex-1 font-mono" maxlength="11">
+            <select [(ngModel)]="newPhoneDescription"
+              class="input-field py-1.5 px-2.5 text-xs bg-dark-950 border border-dark-700 rounded-xl text-white font-medium">
+              <option *ngFor="let opt of phoneDescriptionOptions" [value]="opt">{{ opt }}</option>
+            </select>
+            <input *ngIf="newPhoneDescription === 'أخرى'" type="text" [(ngModel)]="customNewPhoneDescription"
+              placeholder="وصف مخصص..." class="input-field py-1.5 text-xs w-28">
+          </div>
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button (click)="isAddingPhone.set(false)" class="btn-secondary py-1 px-3 text-xs">إلغاء</button>
             <button (click)="onAddPhone()" [disabled]="newPhoneNumber.length !== 11 || isSaving()"
-              class="btn-primary p-1.5 px-3 text-xs">حفظ</button>
+              class="btn-primary py-1 px-4 text-xs font-bold">حفظ الرقم</button>
           </div>
         </div>
 
         <div class="space-y-2">
           <div *ngFor="let phone of s.phones" class="group relative">
             <div *ngIf="editingPhoneId() !== phone.id"
-              class="flex items-center gap-3 p-2.5 rounded-xl bg-dark-800/50 hover:bg-dark-700 transition-colors group">
-              <span
-                class="w-6 h-6 rounded-lg bg-primary-500/10 text-primary-400 flex items-center justify-center flex-shrink-0">
-                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                </svg>
-              </span>
-              <a [href]="'tel:' + phone.number"
-                class="text-white font-mono text-sm hover:text-primary-400 transition-colors flex-1">{{ phone.number
-                }}</a>
+              class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-dark-800/50 hover:bg-dark-700/80 border border-dark-700/40 hover:border-dark-600 transition-all group">
+              <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                <span
+                  class="w-7 h-7 rounded-lg bg-primary-500/10 text-primary-400 flex items-center justify-center shrink-0">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </span>
+                <a [href]="'tel:' + phone.number"
+                  class="text-white font-mono text-sm hover:text-primary-400 transition-colors font-semibold tracking-wide dir-ltr">
+                  {{ phone.number }}
+                </a>
+                <span *ngIf="phone.description"
+                  class="px-2 py-0.5 rounded-full text-[10px] font-bold shrink-0 border"
+                  [ngClass]="getPhoneDescBadgeClass(phone.description)">
+                  {{ phone.description }}
+                </span>
+              </div>
 
               <!-- Actions -->
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button (click)="startEditPhone(phone)" class="p-1 text-dark-400 hover:text-primary-400"><svg
-                    class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
+              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+                <button (click)="startEditPhone(phone)" title="تعديل الرقم والوصف"
+                  class="p-1.5 text-dark-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg></button>
-                <button (click)="onDeletePhone(phone.id)" class="p-1 text-dark-400 hover:text-red-400"><svg
-                    class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path
+                  </svg>
+                </button>
+                <button (click)="onDeletePhone(phone.id)" title="حذف الرقم"
+                  class="p-1.5 text-dark-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg></button>
+                  </svg>
+                </button>
               </div>
             </div>
 
             <!-- Edit Phone Form -->
-            <div *ngIf="editingPhoneId() === phone.id" class="flex gap-2 p-2 rounded-xl bg-dark-700/50 animate-fade-in">
-              <input type="text" [(ngModel)]="editingPhoneNumber" class="input-field py-1 text-xs flex-1"
-                maxlength="11">
-              <button (click)="onUpdatePhone(phone.id)" [disabled]="editingPhoneNumber.length !== 11 || isSaving()"
-                class="btn-primary p-1 px-2 text-[10px]">حفظ</button>
-              <button (click)="cancelEditPhone()" class="btn-secondary p-1 px-2 text-[10px]">إلغاء</button>
+            <div *ngIf="editingPhoneId() === phone.id"
+              class="p-3 rounded-xl bg-dark-700/70 border border-primary-500/30 space-y-2.5 animate-fade-in">
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input type="text" [(ngModel)]="editingPhoneNumber" class="input-field py-1.5 text-xs flex-1 font-mono"
+                  maxlength="11" placeholder="رقم الهاتف (11 رقم)...">
+                <select [(ngModel)]="editingPhoneDescription"
+                  class="input-field py-1.5 px-2.5 text-xs bg-dark-950 border border-dark-600 rounded-xl text-white font-medium">
+                  <option *ngFor="let opt of phoneDescriptionOptions" [value]="opt">{{ opt }}</option>
+                </select>
+                <input *ngIf="editingPhoneDescription === 'أخرى'" type="text" [(ngModel)]="customEditingPhoneDescription"
+                  placeholder="وصف مخصص..." class="input-field py-1.5 text-xs w-28">
+              </div>
+              <div class="flex items-center justify-end gap-2 pt-0.5">
+                <button (click)="cancelEditPhone()" class="btn-secondary py-1 px-3 text-xs">إلغاء</button>
+                <button (click)="onUpdatePhone(phone.id)" [disabled]="editingPhoneNumber.length !== 11 || isSaving()"
+                  class="btn-primary py-1 px-4 text-xs font-bold">حفظ التعديل</button>
+              </div>
             </div>
           </div>
 
@@ -662,25 +698,37 @@
       <!-- Memorization Log (Premium UI) -->
       <div class="glass-card overflow-hidden border-dark-800">
         <!-- Header -->
-        <div class="p-5 sm:p-6 border-b border-dark-800 bg-dark-900/50 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 shrink-0">
-              <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+        <div class="p-4 sm:p-6 border-b border-dark-800 bg-dark-900/50 flex flex-col md:flex-row md:items-center justify-between gap-3.5">
+          <div class="flex items-center justify-between gap-3 w-full md:w-auto">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-xl bg-primary-500/10 flex items-center justify-center text-primary-400 shrink-0">
+                <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-white font-bold text-sm sm:text-base">سجل الحفظ والمراجعة</h3>
+                <p class="text-dark-500 text-[10px] uppercase tracking-wider">تتبع تقدم الطالب في القرآن الكريم</p>
+              </div>
+            </div>
+
+            <!-- Mobile Add Record Button -->
+            <button (click)="isAddingMemorization.set(!isAddingMemorization())"
+              title="إضافة سجل جديد"
+              class="md:hidden p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300 shrink-0">
+              <svg class="w-5 h-5 transition-transform" [class.rotate-45]="isAddingMemorization()" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-            </div>
-            <div>
-              <h3 class="text-white font-bold">سجل الحفظ والمراجعة</h3>
-              <p class="text-dark-500 text-[10px] uppercase tracking-wider">تتبع تقدم الطالب في القرآن الكريم</p>
-            </div>
+            </button>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2.5">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 w-full md:w-auto justify-between sm:justify-start">
             <!-- Controls when records exist -->
             <ng-container *ngIf="totalMemorizationRecords() > 0">
               <!-- Total Records Badge -->
-              <span class="text-xs bg-dark-800/80 border border-dark-700/60 text-dark-300 px-3 py-1.5 rounded-xl font-bold">
+              <span class="text-xs bg-dark-800/80 border border-dark-700/60 text-dark-300 px-2.5 sm:px-3 py-1.5 rounded-xl font-bold whitespace-nowrap">
                 إجمالي السجلات: <strong class="text-emerald-400 font-mono">{{ totalMemorizationRecords() }}</strong>
               </span>
 
@@ -688,7 +736,7 @@
               <button type="button"
                       (click)="toggleMemorizationSortOrder()"
                       title="تغيير ترتيب السجلات"
-                      class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-dark-800/80 hover:bg-dark-700/80 border border-dark-700/60 text-dark-300 hover:text-white text-xs font-semibold transition-all">
+                      class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-dark-800/80 hover:bg-dark-700/80 border border-dark-700/60 text-dark-300 hover:text-white text-xs font-semibold transition-all whitespace-nowrap">
                 <svg class="w-3.5 h-3.5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
                 </svg>
@@ -696,10 +744,10 @@
               </button>
 
               <!-- Page Size Selector -->
-              <div class="flex items-center gap-1.5 text-xs text-dark-400">
+              <div class="flex items-center gap-1.5 text-xs text-dark-400 whitespace-nowrap">
                 <span>عرض:</span>
                 <select [ngModel]="memorizationPageSize()" (ngModelChange)="setMemorizationPageSize($event)"
-                        class="bg-dark-800/80 border border-dark-700/60 text-dark-200 text-xs rounded-xl px-2.5 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
+                        class="bg-dark-800/80 border border-dark-700/60 text-dark-200 text-xs rounded-xl px-2 py-1.5 focus:outline-none focus:border-emerald-500 cursor-pointer">
                   <option [value]="2">2 لكل صفحة</option>
                   <option [value]="3">3 لكل صفحة</option>
                   <option [value]="5">5 لكل صفحة</option>
@@ -708,11 +756,11 @@
               </div>
             </ng-container>
 
-            <!-- Add Record Button -->
+            <!-- Desktop Add Record Button -->
             <button (click)="isAddingMemorization.set(!isAddingMemorization())"
               title="إضافة سجل جديد"
-              class="group p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300">
-              <svg class="w-5 h-5 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24"
+              class="hidden md:flex group p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300 shrink-0">
+              <svg class="w-5 h-5 transition-transform" [class.rotate-45]="isAddingMemorization()" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
@@ -907,63 +955,74 @@
         </div>
 
         <!-- Timeline View -->
-        <div class="p-6">
+        <div class="p-3 sm:p-6">
           <div class="relative">
             <div *ngIf="paginatedMemorizationRecords().length > 0"
-              class="absolute right-[21px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-500/50 via-dark-700 to-transparent">
+              class="absolute right-[17px] sm:right-[21px] top-4 bottom-4 w-0.5 bg-gradient-to-b from-primary-500/50 via-dark-700 to-transparent">
             </div>
-            <div class="space-y-8" *ngIf="paginatedMemorizationRecords().length > 0">
-              <div *ngFor="let record of paginatedMemorizationRecords()" class="relative pr-12 group">
+            <div class="space-y-6 sm:space-y-8" *ngIf="paginatedMemorizationRecords().length > 0">
+              <div *ngFor="let record of paginatedMemorizationRecords()" class="relative pr-11 sm:pr-14 group">
                 <div
-                  class="absolute right-0 top-0 w-11 h-11 rounded-2xl bg-dark-800 border-4 border-dark-900 flex flex-col items-center justify-center shadow-xl z-10">
-                  <span class="text-[10px] font-black text-white leading-none">{{ record.date | date:'dd' }}</span>
-                  <span class="text-[8px] font-bold text-primary-400 uppercase leading-none mt-0.5">{{ record.date |
+                  class="absolute right-0 top-0 w-9 h-9 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-dark-800 border-2 sm:border-4 border-dark-900 flex flex-col items-center justify-center shadow-xl z-10">
+                  <span class="text-[9px] sm:text-[10px] font-black text-white leading-none">{{ record.date | date:'dd' }}</span>
+                  <span class="text-[7px] sm:text-[8px] font-bold text-primary-400 uppercase leading-none mt-0.5">{{ record.date |
                     date:'MMM' }}</span>
                 </div>
                 <div
-                  class="flex flex-col gap-3 p-4 rounded-2xl bg-dark-800/40 border border-dark-700/60 hover:border-dark-600 transition-all duration-300">
+                  class="flex flex-col gap-3 p-3.5 sm:p-4 rounded-2xl bg-dark-800/40 border border-dark-700/60 hover:border-dark-600 transition-all duration-300">
                   
-                  <!-- Top Row: New Memorization & Delete Action -->
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                  <!-- Top Bar: Badge, Page Range & Action Buttons -->
+                  <div class="flex items-center justify-between gap-2 pb-2.5 border-b border-dark-700/40 flex-wrap sm:flex-nowrap">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <span class="px-2.5 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-bold flex items-center gap-1.5 shrink-0">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        الحفظ الجديد:
+                        الحفظ الجديد
                       </span>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-white">من {{ getSurahName(record.fromSurahId) }}</span>
-                        <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px] font-mono">آية {{ record.fromAyah }}</span>
-                      </div>
-                      <svg class="w-4 h-4 text-dark-500 hidden sm:block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7" />
-                      </svg>
-                      <div class="flex items-center gap-2">
-                        <span class="text-sm font-bold text-white">إلى {{ getSurahName(record.toSurahId) }}</span>
-                        <span class="px-2 py-0.5 rounded bg-dark-700 text-dark-300 text-[10px] font-mono">آية {{ record.toAyah }}</span>
-                      </div>
-                      <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/25 text-[11px] font-bold">
+                      <span class="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/25 text-[11px] font-bold shrink-0">
                         📖 {{ getMemPageRange(record) }}
                       </span>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-1.5 shrink-0 mr-auto sm:mr-0">
                       <a [routerLink]="['/quran-board']"
                         [queryParams]="{ fromSurah: record.fromSurahId, fromAyah: record.fromAyah, toSurah: record.toSurahId, toAyah: record.toAyah, studentName: student()?.fullName }"
-                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all shadow-sm group">
-                        <span>📖 فتح اللوح القرآني</span>
-                        <svg class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        title="فتح اللوح القرآني"
+                        class="inline-flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500 border border-emerald-500/30 text-emerald-300 hover:text-white text-xs font-bold transition-all shadow-sm group whitespace-nowrap">
+                        <span>📖 فتح اللوح</span>
+                        <svg class="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5 hidden sm:inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                         </svg>
                       </a>
 
                       <button (click)="onDeleteMemorization(record.id)"
                         title="حذف السجل"
-                        class="p-2 rounded-lg text-dark-500 hover:text-red-400 opacity-60 hover:opacity-100 transition-all">
+                        class="p-1.5 sm:p-2 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 opacity-70 hover:opacity-100 transition-all shrink-0">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                         </svg>
                       </button>
+                    </div>
+                  </div>
+
+                  <!-- Surah & Ayah Range Details -->
+                  <div class="flex flex-wrap items-center gap-x-2.5 sm:gap-x-3 gap-y-2 py-1">
+                    <div class="flex items-center gap-1.5 sm:gap-2">
+                      <span class="text-xs text-dark-400 font-medium">من</span>
+                      <span class="text-sm sm:text-base font-bold text-white">{{ getSurahName(record.fromSurahId) }}</span>
+                      <span class="px-2 py-0.5 rounded-md bg-dark-700/80 border border-dark-600/50 text-dark-200 text-[11px] font-mono font-bold">آية {{ record.fromAyah }}</span>
+                    </div>
+
+                    <div class="flex items-center text-emerald-400">
+                      <svg class="w-4 h-4 rotate-180 sm:rotate-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7" />
+                      </svg>
+                    </div>
+
+                    <div class="flex items-center gap-1.5 sm:gap-2">
+                      <span class="text-xs text-dark-400 font-medium">إلى</span>
+                      <span class="text-sm sm:text-base font-bold text-white">{{ getSurahName(record.toSurahId) }}</span>
+                      <span class="px-2 py-0.5 rounded-md bg-dark-700/80 border border-dark-600/50 text-dark-200 text-[11px] font-mono font-bold">آية {{ record.toAyah }}</span>
                     </div>
                   </div>
 
@@ -976,7 +1035,7 @@
                         [ngClass]="record.nearRevision ? 'text-blue-400' : 'text-dark-400'">
                         <span>🔹 الماضي القريب:</span>
                       </span>
-                      <span class="text-xs truncate font-medium">
+                      <span class="text-xs font-medium break-words">
                         {{ record.nearRevision || 'لا يوجد' }}
                       </span>
                     </div>
@@ -988,7 +1047,7 @@
                         [ngClass]="record.distantRevision ? 'text-amber-400' : 'text-dark-400'">
                         <span>🔸 الماضي البعيد:</span>
                       </span>
-                      <span class="text-xs truncate font-medium">
+                      <span class="text-xs font-medium break-words">
                         {{ record.distantRevision || 'لا يوجد' }}
                       </span>
                     </div>
@@ -1001,7 +1060,7 @@
                       [ngClass]="record.notes ? 'text-primary-400' : 'text-dark-400'">
                       <span>💬 الملاحظات:</span>
                     </span>
-                    <span class="text-xs leading-relaxed font-medium">
+                    <span class="text-xs leading-relaxed font-medium break-words">
                       {{ record.notes || 'لا توجد ملاحظات مسجلة' }}
                     </span>
                   </div>
@@ -1017,8 +1076,8 @@
 
         <!-- Pagination Footer -->
         <div *ngIf="totalMemorizationRecords() > 0"
-             class="flex flex-wrap items-center justify-between gap-3 px-6 py-4 border-t border-dark-800 bg-dark-900/60">
-          <div class="text-xs text-dark-400">
+             class="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-dark-800 bg-dark-900/60">
+          <div class="text-xs text-dark-400 text-center sm:text-right">
             عرض السجلات
             <span class="text-white font-bold font-mono">{{ memorizationStartRecordIndex() }} - {{ memorizationEndRecordIndex() }}</span>
             من إجمالي
@@ -1026,20 +1085,20 @@
             سجل
           </div>
 
-          <div class="flex items-center gap-1.5">
+          <div class="flex flex-wrap items-center justify-center gap-1 sm:gap-1.5">
             <!-- First Page -->
             <button type="button"
                     (click)="goToMemorizationPage(1)"
                     [disabled]="memorizationCurrentPage() === 1"
                     title="الصفحة الأولى"
-                    class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                    class="px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
               ««
             </button>
             <!-- Prev Page -->
             <button type="button"
                     (click)="goToMemorizationPage(memorizationCurrentPage() - 1)"
                     [disabled]="memorizationCurrentPage() === 1"
-                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                    class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
               السابق
             </button>
 
@@ -1048,8 +1107,8 @@
               <button type="button"
                       (click)="goToMemorizationPage(p)"
                       [class]="p === memorizationCurrentPage()
-                        ? 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary-600 text-white shadow-md shadow-primary-600/25'
-                        : 'px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700'">
+                        ? 'px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold bg-primary-600 text-white shadow-md shadow-primary-600/25'
+                        : 'px-3 sm:px-3.5 py-1.5 rounded-xl text-xs font-bold hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700'">
                 {{ p }}
               </button>
             </ng-container>
@@ -1058,7 +1117,7 @@
             <button type="button"
                     (click)="goToMemorizationPage(memorizationCurrentPage() + 1)"
                     [disabled]="memorizationCurrentPage() === totalMemorizationPages()"
-                    class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                    class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
               التالي
             </button>
             <!-- Last Page -->
@@ -1066,7 +1125,7 @@
                     (click)="goToMemorizationPage(totalMemorizationPages())"
                     [disabled]="memorizationCurrentPage() === totalMemorizationPages()"
                     title="الصفحة الأخيرة"
-                    class="px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
+                    class="px-2 sm:px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all disabled:opacity-25 disabled:cursor-not-allowed hover:bg-dark-800 text-dark-300 hover:text-white border border-dark-800 hover:border-dark-700">
               »»
             </button>
           </div>

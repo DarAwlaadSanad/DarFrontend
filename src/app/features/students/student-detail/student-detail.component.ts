@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink, Router } from '@angular/router';
 import { StudentService } from '../../../core/services/student.service';
-import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, MemorizationRecordDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
+import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, PhoneViewDTO, MemorizationRecordDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
 import { MemorizationService, MemorizationRecordCreateDTO, QuranSurah } from '../../../core/services/memorization.service';
 import { GroupService } from '../../../core/services/group.service';
 import { GroupCardDTO } from '../../../core/models/group.models';
@@ -153,8 +153,13 @@ export class StudentDetailComponent implements OnInit {
   // Phone Management
   isAddingPhone = signal(false);
   newPhoneNumber = '';
+  newPhoneDescription = 'الأب';
+  customNewPhoneDescription = '';
   editingPhoneId = signal<number | null>(null);
   editingPhoneNumber = '';
+  editingPhoneDescription = '';
+  customEditingPhoneDescription = '';
+  phoneDescriptionOptions = ['الأب', 'الأم', 'ولي الأمر', 'الطالب', 'المنزل', 'أخرى'];
 
   // Group Management
   studentGroups = signal<GroupCardDTO[]>([]);
@@ -606,15 +611,31 @@ export class StudentDetailComponent implements OnInit {
   getGenderLabel = getGenderLabel;
 
   // ── Phone Management ────────────────────────────────────────────────────────
+  getPhoneDescBadgeClass(desc?: string): string {
+    if (!desc) return 'bg-dark-800 text-dark-300 border-dark-700';
+    const clean = desc.trim();
+    if (clean === 'الأب') return 'bg-blue-500/15 text-blue-400 border border-blue-500/30';
+    if (clean === 'الأم') return 'bg-pink-500/15 text-pink-400 border border-pink-500/30';
+    if (clean === 'ولي الأمر') return 'bg-amber-500/15 text-amber-400 border border-amber-500/30';
+    if (clean === 'الطالب') return 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30';
+    if (clean === 'المنزل') return 'bg-purple-500/15 text-purple-400 border border-purple-500/30';
+    return 'bg-dark-800 text-dark-200 border border-dark-700';
+  }
+
   onAddPhone() {
     const s = this.student();
     if (!s || this.newPhoneNumber.length !== 11) return;
+    const desc = this.newPhoneDescription === 'أخرى' 
+      ? this.customNewPhoneDescription.trim() 
+      : this.newPhoneDescription;
     this.isSaving.set(true);
-    this.studentService.addPhone(s.id, this.newPhoneNumber).subscribe({
+    this.studentService.addPhone(s.id, this.newPhoneNumber, desc).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.isAddingPhone.set(false);
         this.newPhoneNumber = '';
+        this.newPhoneDescription = 'الأب';
+        this.customNewPhoneDescription = '';
         this.loadStudent();
       },
       error: () => {
@@ -626,11 +647,17 @@ export class StudentDetailComponent implements OnInit {
 
   onUpdatePhone(phoneId: number) {
     if (this.editingPhoneNumber.length !== 11) return;
+    const desc = this.editingPhoneDescription === 'أخرى' 
+      ? this.customEditingPhoneDescription.trim() 
+      : this.editingPhoneDescription;
     this.isSaving.set(true);
-    this.studentService.updatePhone(phoneId, this.editingPhoneNumber).subscribe({
+    this.studentService.updatePhone(phoneId, this.editingPhoneNumber, desc).subscribe({
       next: () => {
         this.isSaving.set(false);
         this.editingPhoneId.set(null);
+        this.editingPhoneNumber = '';
+        this.editingPhoneDescription = '';
+        this.customEditingPhoneDescription = '';
         this.loadStudent();
       },
       error: () => {
@@ -656,13 +683,24 @@ export class StudentDetailComponent implements OnInit {
     });
   }
 
-  startEditPhone(phone: { id: number, number: string }) {
+  startEditPhone(phone: PhoneViewDTO) {
     this.editingPhoneId.set(phone.id);
     this.editingPhoneNumber = phone.number;
+    const d = phone.description || 'الأب';
+    if (this.phoneDescriptionOptions.includes(d)) {
+      this.editingPhoneDescription = d;
+      this.customEditingPhoneDescription = '';
+    } else {
+      this.editingPhoneDescription = 'أخرى';
+      this.customEditingPhoneDescription = d;
+    }
   }
 
   cancelEditPhone() {
     this.editingPhoneId.set(null);
+    this.editingPhoneNumber = '';
+    this.editingPhoneDescription = '';
+    this.customEditingPhoneDescription = '';
   }
 
   submitEdit() {

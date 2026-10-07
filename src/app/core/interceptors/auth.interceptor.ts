@@ -26,6 +26,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       if (
         error instanceof HttpErrorResponse && 
         error.status === 401 && 
+        token && 
         !req.url.includes('/login') && 
         !req.url.includes('/refresh')
       ) {

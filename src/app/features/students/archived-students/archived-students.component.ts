@@ -44,15 +44,20 @@ import { GroupCardDTO } from '../../../core/models/group.models';
       </div>
 
       <!-- Navigation Tabs -->
-      <div class="flex items-center gap-2 border-b border-dark-800 pb-3">
+      <div class="flex items-center gap-2 border-b border-dark-800 pb-3 overflow-x-auto">
         <a routerLink="/dashboard/students"
-           class="px-4 py-2 rounded-xl text-xs font-bold border border-transparent hover:border-dark-700 transition-all flex items-center gap-2 text-dark-400 hover:text-white">
+           class="px-4 py-2 rounded-xl text-xs font-bold border border-transparent hover:border-dark-700 transition-all flex items-center gap-2 text-dark-400 hover:text-white shrink-0">
           <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
           <span>الطلاب النشطون</span>
         </a>
+        <a routerLink="/dashboard/students/waiting-list"
+           class="px-4 py-2 rounded-xl text-xs font-bold border border-transparent hover:border-dark-700 transition-all flex items-center gap-2 text-dark-400 hover:text-white shrink-0">
+          <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span>قائمة الانتظار والتقديمات</span>
+        </a>
         <a routerLink="/dashboard/students/archived"
-           class="px-4 py-2 rounded-xl text-xs font-bold border bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-sm flex items-center gap-2">
-          <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+           class="px-4 py-2 rounded-xl text-xs font-bold border bg-amber-500/15 text-amber-300 border-amber-500/30 shadow-sm flex items-center gap-2 shrink-0">
+          <span class="w-2 h-2 rounded-full bg-dark-500"></span>
           <span>الطلاب المنقطعون / المحذوفون ({{ totalCount() }})</span>
         </a>
       </div>

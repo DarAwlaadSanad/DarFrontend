@@ -62,6 +62,12 @@
                 d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
             </svg>
 
+            <!-- قائمة الانتظار والتقديمات -->
+            <svg *ngIf="item.icon === 'user-clock'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+
             <!-- الطلاب المنقطعون -->
             <svg *ngIf="item.icon === 'user-x'" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -243,12 +249,14 @@
         </button>
 
         <!-- Breadcrumb -->
-        <div class="hidden sm:flex items-center gap-2">
-          <span class="text-dark-600 text-xs">نظام إدارة المركز</span>
-          <svg class="w-3 h-3 text-dark-700 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <div class="flex items-center gap-1.5 sm:gap-2">
+          <span class="hidden md:inline text-slate-500 dark:text-dark-400 text-xs font-medium">نظام إدارة المركز</span>
+          <svg class="hidden md:inline w-3 h-3 text-slate-400 dark:text-dark-600 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
           </svg>
-          <span class="text-dark-300 text-xs font-medium">لوحة التحكم</span>
+          <span class="text-slate-900 dark:text-white text-xs sm:text-sm font-bold transition-all duration-200">
+            {{ currentPageTitle() }}
+          </span>
         </div>
       </div>
 

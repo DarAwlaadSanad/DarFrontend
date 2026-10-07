@@ -1,0 +1,515 @@
+<div class="adm-root min-h-screen flex flex-col justify-between relative selection:bg-emerald-500/30 selection:text-emerald-300 font-sans overflow-x-hidden" dir="rtl">
+
+  <!-- Ambient Islamic Background Lighting -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden" aria-hidden="true">
+    <div class="absolute -top-32 right-1/4 w-96 h-96 bg-emerald-500/10 dark:bg-emerald-500/10 rounded-full blur-[140px] animate-glow"></div>
+    <div class="absolute top-1/3 -left-20 w-80 h-80 bg-amber-500/10 dark:bg-amber-500/10 rounded-full blur-[130px]"></div>
+    <div class="absolute inset-0 opacity-[0.035] dark:opacity-[0.035] bg-repeat"
+         style="background-image: url('assets/images/islamic-pattern.svg'); background-size: 140px 140px;"></div>
+  </div>
+
+  <!-- Top Imperial Accent Ribbon -->
+  <div class="relative z-50 h-1.5 w-full bg-gradient-to-r from-emerald-800 via-amber-400 via-emerald-500 to-emerald-800 shadow-sm"></div>
+
+  <!-- Sticky Luxury Navbar -->
+  <header class="adm-header sticky top-0 z-40 backdrop-blur-2xl transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a routerLink="/" class="flex items-center group cursor-pointer focus:outline-none transition-transform duration-300 hover:scale-105" aria-label="دار أولاد سند">
+        <img src="assets/logo-dark.png" alt="دار أولاد سند" class="logo-dark h-10 sm:h-12 w-auto max-w-[170px] sm:max-w-[210px] object-contain drop-shadow-md">
+        <img src="assets/logo.png" alt="دار أولاد سند" class="logo-light h-10 sm:h-12 w-auto max-w-[170px] sm:max-w-[210px] object-contain drop-shadow-md">
+      </a>
+
+      <!-- Center Links / Breadcrumb -->
+      <nav class="hidden md:flex items-center gap-2 text-sm font-semibold">
+        <a routerLink="/" class="adm-muted hover:text-amber-500 transition-colors flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>الرئيسية</span>
+        </a>
+        <span class="adm-muted">/</span>
+        <span class="text-amber-600 dark:text-amber-400 font-bold">استمارة التقديم والالتحاق</span>
+      </nav>
+
+      <!-- Right Action CTAs -->
+      <div class="flex items-center gap-2.5 sm:gap-3">
+        <!-- Theme Toggle -->
+        <app-theme-toggle variant="ghost" />
+
+        <!-- Portal Access (Authenticated or Guest) -->
+        <ng-container *ngIf="isAuthenticated(); else guestAuth">
+          <a [routerLink]="getDashboardUrl()"
+             class="btn-royal-primary inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold">
+            <span>{{ isStudent() ? 'بوابة الطالب' : 'لوحة التحكم' }}</span>
+            <svg class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </ng-container>
+        <ng-template #guestAuth>
+          <a routerLink="/login"
+             class="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 hover:border-amber-500/50 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-300 font-bold text-xs sm:text-sm transition-all shadow-sm">
+            <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            <span>دخول المنظومة</span>
+          </a>
+        </ng-template>
+
+        <a routerLink="/"
+           class="p-2 sm:px-3 sm:py-2 rounded-xl border border-slate-300 dark:border-slate-700/60 hover:border-slate-400 text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white text-xs font-bold transition-all flex items-center gap-1.5"
+           title="الرجوع للرئيسية">
+          <span class="hidden sm:inline">العودة</span>
+          <svg class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="relative z-10 flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 sm:py-12">
+
+    <!-- ========================================================================= -->
+    <!-- SUCCESS STATE (Submitted) -->
+    <!-- ========================================================================= -->
+    <div *ngIf="isSubmitted()" class="adm-card p-6 sm:p-12 text-center animate-fade-in border-emerald-500/40 shadow-2xl">
+      <div class="w-20 h-20 mx-auto rounded-3xl bg-emerald-500/15 border border-emerald-500/40 flex items-center justify-center text-4xl mb-6 shadow-xl shadow-emerald-950/60 animate-bounce">
+        ✨
+      </div>
+      
+      <span class="px-4 py-1.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 text-xs font-bold border border-emerald-500/30 inline-block mb-3">
+        تم استلام طلب الالتحاق بنجاح
+      </span>
+
+      <h2 class="text-2xl sm:text-3xl font-black mb-3 adm-heading">
+        أهلاً بكم في رحاب القرآن الكريم!
+      </h2>
+
+      <p class="text-sm sm:text-base leading-relaxed max-w-xl mx-auto mb-8 adm-text">
+        تم تسجيل طلب التحاق الطالب <strong class="text-amber-600 dark:text-amber-400 font-bold">"{{ submittedName() }}"</strong> في قائمة المتقدمين لدار أولاد سند بنجاح.
+        سيقوم فريق إدارة الدار بمراجعة البيانات والتواصل معكم هاتفياً أو عبر الواتساب لتحديد موعد اختبار تحديد المستوى والتسكين في الحلقة المناسبة.
+      </p>
+
+      <!-- Summary Details Card -->
+      <div class="p-5 rounded-2xl adm-box-surface max-w-md mx-auto mb-8 text-xs space-y-3 text-right">
+        <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2">
+          <span class="adm-muted">اسم الطالب:</span>
+          <span class="font-bold adm-heading">{{ submittedName() }}</span>
+        </div>
+        <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2">
+          <span class="adm-muted">تاريخ التقديم:</span>
+          <span class="font-mono adm-heading">{{ todayDate }}</span>
+        </div>
+        <div class="flex justify-between items-center border-b border-slate-200 dark:border-white/10 pb-2">
+          <span class="adm-muted">رقم التواصل:</span>
+          <span class="font-mono adm-heading" dir="ltr">{{ model.phoneNumber }}</span>
+        </div>
+        <div class="flex justify-between items-center pt-1">
+          <span class="adm-muted">حالة الطلب:</span>
+          <span class="text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            قيد المراجعة وتحديد موعد الاختبار
+          </span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 justify-center items-center">
+        <a [href]="'https://wa.me/2' + model.phoneNumber + '?text=' + getWhatsappWelcomeMessage()"
+           target="_blank"
+           class="w-full sm:w-auto py-3.5 px-6 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-emerald-950/50 transition-all">
+          <span>💬 استفسار عبر الواتساب</span>
+        </a>
+
+        <button (click)="resetForm()"
+                class="w-full sm:w-auto py-3.5 px-6 rounded-xl border border-slate-300 dark:border-slate-600 hover:border-slate-400 adm-heading text-sm font-bold flex items-center justify-center gap-2 transition-all">
+          <span>تسجيل طالب آخر</span>
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+
+        <a routerLink="/"
+           class="w-full sm:w-auto py-3.5 px-6 rounded-xl border border-slate-300 dark:border-slate-700 hover:border-amber-400/50 adm-text text-sm font-bold flex items-center justify-center transition-all">
+          الرجوع للصفحة الرئيسية
+        </a>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- APPLICATION FORM (Active State) -->
+    <!-- ========================================================================= -->
+    <div *ngIf="!isSubmitted()" class="space-y-6">
+
+      <!-- Hero Header Card -->
+      <div class="adm-hero relative overflow-hidden rounded-3xl p-6 sm:p-8 shadow-xl">
+        <div class="absolute -left-12 -top-12 w-48 h-48 rounded-full bg-emerald-500/15 blur-3xl pointer-events-none"></div>
+        <div class="absolute right-0 bottom-0 w-64 h-64 rounded-full bg-amber-500/15 blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 text-center sm:text-right space-y-3">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-100 dark:bg-emerald-950/60 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs font-bold">
+            <span class="relative flex h-2 w-2">
+              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+              <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            <span>استمارة التقديم والالتحاق الإلكتروني</span>
+          </div>
+
+          <h1 class="text-2xl sm:text-4xl font-black adm-heading tracking-wide">
+            طلب انضمام طالب جديد إلى الدار
+          </h1>
+
+          <p class="text-xs sm:text-sm adm-text max-w-2xl leading-relaxed">
+            سجّل بيانات الطالب بدقة ليتم إدراجه في قوائم المتقدمين، وسنتواصل معكم فوراً لتحديد موعد اختبار المستوى وتسكينه بالحلقة المناسبة.
+          </p>
+
+          <div class="text-xs text-amber-700 dark:text-amber-300/90 font-medium pt-1 font-quran flex items-center justify-center sm:justify-start gap-2">
+            <span>✨</span>
+            <span>قال رسول الله ﷺ: «خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application Steps Indicator Bar -->
+      <div class="grid grid-cols-3 gap-2 sm:gap-4 text-center text-xs font-bold">
+        <div class="p-3 rounded-2xl border border-emerald-500/30 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 flex items-center justify-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 text-xs flex items-center justify-center font-black">١</span>
+          <span class="hidden sm:inline">بيانات الطالب</span>
+          <span class="sm:hidden">الطالب</span>
+        </div>
+        <div class="p-3 rounded-2xl border border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-300 flex items-center justify-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-amber-600 dark:bg-amber-500 text-white dark:text-slate-950 text-xs flex items-center justify-center font-black">٢</span>
+          <span class="hidden sm:inline">بيانات التواصل</span>
+          <span class="sm:hidden">التواصل</span>
+        </div>
+        <div class="p-3 rounded-2xl border border-teal-500/30 bg-teal-50 dark:bg-teal-500/10 text-teal-700 dark:text-teal-300 flex items-center justify-center gap-2">
+          <span class="w-5 h-5 rounded-full bg-teal-600 dark:bg-teal-500 text-white dark:text-slate-950 text-xs flex items-center justify-center font-black">٣</span>
+          <span class="hidden sm:inline">المستندات والصور</span>
+          <span class="sm:hidden">المستندات</span>
+        </div>
+      </div>
+
+      <!-- The Form -->
+      <form (ngSubmit)="submitApplication()" #appForm="ngForm" class="adm-card p-6 sm:p-10 space-y-8">
+
+        <!-- ================================================================= -->
+        <!-- SECTION 1: STUDENT BASIC INFO -->
+        <!-- ================================================================= -->
+        <div class="space-y-5">
+          <div class="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700/60 pb-3">
+            <span class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-sm font-black">١</span>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold adm-heading">البيانات الأساسية للطالب</h2>
+              <p class="text-xs adm-muted">الاسم، الرقم القومي، النوع والمرحلة الدراسية</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Full Name -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold adm-heading mb-1.5">
+                الاسم الرباعي للطالب <span class="text-rose-500">*</span>
+              </label>
+              <input type="text" [(ngModel)]="model.fullName" name="fullName" required
+                class="adm-input text-sm" placeholder="أدخل اسم الطالب الرباعي كما في شهادة الميلاد...">
+            </div>
+
+            <!-- National ID (SSN) -->
+            <div>
+              <label class="block text-xs font-bold adm-heading mb-1.5 flex items-center justify-between">
+                <span>الرقم القومي للطالب (14 رقم)</span>
+                <span class="text-[10px] adm-muted font-normal">من واقع شهادة الميلاد أو البطاقة</span>
+              </label>
+              
+              <div class="relative">
+                <input type="text" [(ngModel)]="model.ssn" (input)="onSsnInput()" name="ssn" maxlength="14"
+                  class="adm-input text-sm font-mono tracking-wider"
+                  [ngClass]="{
+                    '!border-rose-500 text-rose-500': ssnCheckStatus().isAvailable === false,
+                    '!border-emerald-500 text-emerald-600 dark:text-emerald-300': ssnCheckStatus().isAvailable === true
+                  }"
+                  placeholder="2XXXXXXXXXXXXX أو 3XXXXXXXXXXXXX">
+
+                <!-- Loading indicator -->
+                <div *ngIf="ssnCheckStatus().checking" class="absolute left-3 top-1/2 -translate-y-1/2">
+                  <svg class="w-4 h-4 animate-spin text-amber-500" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                </div>
+              </div>
+
+              <!-- Real-time SSN Validation Feedback -->
+              <div *ngIf="ssnCheckStatus().message" class="mt-1.5 text-xs flex items-center gap-1.5 font-semibold"
+                [ngClass]="ssnCheckStatus().isAvailable === false ? 'text-rose-500' : 'text-emerald-600 dark:text-emerald-400'">
+                <span>{{ ssnCheckStatus().isAvailable === false ? '✕' : '✓' }}</span>
+                <span>{{ ssnCheckStatus().message }}</span>
+              </div>
+
+              <!-- Smart Auto-Detected Info (Date of Birth & Age) -->
+              <div *ngIf="parsedBirthInfo()" class="mt-2 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+                <span>🎂</span>
+                <span>تاريخ الميلاد المستخرج: <strong>{{ parsedBirthInfo()?.birthDate }}</strong> (العمر التقريبي: {{ parsedBirthInfo()?.approxAge }} سنة)</span>
+              </div>
+            </div>
+
+            <!-- Gender Selector (ذكر / أنثى) -->
+            <div>
+              <label class="block text-xs font-bold adm-heading mb-1.5">
+                النوع <span class="text-rose-500">*</span>
+              </label>
+              <div class="grid grid-cols-2 gap-3">
+                <button type="button" (click)="model.gender = 1"
+                  [class]="model.gender === 1 ? 'border-emerald-500 bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 ring-2 ring-emerald-500/30 font-black shadow-md' : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-black/20 adm-muted hover:text-black dark:hover:text-white'"
+                  class="py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer">
+                  <span class="text-base">👦</span>
+                  <span>ذكر</span>
+                </button>
+
+                <button type="button" (click)="model.gender = 2"
+                  [class]="model.gender === 2 ? 'border-pink-500 bg-pink-500/20 text-pink-700 dark:text-pink-300 ring-2 ring-pink-500/30 font-black shadow-md' : 'border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-black/20 adm-muted hover:text-black dark:hover:text-white'"
+                  class="py-2.5 px-3 rounded-xl border text-xs sm:text-sm font-bold transition-all flex items-center justify-center gap-2 cursor-pointer">
+                  <span class="text-base">👧</span>
+                  <span>أنثى</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Academic Year Selector -->
+            <div class="sm:col-span-2">
+              <label class="block text-xs font-bold adm-heading mb-1.5">
+                السنة الدراسية / المرحلة <span class="text-rose-500">*</span>
+              </label>
+              
+              <div class="relative">
+                <select [(ngModel)]="model.academicYearId" name="academicYearId" required
+                  class="adm-input text-sm appearance-none pr-3 pl-10 cursor-pointer">
+                  <option [ngValue]="undefined" disabled>-- اختر السنة أو المرحلة الدراسية للطالب --</option>
+
+                  <optgroup label="المرحلة الابتدائية">
+                    <option *ngFor="let year of getYearsByGroup('primary')" [ngValue]="year.id">
+                      {{ getAcademicYearLabel(year) }}
+                    </option>
+                  </optgroup>
+
+                  <optgroup label="المرحلة الإعدادية">
+                    <option *ngFor="let year of getYearsByGroup('prep')" [ngValue]="year.id">
+                      {{ getAcademicYearLabel(year) }}
+                    </option>
+                  </optgroup>
+
+                  <optgroup label="المرحلة الثانوية">
+                    <option *ngFor="let year of getYearsByGroup('secondary')" [ngValue]="year.id">
+                      {{ getAcademicYearLabel(year) }}
+                    </option>
+                  </optgroup>
+
+                  <optgroup label="مراحل أخرى">
+                    <option *ngFor="let year of getYearsByGroup('other')" [ngValue]="year.id">
+                      {{ getAcademicYearLabel(year) }}
+                    </option>
+                  </optgroup>
+                </select>
+
+                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600 dark:text-emerald-400">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <p class="text-[11px] adm-muted mt-1">تساعدنا السنة الدراسية في تسكين الطالب في حلقة متجانسة عمرياً مع أقرانه.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- SECTION 2: PARENT CONTACT INFO -->
+        <!-- ================================================================= -->
+        <div class="space-y-5 pt-2">
+          <div class="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700/60 pb-3">
+            <span class="w-8 h-8 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-black">٢</span>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold adm-heading">بيانات التواصل وولي الأمر</h2>
+              <p class="text-xs adm-muted">رقم الهاتف للتواصل وتأكيد موعد الاختبار عبر الواتساب</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Phone Number -->
+            <div>
+              <label class="block text-xs font-bold adm-heading mb-1.5">
+                رقم هاتف ولي الأمر (واتساب متاح) <span class="text-rose-500">*</span>
+              </label>
+              <div class="relative">
+                <input type="tel" [(ngModel)]="model.phoneNumber" name="phoneNumber" required maxlength="11"
+                  class="adm-input text-sm font-mono text-left pl-10" dir="ltr" placeholder="01XXXXXXXXX">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-mono">📱</span>
+              </div>
+              <p class="text-[11px] adm-muted mt-1">يُرجى التأكد من صحة الرقم لتلقي رسائل المتابعة وتأكيد الموعد.</p>
+            </div>
+
+            <!-- Relationship -->
+            <div>
+              <label class="block text-xs font-bold adm-heading mb-1.5">صلة القرابة</label>
+              <div class="relative">
+                <select [(ngModel)]="model.phoneDescription" name="phoneDescription"
+                  class="adm-input text-sm appearance-none pr-3 pl-10 cursor-pointer">
+                  <option value="الأب">الأب</option>
+                  <option value="الأم">الأم</option>
+                  <option value="ولي الأمر">ولي الأمر</option>
+                  <option value="أخرى">أخرى</option>
+                </select>
+                <div class="absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- SECTION 3: DOCUMENTS & ATTACHMENTS (OPTIONAL) -->
+        <!-- ================================================================= -->
+        <div class="space-y-5 pt-2">
+          <div class="flex items-center gap-3 border-b border-slate-200 dark:border-slate-700/60 pb-3">
+            <span class="w-8 h-8 rounded-xl bg-teal-500/20 text-teal-600 dark:text-teal-400 flex items-center justify-center text-sm font-black">٣</span>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold adm-heading">المستندات والصور (اختياري)</h2>
+              <p class="text-xs adm-muted">يمكنك رفعها الآن لتسريع استخراج كارنيه الطالب أو تقديمها لاحقاً</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            
+            <!-- 1. Student Personal Photo -->
+            <div class="p-4 rounded-2xl adm-box-surface flex flex-col items-center text-center hover:border-emerald-500/50 transition-all">
+              <span class="text-xs font-bold adm-heading mb-2">الصورة الشخصية للطالب</span>
+
+              <div *ngIf="photoPreview()" class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500/50 mb-2 shadow-lg group">
+                <img [src]="photoPreview()!" class="w-full h-full object-cover" alt="معاينة الصورة">
+                <button type="button" (click)="removePhoto()"
+                  class="absolute inset-0 bg-red-950/80 text-red-200 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold">
+                  حذف ✕
+                </button>
+              </div>
+
+              <div *ngIf="!photoPreview()" class="adm-upload-zone w-24 h-24 mb-2">
+                <span class="text-2xl mb-1">👤</span>
+                <span class="text-[10px] font-bold adm-muted">اختر صورة</span>
+                <input type="file" (change)="onPhotoSelected($event)" accept="image/*" aria-label="الصورة الشخصية">
+              </div>
+              <p class="text-[10px] adm-muted">صورة واضحة للوجه لكارنيه الطالب</p>
+            </div>
+
+            <!-- 2. Birth Certificate or ID Front -->
+            <div class="p-4 rounded-2xl adm-box-surface flex flex-col items-center text-center hover:border-emerald-500/50 transition-all">
+              <span class="text-xs font-bold adm-heading mb-2">شهادة الميلاد / وجه البطاقة</span>
+
+              <div *ngIf="docPreview()" class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500/50 mb-2 shadow-lg group">
+                <img [src]="docPreview()!" class="w-full h-full object-cover" alt="معاينة المستند">
+                <button type="button" (click)="removeDoc()"
+                  class="absolute inset-0 bg-red-950/80 text-red-200 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold">
+                  حذف ✕
+                </button>
+              </div>
+
+              <div *ngIf="!docPreview()" class="adm-upload-zone w-24 h-24 mb-2">
+                <span class="text-2xl mb-1">📄</span>
+                <span class="text-[10px] font-bold adm-muted">رفع المستند</span>
+                <input type="file" (change)="onDocSelected($event)" accept="image/*" aria-label="شهادة الميلاد">
+              </div>
+              <p class="text-[10px] adm-muted">شهادة الميلاد أو وجه البطاقة</p>
+            </div>
+
+            <!-- 3. ID Back -->
+            <div class="p-4 rounded-2xl adm-box-surface flex flex-col items-center text-center hover:border-emerald-500/50 transition-all">
+              <span class="text-xs font-bold adm-heading mb-2">ظهر البطاقة (اختياري)</span>
+
+              <div *ngIf="docBackPreview()" class="relative w-24 h-24 rounded-2xl overflow-hidden border-2 border-emerald-500/50 mb-2 shadow-lg group">
+                <img [src]="docBackPreview()!" class="w-full h-full object-cover" alt="معاينة ظهر البطاقة">
+                <button type="button" (click)="removeDocBack()"
+                  class="absolute inset-0 bg-red-950/80 text-red-200 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-xs font-bold">
+                  حذف ✕
+                </button>
+              </div>
+
+              <div *ngIf="!docBackPreview()" class="adm-upload-zone w-24 h-24 mb-2">
+                <span class="text-2xl mb-1">💳</span>
+                <span class="text-[10px] font-bold adm-muted">ظهر البطاقة</span>
+                <input type="file" (change)="onDocBackSelected($event)" accept="image/*" aria-label="ظهر البطاقة">
+              </div>
+              <p class="text-[10px] adm-muted">في حال توفر بطاقة الرقم القومي</p>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- SECTION 4: NOTES & SUBMIT -->
+        <!-- ================================================================= -->
+        <div class="space-y-4 pt-2">
+          <div>
+            <label class="block text-xs font-bold adm-heading mb-1.5">
+              ملاحظات أو رغبات خاصة لولي الأمر (اختياري)
+            </label>
+            <textarea [(ngModel)]="model.notes" name="notes" rows="2"
+              class="adm-input text-sm" placeholder="أية ملاحظات حول مستوى الطالب أو الحفظ السابق أو الأوقات المفضلة للحلقات..."></textarea>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-4">
+            <button type="submit" [disabled]="!appForm.valid || isSaving() || ssnCheckStatus().isAvailable === false"
+              class="btn-royal-gold w-full py-4 text-base font-black flex items-center justify-center gap-2 rounded-2xl shadow-xl cursor-pointer">
+              <svg *ngIf="isSaving()" class="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span>{{ isSaving() ? 'جاري إرسال الطلب...' : 'إرسال طلب الالتحاق بالدار' }}</span>
+              <svg *ngIf="!isSaving()" class="w-5 h-5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+            
+            <p class="text-[11px] text-center adm-muted mt-3 flex items-center justify-center gap-1.5">
+              <span class="text-emerald-600 dark:text-emerald-400">✓</span>
+              <span>التقديم مجاني وسيتم التواصل معكم عبر الهاتف لتأكيد موعد اختبار تحديد المستوى</span>
+            </p>
+          </div>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+
+  <!-- Comprehensive Footer -->
+  <footer class="adm-footer py-8 text-xs adm-muted mt-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-right">
+        <div class="flex items-center gap-3">
+          <img src="assets/logo-dark.png" alt="دار أولاد سند" class="logo-dark h-9 w-auto max-w-[150px] object-contain">
+          <img src="assets/logo.png" alt="دار أولاد سند" class="logo-light h-9 w-auto max-w-[150px] object-contain">
+          <span class="text-slate-400 hidden sm:inline">|</span>
+          <span class="text-xs adm-muted">صرح قرآني وتربوي مبارك</span>
+        </div>
+
+        <div class="text-xs adm-muted">
+          جميع الحقوق محفوظة © {{ currentYear }} <strong class="adm-heading">دار أولاد سند لتحفيظ القرآن الكريم</strong>.
+        </div>
+
+        <div class="flex items-center gap-4">
+          <a routerLink="/" class="text-emerald-600 dark:text-emerald-400 hover:text-amber-500 transition-colors">الرئيسية</a>
+          <span>•</span>
+          <a routerLink="/login" class="adm-muted hover:text-amber-500 transition-colors">دخول المنظومة</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div>

@@ -144,7 +144,6 @@ export class StudentLayoutComponent {
     { label: 'محادثة الدار', icon: 'chat', route: '/student/chat', exact: false },
     { label: 'سجل الإنذارات', icon: 'alert', route: '/student/warnings', exact: false },
     { label: 'ملفي الشخصي', icon: 'user', route: '/student/profile', exact: false },
-    { label: 'تغيير السر', icon: 'shield', route: '/student/change-password', exact: false },
   ];
 
   constructor() {

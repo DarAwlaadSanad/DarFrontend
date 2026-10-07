@@ -15,6 +15,7 @@ export class StudentService {
   totalCount = signal(0);
   maleCount = signal(0);
   femaleCount = signal(0);
+  unassignedCount = signal(0);
   isLoading = signal(false);
 
   constructor(private http: HttpClient) { }
@@ -33,7 +34,7 @@ export class StudentService {
       .set('pageSize', pageSize.toString());
 
     if (academicYearId) params = params.set('academicYearId', academicYearId.toString());
-    if (groupId) params = params.set('groupId', groupId.toString());
+    if (groupId !== undefined && groupId !== null) params = params.set('groupId', groupId.toString());
     if (search) params = params.set('search', search);
     if (isActive !== undefined && isActive !== null) params = params.set('isActive', isActive.toString());
     if (gender !== undefined && gender !== null) params = params.set('gender', gender.toString());
@@ -44,6 +45,7 @@ export class StudentService {
         this.totalCount.set(res.totalCount);
         this.maleCount.set(res.maleCount);
         this.femaleCount.set(res.femaleCount);
+        this.unassignedCount.set(res.unassignedCount || 0);
       })
     );
   }
@@ -62,6 +64,9 @@ export class StudentService {
 
     dto.groupIds.forEach(id => formData.append('GroupIds', id.toString()));
     dto.phoneNumbers.forEach(phone => formData.append('PhoneNumbers', phone));
+    if (dto.phoneDescriptions) {
+      dto.phoneDescriptions.forEach(desc => formData.append('PhoneDescriptions', desc || ''));
+    }
 
     if (dto.imageFiles) {
       dto.imageFiles.forEach(file => formData.append('ImageFiles', file, file.name));
@@ -96,16 +101,16 @@ export class StudentService {
     return this.http.delete<void>(`${this.apiUrl}/images/${imageId}`);
   }
 
-  addPhone(studentId: number, phone: string): Observable<void> {
-    return this.http.post<void>(`${this.apiUrl}/addPhone`, null, {
-      params: { studetId: studentId.toString(), phone }
-    });
+  addPhone(studentId: number, phone: string, description?: string): Observable<void> {
+    const params: Record<string, string> = { studetId: studentId.toString(), phone };
+    if (description?.trim()) params['description'] = description.trim();
+    return this.http.post<void>(`${this.apiUrl}/addPhone`, null, { params });
   }
 
-  updatePhone(phoneId: number, phone: string): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/updatePhone`, null, {
-      params: { phoneId: phoneId.toString(), phone }
-    });
+  updatePhone(phoneId: number, phone: string, description?: string): Observable<void> {
+    const params: Record<string, string> = { phoneId: phoneId.toString(), phone };
+    if (description !== undefined) params['description'] = description.trim();
+    return this.http.put<void>(`${this.apiUrl}/updatePhone`, null, { params });
   }
 
   deletePhone(phoneId: number): Observable<void> {

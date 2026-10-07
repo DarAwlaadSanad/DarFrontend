@@ -177,8 +177,9 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   showAddStudentModal = signal(false);
   academicYears = signal<AcademicYearViewDTO[]>([]);
   imagePreviews = signal<string[]>([]);
+  phoneDescriptionOptions = ['الأب', 'الأم', 'ولي الأمر', 'الطالب', 'المنزل', 'أخرى'];
   newStudent: StudentAddDTO = {
-    fullName: '', ssn: '', notes: '', academicYearId: 0, gender: 1, groupIds: [], phoneNumbers: [''], imageFiles: []
+    fullName: '', ssn: '', notes: '', academicYearId: 0, gender: 1, groupIds: [], phoneNumbers: [''], phoneDescriptions: ['الأب'], imageFiles: []
   };
 
   months = [
@@ -537,9 +538,17 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
       hasMemorization = true;
     }
 
+    const score = this.singleAttendanceScore();
+    if (score !== null && score !== undefined && (score as any) !== '') {
+      const numScore = Number(score);
+      if (isNaN(numScore) || numScore < 0 || numScore > 10) {
+        this.ui.error('يرجى إدخال درجة صحيحة بين 0 و 10');
+        return;
+      }
+    }
+
     this.isSavingSingle.set(true);
     const status = this.singleAttendanceStatus();
-    const score = this.singleAttendanceScore();
     const comment = this.singleAttendanceComment();
 
     // 1. Optimistic UI update immediately
@@ -615,6 +624,14 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   saveSingleRow(row: SessionEditorRow) {
     const session = this.editingSession();
     if (!session) return;
+
+    if (row.score !== null && row.score !== undefined && (row.score as any) !== '') {
+      const numScore = Number(row.score);
+      if (isNaN(numScore) || numScore < 0 || numScore > 10) {
+        this.ui.error(`درجة الطالب ${row.studentName} يجب أن تكون بين 0 و 10`);
+        return;
+      }
+    }
 
     this.applyOptimisticSingleRecord(session.sessionId, row.studentId, row.status, row.score, row.comment);
 
@@ -700,6 +717,19 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   saveSession() {
     const session = this.editingSession();
     if (!session) return;
+
+    const invalidRow = this.editorRows().find(r => {
+      if (r.score !== null && r.score !== undefined && (r.score as any) !== '') {
+        const num = Number(r.score);
+        return isNaN(num) || num < 0 || num > 10;
+      }
+      return false;
+    });
+    if (invalidRow) {
+      this.ui.error(`درجة الطالب "${invalidRow.studentName}" يجب أن تكون بين 0 و 10`);
+      return;
+    }
+
     this.isSaving.set(true);
 
     const attBatch = {
@@ -1018,13 +1048,33 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
 
   // ── Add Student ─────────────────────────────────────────────────────────────
   openAddStudentModal() {
-    this.newStudent = { fullName: '', ssn: '', notes: '', academicYearId: this.academicYears()[0]?.id || 0, gender: 1, groupIds: [this.details()!.groupId], phoneNumbers: [''], imageFiles: [] };
+    this.newStudent = {
+      fullName: '',
+      ssn: '',
+      notes: '',
+      academicYearId: this.academicYears()[0]?.id || 0,
+      gender: 1,
+      groupIds: [this.details()!.groupId],
+      phoneNumbers: [''],
+      phoneDescriptions: ['الأب'],
+      imageFiles: []
+    };
     this.imagePreviews.set([]);
     this.showAddStudentModal.set(true);
   }
   closeAddStudentModal() { this.showAddStudentModal.set(false); }
-  addPhone() { this.newStudent.phoneNumbers.push(''); }
-  removePhone(i: number) { this.newStudent.phoneNumbers.splice(i, 1); }
+  addPhone() {
+    this.newStudent.phoneNumbers.push('');
+    if (!this.newStudent.phoneDescriptions) this.newStudent.phoneDescriptions = [];
+    const defaultDesc = this.phoneDescriptionOptions[this.newStudent.phoneNumbers.length - 1] || 'الأب';
+    this.newStudent.phoneDescriptions.push(defaultDesc);
+  }
+  removePhone(i: number) {
+    this.newStudent.phoneNumbers.splice(i, 1);
+    if (this.newStudent.phoneDescriptions && this.newStudent.phoneDescriptions.length > i) {
+      this.newStudent.phoneDescriptions.splice(i, 1);
+    }
+  }
 
   onFileChange(e: any) {
     if (e.target.files.length) {
@@ -1052,14 +1102,26 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
     if (!this.newStudent.fullName) return;
 
     // Validate that at least one valid 11-digit phone is provided if they entered something
-    const validPhones = this.newStudent.phoneNumbers.filter(p => p.trim().length === 11);
-    if (this.newStudent.phoneNumbers.some(p => p.trim() !== '') && validPhones.length === 0) {
+    const validPhones: string[] = [];
+    const validDescriptions: string[] = [];
+    (this.newStudent.phoneNumbers || []).forEach((p, idx) => {
+      if (p && p.trim().length === 11) {
+        validPhones.push(p.trim());
+        validDescriptions.push(this.newStudent.phoneDescriptions?.[idx] || 'الأب');
+      }
+    });
+
+    if (this.newStudent.phoneNumbers.some(p => p && p.trim() !== '') && validPhones.length === 0) {
       this.ui.error('يرجى إدخال رقم هاتف صحيح مكون من 11 رقم');
       return;
     }
 
     this.isSaving.set(true);
-    const payload = { ...this.newStudent, phoneNumbers: validPhones };
+    const payload = {
+      ...this.newStudent,
+      phoneNumbers: validPhones,
+      phoneDescriptions: validDescriptions
+    };
 
     if (this.newStudent.ssn) {
       this.studentService.validateSSN(this.newStudent.ssn).subscribe({

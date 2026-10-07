@@ -1,0 +1,500 @@
+<div class="lp-root min-h-screen relative selection:bg-emerald-500/30" style="overflow-x: clip;" dir="rtl">
+
+  <!-- Ambient background -->
+  <div class="lp-ambient" aria-hidden="true">
+    <div class="glow-1"></div>
+    <div class="glow-2"></div>
+    <div class="pattern" style="background-image: url('assets/images/islamic-pattern.svg');"></div>
+  </div>
+
+  <!-- ============ HEADER ============ -->
+  <header class="lp-header fixed top-0 inset-x-0 z-50" [class.scrolled]="isScrolled() || mobileMenuOpen()">
+    <div class="bar max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4"
+         [class.h-20]="!isScrolled()" [class.h-16]="isScrolled()">
+
+      <!-- Logo -->
+      <a routerLink="/" (click)="scrollToTop()" class="flex items-center shrink-0 transition-transform hover:scale-105" aria-label="دار أولاد سند - الرئيسية">
+        <img src="assets/logo-dark.png" alt="دار أولاد سند" class="logo-dark h-10 sm:h-11 w-auto max-w-[170px] object-contain">
+        <img src="assets/logo.png" alt="دار أولاد سند" class="logo-light h-10 sm:h-11 w-auto max-w-[170px] object-contain">
+      </a>
+
+      <!-- Desktop nav -->
+      <nav class="hidden lg:flex items-center gap-1" aria-label="التنقل الرئيسي">
+        <button *ngFor="let link of navLinks" type="button"
+                [id]="'nav-' + link.id"
+                (click)="scrollToSection(link.id)"
+                class="lp-nav-link" [class.active]="activeSection() === link.id">
+          {{ link.label }}
+        </button>
+      </nav>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <app-theme-toggle variant="ghost" />
+
+        <ng-container *ngIf="isAuthenticated(); else guestAuth">
+          <a [routerLink]="getDashboardUrl()" id="header-dashboard-btn"
+             class="btn-lp-ghost hidden sm:inline-flex px-4 py-2 rounded-xl text-sm">
+            {{ isStudent() ? 'بوابة الطالب' : 'لوحة التحكم' }}
+          </a>
+        </ng-container>
+        <ng-template #guestAuth>
+          <a routerLink="/login" id="header-login-btn"
+             class="btn-lp-ghost hidden sm:inline-flex px-4 py-2 rounded-xl text-sm">
+            <svg class="w-4 h-4 lp-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+            </svg>
+            تسجيل الدخول
+          </a>
+        </ng-template>
+
+        <a routerLink="/apply" id="header-apply-btn" class="btn-lp-gold px-4 sm:px-5 py-2 rounded-xl text-sm">
+          قدّم الآن
+        </a>
+
+        <button type="button" id="mobile-menu-toggle" (click)="toggleMobileMenu()"
+                class="lg:hidden w-10 h-10 rounded-xl btn-lp-ghost"
+                [attr.aria-expanded]="mobileMenuOpen()" aria-label="القائمة">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path *ngIf="!mobileMenuOpen()" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            <path *ngIf="mobileMenuOpen()" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div *ngIf="mobileMenuOpen()" class="lg:hidden border-t lp-border px-4 pb-5 pt-3 space-y-1 animate-fade-in">
+      <button *ngFor="let link of navLinks" type="button" (click)="scrollToSection(link.id)"
+              class="w-full text-right px-4 py-3 rounded-xl font-semibold lp-text hover:bg-emerald-500/10"
+              [class.lp-accent]="activeSection() === link.id">
+        {{ link.label }}
+      </button>
+      <div class="pt-3 grid grid-cols-2 gap-2">
+        <a *ngIf="!isAuthenticated()" routerLink="/login" class="btn-lp-ghost py-3 rounded-xl text-sm">تسجيل الدخول</a>
+        <a *ngIf="isAuthenticated()" [routerLink]="getDashboardUrl()" class="btn-lp-ghost py-3 rounded-xl text-sm">
+          {{ isStudent() ? 'بوابة الطالب' : 'لوحة التحكم' }}
+        </a>
+        <a routerLink="/apply" class="btn-lp-gold py-3 rounded-xl text-sm">قدّم الآن</a>
+      </div>
+    </div>
+
+    <div class="lp-progress" [style.width.%]="scrollProgress()"></div>
+  </header>
+
+  <main class="relative z-10">
+
+    <!-- ============ HERO ============ -->
+    <section id="hero" class="relative pt-28 sm:pt-36 pb-16 sm:pb-24">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-14 lg:gap-10 items-center">
+
+          <!-- Text -->
+          <div class="lg:col-span-7 text-center lg:text-right space-y-7">
+            <div data-reveal class="lp-chip gold">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              باب التقديم مفتوح الآن
+            </div>
+
+            <h1 data-reveal style="--d: 80ms" class="lp-heading text-4xl sm:text-5xl lg:text-[3.6rem] font-black leading-[1.35]">
+              نُعلِّم أبناءكم القرآن
+              <span class="block lp-gradient-text pb-2">حفظاً وإتقاناً وخُلُقاً</span>
+            </h1>
+
+            <p data-reveal style="--d: 160ms" class="lp-text text-base sm:text-lg leading-loose max-w-xl mx-auto lg:mx-0">
+              دار أولاد سند لتحفيظ القرآن الكريم — حلقات متخصصة لجميع الأعمار بإشراف معلمين متقنين،
+              مع منظومة إلكترونية تتيح لك متابعة تسميع ابنك وحضوره يوماً بيوم.
+            </p>
+
+            <div data-reveal style="--d: 240ms" class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
+              <a routerLink="/apply" id="hero-apply-btn" class="btn-lp-primary w-full sm:w-auto px-8 py-4 rounded-2xl text-base group">
+                قدّم طلب الالتحاق
+                <svg class="w-5 h-5 transition-transform group-hover:-translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </a>
+              <button type="button" id="hero-tracks-btn" (click)="scrollToSection('tracks')" class="btn-lp-ghost w-full sm:w-auto px-7 py-4 rounded-2xl text-base">
+                تعرّف على المسارات
+              </button>
+            </div>
+
+            <!-- Inline live stats -->
+            <div id="stats" data-reveal style="--d: 320ms" class="pt-6 grid grid-cols-3 gap-3 sm:gap-4 max-w-lg mx-auto lg:mx-0">
+              <div class="lp-card rounded-2xl px-3 py-4 text-center">
+                <div class="lp-heading text-2xl sm:text-3xl font-black tabular-nums">+{{ displayStats().students }}</div>
+                <div class="lp-muted text-xs font-semibold mt-1">طالب وطالبة</div>
+              </div>
+              <div class="lp-card rounded-2xl px-3 py-4 text-center">
+                <div class="lp-heading text-2xl sm:text-3xl font-black tabular-nums">{{ displayStats().groups }}</div>
+                <div class="lp-muted text-xs font-semibold mt-1">حلقة قرآنية</div>
+              </div>
+              <div class="lp-card rounded-2xl px-3 py-4 text-center">
+                <div class="lp-heading text-2xl sm:text-3xl font-black tabular-nums">{{ displayStats().teachers }}</div>
+                <div class="lp-muted text-xs font-semibold mt-1">معلم ومحفّظ</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Visual -->
+          <div class="lg:col-span-5 flex justify-center" data-reveal style="--d: 200ms">
+            <div class="relative w-full max-w-[400px]">
+              <div class="lp-hero-frame lp-arch relative aspect-[4/5] overflow-hidden flex items-end justify-center p-6">
+                <div class="absolute inset-0 opacity-[0.12]" style="background-image: url('assets/images/islamic-pattern.svg'); background-size: 90px;"></div>
+                <img src="assets/images/student-reading-quran.png"
+                     alt="طالب يتلو القرآن الكريم في دار أولاد سند"
+                     class="relative z-10 w-full h-[88%] object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]">
+              </div>
+
+              <!-- Floating badges -->
+              <div class="lp-float-badge absolute top-10 -right-3 sm:-right-8 rounded-2xl px-4 py-3 flex items-center gap-3 animate-float">
+                <div class="lp-icon-tile w-10 h-10 text-lg">⭐</div>
+                <div>
+                  <div class="lp-muted text-[11px] font-semibold">تقييم التسميع</div>
+                  <div class="lp-heading text-sm font-black">ممتاز 10/10</div>
+                </div>
+              </div>
+
+              <div class="lp-float-badge absolute bottom-12 -left-3 sm:-left-8 rounded-2xl px-4 py-3 flex items-center gap-3 animate-float" style="animation-delay: 1.8s;">
+                <div class="lp-icon-tile w-10 h-10 text-lg">📱</div>
+                <div>
+                  <div class="lp-muted text-[11px] font-semibold">متابعة ولي الأمر</div>
+                  <div class="lp-heading text-sm font-black">لحظة بلحظة</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Ayah ribbon -->
+    <div class="relative z-10 border-y lp-border lp-bg-alt">
+      <div class="max-w-7xl mx-auto px-4 py-5 text-center">
+        <p class="font-quran text-xl sm:text-2xl lp-gold">«خَيْرُكُمْ مَنْ تَعَلَّمَ الْقُرْآنَ وَعَلَّمَهُ»</p>
+      </div>
+    </div>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="py-20 sm:py-28">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+
+          <div data-reveal class="relative order-2 lg:order-1">
+            <div class="lp-card rounded-[2rem] p-3">
+              <div class="relative rounded-[1.6rem] overflow-hidden aspect-[4/3]">
+                <img src="assets/images/halaqah-circle.png" alt="حلقة تحفيظ في دار أولاد سند" loading="lazy"
+                     class="w-full h-full object-cover transition-transform duration-700 hover:scale-105">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent"></div>
+                <div class="absolute bottom-5 inset-x-5 text-center">
+                  <p class="font-quran text-xl sm:text-2xl text-amber-300">﴿ وَرَتِّلِ الْقُرْآنَ تَرْتِيلًا ﴾</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-6 order-1 lg:order-2">
+            <span data-reveal class="lp-chip">عن الدار</span>
+            <h2 data-reveal style="--d: 80ms" class="lp-heading text-3xl sm:text-4xl font-black leading-snug">
+              رسالتنا: ربط القلوب بكتاب الله
+              <span class="lp-accent">تلاوةً وفهماً وعملاً</span>
+            </h2>
+            <p data-reveal style="--d: 140ms" class="lp-text leading-loose">
+              دار أولاد سند منارة قرآنية وتربوية تعتمد التلقي المباشر عن معلمين متقنين،
+              وتوظّف التقنية لتيسير الحفظ ومتابعته وتوفير بيئة محفزة للأطفال والشباب.
+            </p>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+              <div data-reveal style="--d: 180ms" class="lp-card lp-card-hover rounded-2xl p-5 flex gap-4">
+                <div class="lp-icon-tile w-11 h-11 text-xl shrink-0">📜</div>
+                <div>
+                  <h3 class="lp-heading font-bold mb-1">أصالة التلقي</h3>
+                  <p class="lp-muted text-sm leading-relaxed">تلقين مشافهة برواية حفص مع ضبط المخارج.</p>
+                </div>
+              </div>
+              <div data-reveal style="--d: 240ms" class="lp-card lp-card-hover rounded-2xl p-5 flex gap-4">
+                <div class="lp-icon-tile w-11 h-11 text-xl shrink-0">⚡</div>
+                <div>
+                  <h3 class="lp-heading font-bold mb-1">متابعة إلكترونية</h3>
+                  <p class="lp-muted text-sm leading-relaxed">الدرجات والحضور متاحة فوراً دون انتظار.</p>
+                </div>
+              </div>
+              <div data-reveal style="--d: 300ms" class="lp-card lp-card-hover rounded-2xl p-5 flex gap-4">
+                <div class="lp-icon-tile w-11 h-11 text-xl shrink-0">🌱</div>
+                <div>
+                  <h3 class="lp-heading font-bold mb-1">رعاية تربوية</h3>
+                  <p class="lp-muted text-sm leading-relaxed">غرس الآداب والأخلاق القرآنية.</p>
+                </div>
+              </div>
+              <div data-reveal style="--d: 360ms" class="lp-card lp-card-hover rounded-2xl p-5 flex gap-4">
+                <div class="lp-icon-tile w-11 h-11 text-xl shrink-0">🎯</div>
+                <div>
+                  <h3 class="lp-heading font-bold mb-1">تثبيت المحفوظ</h3>
+                  <p class="lp-muted text-sm leading-relaxed">مراجعة منتظمة للماضي القريب والبعيد.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ TRACKS ============ -->
+    <section id="tracks" class="py-20 sm:py-28 lp-bg-alt border-y lp-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-14 space-y-4">
+          <span data-reveal class="lp-chip">المسارات التعليمية</span>
+          <h2 data-reveal style="--d: 80ms" class="lp-heading text-3xl sm:text-4xl font-black">مسار مناسب لكل عمر ومستوى</h2>
+          <p data-reveal style="--d: 140ms" class="lp-text">ينتقل الطالب خطوة بخطوة من التأسيس حتى إتمام الختمة وإتقان التلاوة.</p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <article *ngFor="let track of tracks; let i = index"
+                   data-reveal [style.--d]="(i * 90) + 'ms'"
+                   class="lp-card lp-card-hover lp-track rounded-3xl p-6 flex flex-col"
+                   [ngClass]="'track-' + track.accent" [class.featured]="track.featured">
+
+            <div class="flex items-start justify-between mb-5">
+              <div class="track-icon w-14 h-14 rounded-2xl flex items-center justify-center text-2xl">{{ track.icon }}</div>
+              <span class="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                    [ngClass]="track.featured ? 'bg-amber-400 text-amber-950' : 'lp-chip !py-1 !px-2.5'">
+                {{ track.badge }}
+              </span>
+            </div>
+
+            <h3 class="lp-heading text-xl font-black mb-1">{{ track.title }}</h3>
+            <p class="track-check text-sm font-bold mb-3">{{ track.age }}</p>
+            <p class="lp-muted text-sm leading-relaxed mb-5">{{ track.description }}</p>
+
+            <ul class="space-y-2.5 pt-4 border-t lp-border mb-6 flex-1">
+              <li *ngFor="let feat of track.features" class="flex items-start gap-2 text-sm lp-text">
+                <svg class="track-check w-4 h-4 mt-0.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{{ feat }}</span>
+              </li>
+            </ul>
+
+            <a routerLink="/apply" [id]="'track-apply-' + track.id"
+               [ngClass]="track.featured ? 'btn-lp-primary' : 'btn-lp-ghost'"
+               class="w-full py-3 rounded-xl text-sm">
+              سجّل في هذا المسار
+            </a>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ENROLLMENT STEPS ============ -->
+    <section id="steps" class="py-20 sm:py-28">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-16 space-y-4">
+          <span data-reveal class="lp-chip gold">خطوات الالتحاق</span>
+          <h2 data-reveal style="--d: 80ms" class="lp-heading text-3xl sm:text-4xl font-black">انضم إلينا في 4 خطوات بسيطة</h2>
+          <p data-reveal style="--d: 140ms" class="lp-text">من تقديم الطلب حتى أول يوم في الحلقة — رحلة واضحة وسهلة.</p>
+        </div>
+
+        <div class="relative">
+          <div class="lp-steps-line hidden lg:block" aria-hidden="true"></div>
+          <ol class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6">
+            <li *ngFor="let step of steps; let i = index" data-reveal [style.--d]="(i * 120) + 'ms'" class="text-center">
+              <div class="relative mx-auto w-[4.5rem] h-[4.5rem] mb-5">
+                <div class="lp-card w-full h-full rounded-2xl flex items-center justify-center text-3xl">{{ step.icon }}</div>
+                <span class="absolute -top-2 -left-2 w-7 h-7 rounded-full bg-gradient-to-br from-amber-300 to-amber-500 text-amber-950 text-[11px] font-black flex items-center justify-center shadow-md">
+                  {{ i + 1 }}
+                </span>
+              </div>
+              <h3 class="lp-heading text-lg font-black mb-2">{{ step.title }}</h3>
+              <p class="lp-muted text-sm leading-relaxed max-w-[15rem] mx-auto">{{ step.description }}</p>
+            </li>
+          </ol>
+        </div>
+
+        <div data-reveal class="text-center mt-14">
+          <a routerLink="/apply" id="steps-apply-btn" class="btn-lp-primary px-8 py-4 rounded-2xl text-base">
+            ابدأ الخطوة الأولى الآن
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURES ============ -->
+    <section id="features" class="py-20 sm:py-28 lp-bg-alt border-y lp-border">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-14 space-y-4">
+          <span data-reveal class="lp-chip">المنظومة الذكية</span>
+          <h2 data-reveal style="--d: 80ms" class="lp-heading text-3xl sm:text-4xl font-black">كل ما تحتاجه لمتابعة ابنك في مكان واحد</h2>
+          <p data-reveal style="--d: 140ms" class="lp-text">منصة رقمية تجمع الإدارة والمعلمين والطلاب وأولياء الأمور.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div *ngFor="let item of features; let i = index"
+               data-reveal [style.--d]="(i % 3) * 90 + 'ms'"
+               class="lp-card lp-card-hover rounded-3xl p-7 group">
+            <div class="lp-icon-tile w-14 h-14 text-2xl mb-5 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-6">
+              {{ item.icon }}
+            </div>
+            <h3 class="lp-heading text-lg font-black mb-2">{{ item.title }}</h3>
+            <p class="lp-muted text-sm leading-relaxed">{{ item.description }}</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AYAH INTERLUDE ============ -->
+    <section class="py-20 sm:py-24">
+      <div data-reveal class="max-w-4xl mx-auto px-4 sm:px-6 text-center space-y-6">
+        <span class="lp-gold text-4xl block">﷽</span>
+        <blockquote class="font-quran lp-heading text-2xl sm:text-3xl lg:text-4xl leading-[2]">
+          ﴿ إِنَّ هَٰذَا الْقُرْآنَ يَهْدِي لِلَّتِي هِيَ أَقْوَمُ ﴾
+        </blockquote>
+        <p class="lp-muted text-sm font-semibold">سورة الإسراء — الآية 9</p>
+      </div>
+    </section>
+
+    <!-- ============ TESTIMONIALS ============ -->
+    <section id="testimonials" class="pb-20 sm:pb-28">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center max-w-2xl mx-auto mb-14 space-y-4">
+          <span data-reveal class="lp-chip gold">آراء أسر الدار</span>
+          <h2 data-reveal style="--d: 80ms" class="lp-heading text-3xl sm:text-4xl font-black">ثقة نعتز بها</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <figure *ngFor="let item of testimonials; let i = index"
+                  data-reveal [style.--d]="(i * 100) + 'ms'"
+                  class="lp-card lp-card-hover rounded-3xl p-7 flex flex-col">
+            <svg class="w-9 h-9 lp-gold opacity-60 mb-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+            </svg>
+            <blockquote class="lp-text leading-loose flex-1 mb-6">{{ item.quote }}</blockquote>
+            <figcaption class="flex items-center gap-3 pt-5 border-t lp-border">
+              <div class="w-11 h-11 rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-white font-black flex items-center justify-center">
+                {{ item.avatar }}
+              </div>
+              <div>
+                <div class="lp-heading font-bold text-sm">{{ item.author }}</div>
+                <div class="lp-muted text-xs">{{ item.role }} • <span class="lp-accent">{{ item.student }}</span></div>
+              </div>
+            </figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section id="faq" class="py-20 sm:py-28 lp-bg-alt border-y lp-border">
+      <div class="max-w-3xl mx-auto px-4 sm:px-6">
+        <div class="text-center mb-12 space-y-4">
+          <span data-reveal class="lp-chip">الأسئلة الشائعة</span>
+          <h2 data-reveal style="--d: 80ms" class="lp-heading text-3xl sm:text-4xl font-black">لديك سؤال؟</h2>
+        </div>
+
+        <div class="space-y-3">
+          <div *ngFor="let item of faqs; let i = index"
+               data-reveal [style.--d]="(i * 60) + 'ms'"
+               class="lp-card lp-faq-item rounded-2xl" [class.open]="activeFaqIndex() === i">
+            <button type="button" [id]="'faq-q-' + i" (click)="toggleFaq(i)"
+                    [attr.aria-expanded]="activeFaqIndex() === i" [attr.aria-controls]="'faq-a-' + i"
+                    class="w-full p-5 text-right flex items-center justify-between gap-4">
+              <span class="lp-heading font-bold">{{ item.question }}</span>
+              <span class="lp-faq-icon lp-icon-tile w-8 h-8 !rounded-full shrink-0 lp-accent text-lg font-bold">+</span>
+            </button>
+            <div [id]="'faq-a-' + i" role="region" [attr.aria-labelledby]="'faq-q-' + i"
+                 class="lp-faq-body" [class.open]="activeFaqIndex() === i">
+              <div>
+                <p class="px-5 pb-5 lp-text leading-loose">{{ item.answer }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA ============ -->
+    <section class="py-20 sm:py-28">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6">
+        <div data-reveal class="lp-cta relative overflow-hidden rounded-[2rem] px-6 py-14 sm:p-16 text-center shadow-2xl">
+          <div class="absolute inset-0 opacity-[0.08]" style="background-image: url('assets/images/islamic-pattern.svg'); background-size: 120px;"></div>
+          <div class="relative z-10 max-w-2xl mx-auto space-y-6">
+            <h2 class="text-3xl sm:text-5xl font-black text-white leading-snug">
+              احجز مقعد ابنك في
+              <span class="text-amber-300">حلقات النور</span>
+            </h2>
+            <p class="text-emerald-50/85 leading-loose">
+              الأماكن محدودة لضمان عدد مناسب في كل حلقة يتيح لكل طالب وقتاً كافياً للتسميع والتصحيح.
+            </p>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <a routerLink="/apply" id="cta-apply-btn" class="btn-lp-gold w-full sm:w-auto px-9 py-4 rounded-2xl text-base">
+                قدّم طلب الالتحاق الآن
+              </a>
+              <a routerLink="/login" id="cta-login-btn"
+                 class="w-full sm:w-auto px-7 py-4 rounded-2xl text-base font-bold text-white border border-white/25 hover:bg-white/10 transition-colors">
+                دخول بوابة الطالب
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="relative z-10 border-t lp-border lp-bg-alt pt-16 pb-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 pb-12 border-b lp-border">
+
+        <div class="space-y-4 lg:col-span-2">
+          <img src="assets/logo-dark.png" alt="دار أولاد سند" class="logo-dark h-12 w-auto max-w-[190px] object-contain">
+          <img src="assets/logo.png" alt="دار أولاد سند" class="logo-light h-12 w-auto max-w-[190px] object-contain">
+          <p class="lp-muted text-sm leading-relaxed max-w-sm">
+            صرح تعليمي وتربوي متخصص في تحفيظ القرآن الكريم وتجويده، بمتابعة إلكترونية حديثة.
+          </p>
+        </div>
+
+        <div>
+          <h4 class="lp-heading font-bold mb-4">روابط سريعة</h4>
+          <ul class="space-y-2.5 text-sm">
+            <li *ngFor="let link of navLinks">
+              <button type="button" (click)="scrollToSection(link.id)" class="lp-muted hover:text-amber-500 transition-colors">{{ link.label }}</button>
+            </li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="lp-heading font-bold mb-4">ابدأ الآن</h4>
+          <ul class="space-y-2.5 text-sm">
+            <li><a routerLink="/apply" class="lp-accent font-bold hover:underline">طلب التحاق جديد</a></li>
+            <li><a routerLink="/login" class="lp-muted hover:text-amber-500 transition-colors">تسجيل الدخول</a></li>
+          </ul>
+          <div class="mt-5 flex items-start gap-2 text-sm lp-muted">
+            <span>🕒</span>
+            <span>فترات صباحية ومسائية بعد المدرسة</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs lp-muted">
+        <p>© {{ currentYear }} <strong class="lp-heading">دار أولاد سند لتحفيظ القرآن الكريم</strong>. جميع الحقوق محفوظة.</p>
+        <p>المنظومة التعليمية الذكية</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Back to top -->
+  <button type="button" id="back-to-top" (click)="scrollToTop()" aria-label="العودة للأعلى"
+          class="lp-to-top fixed bottom-6 left-6 z-40 w-12 h-12 rounded-2xl flex items-center justify-center"
+          [class.opacity-0]="!showBackToTop()" [class.pointer-events-none]="!showBackToTop()"
+          [class.translate-y-4]="!showBackToTop()">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 15l7-7 7 7" />
+    </svg>
+  </button>
+
+</div>

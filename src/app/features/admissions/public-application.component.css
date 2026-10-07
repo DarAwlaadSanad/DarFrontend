@@ -1,0 +1,206 @@
+/* ==========================================================================
+   Public Application / Admissions Design System - Dar Awlaad Sanad
+   Complete Dark & Light Mode Theme Engine
+   ========================================================================== */
+
+:host {
+  display: block;
+  width: 100%;
+
+  /* Dark theme (default) */
+  --adm-bg: #050d14;
+  --adm-bg-card: rgba(8, 24, 32, 0.88);
+  --adm-bg-surface: #071720;
+  --adm-border: rgba(45, 212, 191, 0.16);
+  --adm-border-strong: rgba(45, 212, 191, 0.3);
+  --adm-heading: #ffffff;
+  --adm-text: #cbd5e1;
+  --adm-text-muted: #8aa0ad;
+  --adm-input-bg: #06121a;
+  --adm-input-border: rgba(16, 185, 129, 0.22);
+  --adm-input-text: #f8fafc;
+  --adm-gold: #fbbf24;
+  --adm-gold-soft: rgba(251, 191, 36, 0.12);
+  --adm-emerald: #34d399;
+  --adm-emerald-soft: rgba(16, 185, 129, 0.12);
+  --adm-header-bg: rgba(6, 18, 25, 0.92);
+  --adm-footer-bg: #03090e;
+  --adm-hero-bg: linear-gradient(135deg, #071922 0%, #05131c 50%, #040e15 100%);
+  --adm-hero-border: rgba(16, 185, 129, 0.3);
+  --adm-shadow: 0 20px 45px -20px rgba(0, 0, 0, 0.65);
+}
+
+:host-context(.light),
+:host-context(html.light) {
+  --adm-bg: #f8fafc;
+  --adm-bg-card: #ffffff;
+  --adm-bg-surface: #f1f5f9;
+  --adm-border: #e2e8f0;
+  --adm-border-strong: #cbd5e1;
+  --adm-heading: #0f172a;
+  --adm-text: #334155;
+  --adm-text-muted: #64748b;
+  --adm-input-bg: #ffffff;
+  --adm-input-border: #cbd5e1;
+  --adm-input-text: #0f172a;
+  --adm-gold: #b45309;
+  --adm-gold-soft: rgba(217, 119, 6, 0.1);
+  --adm-emerald: #059669;
+  --adm-emerald-soft: rgba(5, 150, 105, 0.1);
+  --adm-header-bg: rgba(255, 255, 255, 0.95);
+  --adm-footer-bg: #ffffff;
+  --adm-hero-bg: linear-gradient(135deg, #ecfdf5 0%, #f0fdfa 50%, #fffbeb 100%);
+  --adm-hero-border: rgba(16, 185, 129, 0.25);
+  --adm-shadow: 0 10px 30px -10px rgba(15, 23, 42, 0.08);
+}
+
+.adm-root {
+  background-color: var(--adm-bg);
+  color: var(--adm-text);
+  font-family: 'Cairo', 'Inter', sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.adm-header {
+  background-color: var(--adm-header-bg);
+  border-bottom: 1px solid var(--adm-border);
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.06);
+}
+
+.adm-hero {
+  background: var(--adm-hero-bg);
+  border: 1px solid var(--adm-hero-border);
+}
+
+.adm-card {
+  background-color: var(--adm-bg-card);
+  border: 1px solid var(--adm-border);
+  box-shadow: var(--adm-shadow);
+  border-radius: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+.adm-footer {
+  background-color: var(--adm-footer-bg);
+  border-top: 1px solid var(--adm-border);
+}
+
+.adm-heading {
+  color: var(--adm-heading);
+}
+
+.adm-text {
+  color: var(--adm-text);
+}
+
+.adm-muted {
+  color: var(--adm-text-muted);
+}
+
+.adm-input {
+  background-color: var(--adm-input-bg);
+  border: 1px solid var(--adm-input-border);
+  color: var(--adm-input-text);
+  border-radius: 0.875rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.adm-input:focus {
+  outline: none;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.18);
+}
+
+.adm-input::placeholder {
+  color: var(--adm-text-muted);
+  opacity: 0.75;
+}
+
+.adm-input option {
+  background-color: var(--adm-bg-surface);
+  color: var(--adm-heading);
+}
+
+.adm-box-surface {
+  background-color: var(--adm-bg-surface);
+  border: 1px solid var(--adm-border);
+}
+
+.btn-royal-gold {
+  background: linear-gradient(135deg, #fcd34d 0%, #f59e0b 55%, #d97706 100%);
+  color: #1c1203;
+  font-weight: 800;
+  border: 1px solid rgba(253, 230, 138, 0.6);
+  box-shadow: 0 10px 24px -10px rgba(217, 119, 6, 0.65);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-royal-gold:hover:not(:disabled) {
+  transform: translateY(-2px);
+  filter: brightness(1.05);
+  box-shadow: 0 16px 32px -12px rgba(217, 119, 6, 0.75);
+}
+
+.btn-royal-gold:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-royal-primary {
+  background: linear-gradient(135deg, #10b981 0%, #059669 50%, #047857 100%);
+  color: #ffffff;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+  box-shadow: 0 8px 20px -4px rgba(5, 150, 105, 0.45);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.btn-royal-primary:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+/* Upload zone */
+.adm-upload-zone {
+  border: 2px dashed var(--adm-border-strong);
+  background-color: var(--adm-bg-surface);
+  border-radius: 1.25rem;
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.25s ease;
+}
+
+.adm-upload-zone:hover {
+  border-color: #f59e0b;
+  background-color: var(--adm-gold-soft);
+}
+
+.adm-upload-zone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* Light mode specific enhancements */
+:host-context(.light) .adm-hero-ayah,
+:host-context(html.light) .adm-hero-ayah {
+  color: #92400e;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.animate-glow {
+  animation: pulseGlow 5s ease-in-out infinite;
+}

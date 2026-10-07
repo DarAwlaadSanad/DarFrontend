@@ -19,82 +19,82 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
       <div class="fixed inset-0 pointer-events-none opacity-20 bg-[radial-gradient(#d4af37_1px,transparent_1px)] [background-size:24px_24px]"></div>
 
       <!-- Top Navigation & Controls Header (Refined 2-Row Islamic Luxury Design) -->
-      <header class="sticky top-0 z-40 backdrop-blur-xl bg-dark-950/95 border-b border-dark-800/80 px-3 py-3 sm:px-6 print:hidden shadow-2xl">
-        <div class="max-w-7xl mx-auto space-y-2.5">
+      <header class="sticky top-0 z-40 backdrop-blur-xl bg-dark-950/95 border-b border-dark-800/80 px-2.5 py-2.5 sm:px-6 sm:py-3 print:hidden shadow-2xl">
+        <div class="max-w-7xl mx-auto space-y-2 sm:space-y-2.5">
           
           <!-- Row 1: Back Button, Board Title, and Display Tools -->
-          <div class="flex items-center justify-between gap-3 flex-wrap">
+          <div class="flex items-center justify-between gap-2 sm:gap-3">
             
             <!-- Right: Back Button & Title -->
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 sm:gap-3 min-w-0">
               <button (click)="goBack()"
                 title="العودة"
-                class="w-10 h-10 rounded-2xl bg-dark-900 hover:bg-dark-800 border border-dark-700/80 flex items-center justify-center text-dark-300 hover:text-white transition-all shadow-md group shrink-0 active:scale-95">
-                <svg class="w-5 h-5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-dark-900 hover:bg-dark-800 border border-dark-700/80 flex items-center justify-center text-dark-300 hover:text-white transition-all shadow-md group shrink-0 active:scale-95">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5 transition-transform group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
 
-              <div>
-                <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                  <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1.5 shadow-sm">
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap mb-0.5">
+                  <span class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 inline-flex items-center gap-1 shadow-sm shrink-0">
                     <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                     <span>مصحف المدينة (١٥ سطراً)</span>
                   </span>
-                  <span *ngIf="studentName" class="text-xs text-dark-300 font-medium px-2.5 py-0.5 rounded-full bg-dark-900 border border-dark-800">
-                    👤 الطالب: <strong class="text-emerald-400 font-bold">{{ studentName }}</strong>
+                  <span *ngIf="studentName" class="text-[10px] sm:text-xs text-dark-300 font-medium px-2 py-0.5 rounded-full bg-dark-900 border border-dark-800 truncate max-w-[150px] sm:max-w-xs">
+                    👤 <strong class="text-emerald-400 font-bold">{{ studentName }}</strong>
                   </span>
                 </div>
 
-                <h1 class="text-sm sm:text-base font-black text-white flex items-center gap-2 tracking-tight">
-                  <span>{{ boardSummary() }}</span>
-                  <span *ngIf="boardData() as data" class="text-xs font-bold text-amber-400/90 font-mono px-2 py-0.5 rounded-md bg-amber-400/10 border border-amber-400/20">
-                    صفحة {{ toArabic(data.fromPage) }} إلى {{ toArabic(data.toPage) }}
+                <h1 class="text-xs sm:text-base font-black text-white flex items-center gap-1.5 sm:gap-2 tracking-tight truncate">
+                  <span class="truncate">{{ boardSummary() }}</span>
+                  <span *ngIf="boardData() as data" class="text-[10px] sm:text-xs font-bold text-amber-400/90 font-mono px-1.5 py-0.5 rounded bg-amber-400/10 border border-amber-400/20 shrink-0">
+                    ص {{ toArabic(data.fromPage) }} إلى {{ toArabic(data.toPage) }}
                   </span>
                 </h1>
               </div>
             </div>
 
             <!-- Left: Display & Reading Tools -->
-            <div class="flex items-center gap-2 flex-wrap">
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
               
               <!-- Toggle Assignment Highlights -->
               <button (click)="toggleHighlight()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95"
+                class="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold border transition-all active:scale-95"
                 [ngClass]="highlightAssigned() 
                   ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-[0_0_12px_rgba(245,158,11,0.2)]' 
                   : 'bg-dark-900 text-dark-400 border-dark-700/80 hover:text-white hover:bg-dark-850'"
                 title="تحديد آيات التكليف باللون الذهبي">
                 <span>✨</span>
-                <span>تمييز الحفظ</span>
+                <span class="hidden sm:inline">تمييز الحفظ</span>
               </button>
 
               <!-- Toggle View Mode: Single Page vs All Pages -->
               <button (click)="toggleViewMode()"
                 *ngIf="boardData() && boardData()!.pages.length > 1"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-dark-850 border border-dark-700/80 text-dark-200 hover:text-white transition-all active:scale-95"
+                class="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-dark-850 border border-dark-700/80 text-dark-200 hover:text-white transition-all active:scale-95"
                 [title]="viewMode() === 'single' ? 'عرض كل صفحات التكليف' : 'عرض صفحة واحدة'">
-                <span *ngIf="viewMode() === 'single'">📑 كل الصفحات</span>
-                <span *ngIf="viewMode() === 'all'">📄 صفحة مفردة</span>
+                <span *ngIf="viewMode() === 'single'">📑<span class="hidden md:inline"> كل الصفحات</span></span>
+                <span *ngIf="viewMode() === 'all'">📄<span class="hidden md:inline"> صفحة مفردة</span></span>
               </button>
 
               <!-- Theme Switcher (Madinah Paper vs Night) -->
               <button (click)="togglePageTheme()"
-                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-dark-850 border border-dark-700/80 text-dark-200 hover:text-white transition-all active:scale-95">
-                <span *ngIf="pageTheme() === 'mushaf'">🌙 النمط الليلي</span>
-                <span *ngIf="pageTheme() === 'dark'">📜 نمط المصحف</span>
+                class="inline-flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-dark-850 border border-dark-700/80 text-dark-200 hover:text-white transition-all active:scale-95">
+                <span *ngIf="pageTheme() === 'mushaf'">🌙<span class="hidden sm:inline"> النمط الليلي</span></span>
+                <span *ngIf="pageTheme() === 'dark'">📜<span class="hidden sm:inline"> نمط المصحف</span></span>
               </button>
 
               <!-- Font Size Zoom Controls -->
               <div class="flex items-center bg-dark-900 border border-dark-700/80 rounded-xl p-0.5 text-xs">
-                <button (click)="decreaseFont()" class="px-2 py-1 text-dark-300 hover:text-amber-400 font-bold" title="تصغير الخط">أ-</button>
-                <span class="px-1.5 text-[11px] text-amber-400/90 font-mono font-bold">{{ fontSize() }}px</span>
-                <button (click)="increaseFont()" class="px-2 py-1 text-dark-300 hover:text-amber-400 font-bold" title="تكبير الخط">أ+</button>
+                <button (click)="decreaseFont()" class="px-1.5 sm:px-2 py-1 text-dark-300 hover:text-amber-400 font-bold" title="تصغير الخط">أ-</button>
+                <span class="px-1 text-[10px] sm:text-[11px] text-amber-400/90 font-mono font-bold">{{ fontSize() }}</span>
+                <button (click)="increaseFont()" class="px-1.5 sm:px-2 py-1 text-dark-300 hover:text-amber-400 font-bold" title="تكبير الخط">أ+</button>
               </div>
 
               <!-- Print Button -->
               <button (click)="printBoard()" 
-                class="w-9 h-9 rounded-xl bg-dark-900 hover:bg-dark-850 border border-dark-700/80 flex items-center justify-center text-dark-300 hover:text-white transition-all" 
+                class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-dark-900 hover:bg-dark-850 border border-dark-700/80 hidden sm:flex items-center justify-center text-dark-300 hover:text-white transition-all" 
                 title="طباعة اللوح">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
@@ -104,40 +104,40 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
           </div>
 
           <!-- Row 2: Dedicated Audio Player & Recitation Control Bar -->
-          <div class="p-2.5 sm:p-3 rounded-2xl bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-amber-500/25 flex items-center justify-between gap-3 flex-wrap shadow-lg">
+          <div class="p-2 sm:p-2.5 md:p-3 rounded-2xl bg-gradient-to-r from-dark-900 via-dark-850 to-dark-900 border border-amber-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-lg">
             
             <!-- Right: Reader Segmented Switch -->
             <div class="flex items-center gap-2">
-              <span class="text-[11px] text-dark-400 font-bold hidden sm:inline">القارئ:</span>
-              <div class="flex items-center bg-dark-950/80 border border-dark-700/80 rounded-xl p-1 text-xs font-bold">
+              <span class="text-[11px] text-dark-400 font-bold hidden md:inline">القارئ:</span>
+              <div class="grid grid-cols-2 sm:flex items-center bg-dark-950/80 border border-dark-700/80 rounded-xl p-0.5 sm:p-1 text-[11px] sm:text-xs font-bold w-full sm:w-auto">
                 <button (click)="setRecitationStyle('muallim')" 
                         [ngClass]="recitationStyle() === 'muallim' 
                           ? 'bg-amber-500 text-dark-950 shadow-md font-black' 
                           : 'text-dark-300 hover:text-white'"
-                        class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
+                        class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 truncate"
                         title="المصحف المعلم (فضيلة الشيخ المنشاوي مع الأطفال)">
                   <span>🎙️</span>
-                  <span>المنشاوي (مع الأطفال)</span>
+                  <span class="truncate">المنشاوي (مع الأطفال)</span>
                 </button>
                 <button (click)="setRecitationStyle('murattal')" 
                         [ngClass]="recitationStyle() === 'murattal' 
                           ? 'bg-amber-500 text-dark-950 shadow-md font-black' 
                           : 'text-dark-300 hover:text-white'"
-                        class="px-3 py-1.5 rounded-lg transition-all flex items-center gap-1.5"
+                        class="px-2.5 sm:px-3 py-1.5 rounded-lg transition-all flex items-center justify-center gap-1.5 truncate"
                         title="المصحف المرتل (فضيلة الشيخ محمود خليل الحصري)">
                   <span>📖</span>
-                  <span>الحصري (مرتل)</span>
+                  <span class="truncate">الحصري (مرتل)</span>
                 </button>
               </div>
             </div>
 
-            <!-- Center: Playback Controls (Play / Pause / Resume / Stop) -->
-            <div class="flex items-center gap-2">
+            <!-- Center & Left: Playback Controls + Status -->
+            <div class="flex items-center justify-between sm:justify-end gap-2 flex-wrap">
               
               <!-- Main Play / Pause / Resume Button -->
               <button (click)="togglePlayPause()"
                 [disabled]="isLoading() || !boardData()"
-                class="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95"
+                class="inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md active:scale-95 grow sm:grow-0"
                 [ngClass]="isPlaying() 
                   ? 'bg-amber-500 hover:bg-amber-400 text-dark-950 shadow-amber-500/20' 
                   : (isPaused() 
@@ -177,31 +177,31 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
                 <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M6 6h12v12H6z"/>
                 </svg>
-                <span>إيقاف تام</span>
+                <span>إيقاف</span>
               </button>
-            </div>
 
-            <!-- Left: Realtime Status & Range Note -->
-            <div class="flex items-center gap-2 text-xs">
-              <div *ngIf="isPlaying()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold">
-                <!-- Animated Equalizer bars -->
-                <span class="flex items-end gap-0.5 h-3.5">
-                  <span class="w-1 bg-amber-400 rounded-full animate-bounce h-2" style="animation-delay: 0ms"></span>
-                  <span class="w-1 bg-amber-400 rounded-full animate-bounce h-3.5" style="animation-delay: 150ms"></span>
-                  <span class="w-1 bg-amber-400 rounded-full animate-bounce h-2.5" style="animation-delay: 300ms"></span>
-                </span>
-                <span>يتلو الآن: {{ currentPlayingSurahName() }} - آية ({{ toArabic(currentPlayingAyahNumber() || 1) }})</span>
+              <!-- Status Note -->
+              <div class="flex items-center gap-2 text-xs">
+                <div *ngIf="isPlaying()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 font-bold text-[11px] sm:text-xs">
+                  <span class="flex items-end gap-0.5 h-3">
+                    <span class="w-0.5 bg-amber-400 rounded-full animate-bounce h-1.5" style="animation-delay: 0ms"></span>
+                    <span class="w-0.5 bg-amber-400 rounded-full animate-bounce h-3" style="animation-delay: 150ms"></span>
+                    <span class="w-0.5 bg-amber-400 rounded-full animate-bounce h-2" style="animation-delay: 300ms"></span>
+                  </span>
+                  <span>{{ currentPlayingSurahName() }} ({{ toArabic(currentPlayingAyahNumber() || 1) }})</span>
+                </div>
+
+                <div *ngIf="isPaused()" class="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-[11px] sm:text-xs">
+                  <span>⏸️</span>
+                  <span>متوقف ({{ toArabic(currentPlayingAyahNumber() || 1) }})</span>
+                </div>
+
+                <div *ngIf="!isPlaying() && !isPaused()" class="text-[10px] sm:text-[11px] text-dark-400 flex items-center gap-1 hidden sm:flex">
+                  <span>🎯</span>
+                  <span>آيات اللوح فقط</span>
+                </div>
               </div>
 
-              <div *ngIf="isPaused()" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold">
-                <span>⏸️</span>
-                <span>متوقف مؤقتاً عند آية ({{ toArabic(currentPlayingAyahNumber() || 1) }})</span>
-              </div>
-
-              <div *ngIf="!isPlaying() && !isPaused()" class="text-[11px] text-dark-400 flex items-center gap-1">
-                <span>🎯</span>
-                <span>التلاوة مقتصرة على آيات اللوح فقط</span>
-              </div>
             </div>
 
           </div>
@@ -210,42 +210,42 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
       </header>
 
       <!-- Page Pagination Toolbar (Only in Single Page view or when multiple pages exist) -->
-      <nav *ngIf="!isLoading() && boardData() as data" class="max-w-3xl mx-auto px-4 pt-4 pb-2 flex items-center justify-between gap-3 select-none print:hidden">
+      <nav *ngIf="!isLoading() && boardData() as data" class="max-w-3xl mx-auto px-2 sm:px-4 pt-3 sm:pt-4 pb-1.5 sm:pb-2 flex items-center justify-between gap-2 sm:gap-3 select-none print:hidden">
         <button (click)="prevPage()"
           [disabled]="currentPageIndex() === 0"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-dark-800 disabled:opacity-30 disabled:pointer-events-none border border-dark-700/80 text-dark-200 hover:text-white transition-all shadow-sm active:scale-95">
-          <span>الصفحة السابقة</span>
+          class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-dark-900 hover:bg-dark-800 disabled:opacity-30 disabled:pointer-events-none border border-dark-700/80 text-dark-200 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
+          <span>السابقة</span>
           <span>►</span>
         </button>
 
         <!-- Current Page Indicator & Quick Page Jump Dropdown -->
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-dark-900/90 border border-dark-800">
-          <span class="text-xs text-dark-400 font-medium">
+        <div class="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1 rounded-xl bg-dark-900/90 border border-dark-800 min-w-0">
+          <span class="text-[11px] sm:text-xs text-dark-400 font-medium shrink-0">
             صفحة
           </span>
           <select 
             [ngModel]="activePage()?.pageNumber" 
             (ngModelChange)="jumpToPage($event)"
-            class="bg-dark-950 border border-amber-500/40 rounded-lg px-2.5 py-1 text-xs font-bold text-amber-400 font-mono focus:outline-none focus:border-amber-400 cursor-pointer">
+            class="bg-dark-950 border border-amber-500/40 rounded-lg px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[11px] sm:text-xs font-bold text-amber-400 font-mono focus:outline-none focus:border-amber-400 cursor-pointer max-w-[130px] sm:max-w-[220px] truncate">
             <option *ngFor="let p of data.pages; let idx = index" [value]="p.pageNumber" class="bg-dark-950 text-white">
               {{ p.pageNumber }} ({{ p.surahNames.join('، ') }})
             </option>
           </select>
-          <span class="text-xs text-dark-400 font-medium">
+          <span class="text-[11px] sm:text-xs text-dark-400 font-medium shrink-0">
             من {{ data.toPage }}
           </span>
         </div>
 
         <button (click)="nextPage()"
           [disabled]="currentPageIndex() >= data.pages.length - 1"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-dark-900 hover:bg-dark-800 disabled:opacity-30 disabled:pointer-events-none border border-dark-700/80 text-dark-200 hover:text-white transition-all shadow-sm active:scale-95">
+          class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl text-[11px] sm:text-xs font-bold bg-dark-900 hover:bg-dark-800 disabled:opacity-30 disabled:pointer-events-none border border-dark-700/80 text-dark-200 hover:text-white transition-all shadow-sm active:scale-95 shrink-0">
           <span>◄</span>
-          <span>الصفحة التالية</span>
+          <span>التالية</span>
         </button>
       </nav>
 
       <!-- Main Board Content -->
-      <main class="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <main class="max-w-4xl mx-auto px-1.5 sm:px-4 py-3 sm:py-6">
         
         <!-- Loading State -->
         <div *ngIf="isLoading()" class="py-28 text-center space-y-4">
@@ -260,50 +260,49 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
         </div>
 
         <!-- Active Pages Container -->
-        <div *ngIf="!isLoading() && boardData() as data" class="space-y-12">
+        <div *ngIf="!isLoading() && boardData() as data" class="space-y-8 sm:space-y-12">
           
           <ng-container *ngFor="let page of (viewMode() === 'single' ? [activePage()!] : data.pages); let pIdx = index">
             
             <!-- MADINAH MUSHAF AUTHENTIC PAGE CONTAINER -->
             <!-- Pages 1 & 2 have a narrower, centered illuminated format (max-w-[490px]) -->
-            <div class="mushaf-page-card relative mx-auto transition-all duration-300 select-text overflow-hidden"
+            <div class="mushaf-page-card relative mx-auto transition-all duration-300 select-text overflow-hidden w-full"
                  [ngClass]="[
                    (page.pageNumber === 1 || page.pageNumber === 2) ? 'max-w-[500px]' : 'max-w-[640px]',
                    pageTheme() === 'mushaf' 
-                     ? 'bg-[#FAF6EE] text-[#1c1917] rounded-3xl border-2 border-[#c2a468] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] p-3 sm:p-6' 
-                     : 'bg-[#0f172a] text-slate-100 rounded-3xl border-2 border-amber-500/40 shadow-2xl p-3 sm:p-6'
+                     ? 'bg-[#FAF6EE] text-[#1c1917] rounded-2xl sm:rounded-3xl border-2 border-[#c2a468] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.6)] p-2 sm:p-5 md:p-6' 
+                     : 'bg-[#0f172a] text-slate-100 rounded-2xl sm:rounded-3xl border-2 border-amber-500/40 shadow-2xl p-2 sm:p-5 md:p-6'
                  ]">
               
               <!-- Double Gilded Outer Frame Line (Authentic Madinah Mushaf Border) -->
-              <div class="mushaf-border-frame relative rounded-2xl border-2 p-2 sm:p-4"
+              <div class="mushaf-border-frame relative rounded-xl sm:rounded-2xl border-2 p-1.5 sm:p-3 md:p-4 overflow-x-auto sm:overflow-x-hidden"
                    [ngClass]="pageTheme() === 'mushaf' ? 'border-[#b89758]/70 bg-[#faf6ee]' : 'border-amber-500/30 bg-[#0d1527]'">
                 
                 <!-- Corner Ornaments (الأركان الزخرفية) -->
-                <div class="absolute top-1 right-1 text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
-                <div class="absolute top-1 left-1 text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
-                <div class="absolute bottom-1 right-1 text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
-                <div class="absolute bottom-1 left-1 text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
+                <div class="absolute top-1 right-1 text-[10px] sm:text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
+                <div class="absolute top-1 left-1 text-[10px] sm:text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
+                <div class="absolute bottom-1 right-1 text-[10px] sm:text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
+                <div class="absolute bottom-1 left-1 text-[10px] sm:text-xs opacity-75 select-none" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#a68646]' : 'text-amber-400'">❖</div>
 
                 <!-- Page Top Header: Juz name on Right, Surah name on Left -->
-                <div class="flex items-center justify-between text-xs sm:text-sm font-bold pb-2 mb-2 border-b select-none transition-colors"
+                <div class="flex items-center justify-between text-[11px] sm:text-sm font-bold pb-1.5 sm:pb-2 mb-1.5 sm:mb-2 border-b select-none transition-colors"
                      [ngClass]="pageTheme() === 'mushaf' ? 'text-[#7d6741] border-[#e2d5c0]' : 'text-amber-300/80 border-slate-700/80'">
                   <span class="font-sans tracking-wide">{{ page.juzName }}</span>
                   <span class="font-sans tracking-wide">{{ formatSurahName(page.surahNames[0] || '') }}</span>
                 </div>
 
                 <!-- 15 LINES OF MADINAH MUSHAF (Constrained width for natural Arabic spacing) -->
-                <div class="mushaf-lines-wrapper mx-auto space-y-1 sm:space-y-1.5 font-quran select-text"
+                <div class="mushaf-lines-wrapper mx-auto space-y-0.5 sm:space-y-1.5 font-quran select-text w-full"
                      [ngClass]="(page.pageNumber === 1 || page.pageNumber === 2) ? 'max-w-[420px]' : 'max-w-[560px]'"
-                     [style.fontSize.px]="fontSize()">
+                     [style.--base-size.px]="fontSize()">
                   
                   <ng-container *ngFor="let line of page.lines">
                     
                     <!-- LINE TYPE 1: TEXT LINE -->
                     <!-- Centered for page 1 & 2, or end of surah, or short lines. Justified for full text lines -->
                     <div *ngIf="line.type === 'text'" 
-                         class="mushaf-line w-full flex items-baseline leading-[2.5] sm:leading-[2.8] transition-colors"
-                         [ngClass]="(page.pageNumber === 1 || page.pageNumber === 2 || line.isCentered) ? 'justify-center gap-2 sm:gap-3' : 'justify-between'"
-                         [style.minHeight.px]="lineHeight()">
+                         class="mushaf-line w-full flex items-baseline leading-[2.4] sm:leading-[2.8] transition-colors"
+                         [ngClass]="(page.pageNumber === 1 || page.pageNumber === 2 || line.isCentered) ? 'justify-center gap-1 sm:gap-3' : 'justify-between'">
                       
                       <ng-container *ngFor="let word of line.words">
                         
@@ -326,9 +325,9 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
                         <!-- AYAH END MEDALLION -->
                         <span *ngIf="word.charType === 'end'"
                               (click)="playAyahAudio(word)"
-                              class="ayah-end-medallion inline-flex items-center justify-center relative cursor-pointer select-none group align-middle mx-0.5"
+                              class="ayah-end-medallion inline-flex items-center justify-center relative cursor-pointer select-none group align-middle mx-0.5 shrink-0"
                               [title]="'الآية ' + word.ayahNumber">
-                          <svg class="w-6 h-6 sm:w-7 sm:h-7 transition-transform group-hover:scale-115 drop-shadow-[0_1px_1px_rgba(0,0,0,0.06)]" viewBox="0 0 36 36" fill="none">
+                          <svg class="w-[1.25em] h-[1.25em] max-w-[28px] max-h-[28px] transition-transform group-hover:scale-110 drop-shadow-[0_1px_1px_rgba(0,0,0,0.06)]" viewBox="0 0 36 36" fill="none">
                             <circle cx="18" cy="18" r="15.5" stroke="#bfa36c" stroke-width="1.3" 
                               [attr.fill]="isCurrentlyPlaying(word) ? '#fde047' : (pageTheme() === 'mushaf' ? '#faf6ee' : '#1e293b')"/>
                             <circle cx="18" cy="18" r="13" stroke="#bfa36c" stroke-width="0.8" stroke-dasharray="1.2 1.8"/>
@@ -338,7 +337,7 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
                             <circle cx="2.2" cy="18" r="1.3" fill="#bfa36c"/>
                             <circle cx="33.8" cy="18" r="1.3" fill="#bfa36c"/>
                           </svg>
-                          <span class="absolute inset-0 flex items-center justify-center font-bold font-sans text-[10px] sm:text-xs pt-[1px] transition-colors"
+                          <span class="absolute inset-0 flex items-center justify-center font-bold font-sans text-[0.52em] pt-[1px] transition-colors"
                                 [ngClass]="pageTheme() === 'mushaf' ? 'text-[#2e2413] group-hover:text-amber-800' : 'text-amber-200 group-hover:text-white'">
                             {{ toArabic(word.ayahNumber) }}
                           </span>
@@ -350,33 +349,33 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
 
                     <!-- LINE TYPE 2: SURAH HEADER BANNER (Authentic Gilded Islamic Frame) -->
                     <div *ngIf="line.type === 'surah_header'" 
-                         class="surah-header-banner relative my-2 sm:my-2.5 rounded-xl border-2 p-1.5 text-center shadow-xs select-none overflow-hidden"
+                         class="surah-header-banner relative my-1.5 sm:my-2.5 rounded-lg sm:rounded-xl border-2 p-1 sm:p-1.5 text-center shadow-xs select-none overflow-hidden"
                          [ngClass]="pageTheme() === 'mushaf'
                            ? 'border-[#c2a468] bg-gradient-to-r from-[#edd9b9]/80 via-[#fcf6eb] to-[#edd9b9]/80'
                            : 'border-amber-500/40 bg-gradient-to-r from-dark-950 via-dark-850 to-dark-950'">
                       
-                      <div class="flex items-center justify-between px-2 sm:px-4 text-[11px] sm:text-xs font-sans"
+                      <div class="flex items-center justify-between px-1.5 sm:px-4 text-[10px] sm:text-xs font-sans"
                            [ngClass]="pageTheme() === 'mushaf' ? 'text-[#7d6741]' : 'text-amber-300/80'">
-                        <span>{{ line.revelationType }}</span>
+                        <span class="shrink-0">{{ line.revelationType }}</span>
                         
                         <!-- Center Name -->
-                        <div class="inline-flex items-center justify-center gap-2 px-4 py-0.5 rounded-lg border"
+                        <div class="inline-flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-4 py-0.5 rounded-lg border"
                              [ngClass]="pageTheme() === 'mushaf' ? 'border-[#c2a468]/60 bg-[#faf6ee]' : 'border-amber-500/30 bg-dark-900'">
-                          <span class="text-xs" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#9c7d3d]' : 'text-amber-400'">۞</span>
-                          <span class="text-base sm:text-lg font-bold font-quran">
+                          <span class="text-[10px] sm:text-xs" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#9c7d3d]' : 'text-amber-400'">۞</span>
+                          <span class="text-sm sm:text-lg font-bold font-quran">
                             {{ formatSurahName(line.surahName || '') }}
                           </span>
-                          <span class="text-xs" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#9c7d3d]' : 'text-amber-400'">۞</span>
+                          <span class="text-[10px] sm:text-xs" [ngClass]="pageTheme() === 'mushaf' ? 'text-[#9c7d3d]' : 'text-amber-400'">۞</span>
                         </div>
 
-                        <span>آيَاتُهَا {{ toArabic(line.totalAyahs || 0) }}</span>
+                        <span class="shrink-0">آيَاتُهَا {{ toArabic(line.totalAyahs || 0) }}</span>
                       </div>
                     </div>
 
                     <!-- LINE TYPE 3: BASMALAH LINE (Centered Calligraphy) -->
                     <div *ngIf="line.type === 'basmalah'" 
-                         class="basmalah-line text-center py-1 select-none leading-relaxed">
-                      <span class="font-quran text-lg sm:text-2xl tracking-wide"
+                         class="basmalah-line text-center py-0.5 sm:py-1 select-none leading-relaxed">
+                      <span class="font-quran text-base sm:text-2xl tracking-wide"
                             [ngClass]="pageTheme() === 'mushaf' ? 'text-[#1c1917]' : 'text-amber-200'">
                         بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ
                       </span>
@@ -387,13 +386,13 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
                 </div>
 
                 <!-- Page Bottom Marker: Authentic Oval Medallion with Page Number -->
-                <div class="pt-4 flex items-center justify-center select-none">
-                  <div class="inline-flex items-center justify-center px-4 py-0.5 rounded-full border shadow-2xs text-xs font-bold"
+                <div class="pt-2 sm:pt-4 flex items-center justify-center select-none">
+                  <div class="inline-flex items-center justify-center px-3 sm:px-4 py-0.5 rounded-full border shadow-2xs text-[11px] sm:text-xs font-bold"
                        [ngClass]="pageTheme() === 'mushaf' 
                          ? 'border-[#c2a468]/60 bg-[#f7f1e4] text-[#735d33]' 
                          : 'border-dark-700 bg-dark-850 text-dark-300'">
                     <span class="text-[9px] ml-1.5 opacity-70">✤</span>
-                    <span class="font-mono text-sm">صفحة {{ toArabic(page.pageNumber) }}</span>
+                    <span class="font-mono text-xs sm:text-sm">صفحة {{ toArabic(page.pageNumber) }}</span>
                     <span class="text-[9px] mr-1.5 opacity-70">✤</span>
                   </div>
                 </div>
@@ -438,10 +437,51 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
       direction: rtl;
     }
 
+    .mushaf-lines-wrapper {
+      --base-size: 24px;
+      font-size: var(--base-size);
+      width: 100%;
+    }
+
+    @media (max-width: 640px) {
+      .mushaf-lines-wrapper {
+        font-size: calc(var(--base-size) * 0.74);
+      }
+    }
+
+    @media (max-width: 480px) {
+      .mushaf-lines-wrapper {
+        font-size: calc(var(--base-size) * 0.62);
+      }
+    }
+
+    @media (max-width: 400px) {
+      .mushaf-lines-wrapper {
+        font-size: calc(var(--base-size) * 0.54);
+      }
+    }
+
+    @media (max-width: 350px) {
+      .mushaf-lines-wrapper {
+        font-size: calc(var(--base-size) * 0.47);
+      }
+    }
+
     .mushaf-line {
       text-align: justify;
       text-align-last: justify;
       word-spacing: normal;
+      width: 100%;
+      box-sizing: border-box;
+      min-height: 1.8em;
+    }
+
+    .mushaf-word {
+      flex-shrink: 0;
+    }
+
+    .ayah-end-medallion {
+      flex-shrink: 0;
     }
 
     @media print {
@@ -460,6 +500,9 @@ import { toArabicNumber } from '../../../core/constants/mushaf-metadata';
       .mushaf-border-frame {
         border: 1px solid #000 !important;
         background: #fff !important;
+      }
+      .mushaf-lines-wrapper {
+        font-size: 22px !important;
       }
     }
   `]

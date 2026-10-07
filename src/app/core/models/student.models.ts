@@ -6,6 +6,7 @@ export interface ImageViewDTO {
 export interface PhoneViewDTO {
   id: number;
   number: string;
+  description?: string;
 }
 
 export interface MemorizationRecordDTO {
@@ -84,6 +85,7 @@ export interface StudentAddDTO {
   groupIds: number[];
   imageFiles?: File[];
   phoneNumbers: string[];
+  phoneDescriptions?: string[];
 }
 
 export interface StudentUpdateDTO {
@@ -106,6 +108,7 @@ export interface StudentPagedResultDTO {
   totalCount: number;
   maleCount: number;
   femaleCount: number;
+  unassignedCount: number;
   page: number;
   pageSize: number;
 }

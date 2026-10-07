@@ -15,6 +15,16 @@ export const routes: Routes = [
       import('./features/auth/register/register.component').then(m => m.RegisterComponent),
   },
   {
+    path: 'apply',
+    loadComponent: () =>
+      import('./features/admissions/public-application.component').then(m => m.PublicApplicationComponent),
+  },
+  {
+    path: 'admission',
+    loadComponent: () =>
+      import('./features/admissions/public-application.component').then(m => m.PublicApplicationComponent),
+  },
+  {
     path: 'dashboard',
     canActivate: [authGuard],
     loadComponent: () =>
@@ -50,6 +60,11 @@ export const routes: Routes = [
         path: 'students/export',
         loadComponent: () =>
           import('./features/students/student-export/student-export.component').then(m => m.StudentExportComponent),
+      },
+      {
+        path: 'students/waiting-list',
+        loadComponent: () =>
+          import('./features/students/waiting-list/waiting-list.component').then(m => m.WaitingListComponent),
       },
       {
         path: 'students/archived',
@@ -233,12 +248,18 @@ export const routes: Routes = [
   },
   {
     path: '',
-    redirectTo: 'dashboard',
+    loadComponent: () =>
+      import('./features/landing/landing-page.component').then(m => m.LandingPageComponent),
     pathMatch: 'full',
   },
   {
+    path: 'landing',
+    loadComponent: () =>
+      import('./features/landing/landing-page.component').then(m => m.LandingPageComponent),
+  },
+  {
     path: '**',
-    redirectTo: 'dashboard',
+    redirectTo: '',
   },
 ];
 

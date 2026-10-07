@@ -53,10 +53,16 @@ export class StudentListComponent implements OnInit {
   totalCount = this.studentService.totalCount;
   maleCount = this.studentService.maleCount;
   femaleCount = this.studentService.femaleCount;
+  unassignedCount = this.studentService.unassignedCount;
   students = this.studentService.students;
 
   academicYears = signal<AcademicYearViewDTO[]>([]);
   groups = signal<GroupCardDTO[]>([]);
+
+  // Assign to group modal
+  showAssignModal = signal(false);
+  studentToAssign = signal<StudentDetailsDTO | null>(null);
+  targetGroupId = signal<number | null>(null);
 
   newStudent: StudentAddDTO = this.getInitialStudent();
 
@@ -91,6 +97,8 @@ export class StudentListComponent implements OnInit {
 
   filteredStudents = computed(() => this.students());
 
+  phoneDescriptionOptions = ['الأب', 'الأم', 'ولي الأمر', 'الطالب', 'المنزل', 'أخرى'];
+
   getInitialStudent(): StudentAddDTO {
     return {
       fullName: '',
@@ -100,6 +108,7 @@ export class StudentListComponent implements OnInit {
       academicYearId: 0,
       groupIds: [],
       phoneNumbers: [''],
+      phoneDescriptions: ['الأب'],
     };
   }
 
@@ -120,7 +129,7 @@ export class StudentListComponent implements OnInit {
       this.currentPage(),
       this.pageSize(),
       this.selectedYearFilter() || undefined,
-      this.selectedGroupFilter() || undefined,
+      this.selectedGroupFilter() === null ? undefined : this.selectedGroupFilter()!,
       this.searchQuery() || undefined,
       this.statusFilter() === null ? undefined : this.statusFilter()!,
       this.genderFilter() === null ? undefined : this.genderFilter()!
@@ -128,6 +137,17 @@ export class StudentListComponent implements OnInit {
       next: () => this.isLoading.set(false),
       error: () => this.isLoading.set(false)
     });
+  }
+
+  filterUnassigned() {
+    if (this.selectedGroupFilter() === -1) {
+      // Toggle off if already active
+      this.selectedGroupFilter.set(null);
+    } else {
+      this.selectedGroupFilter.set(-1);
+    }
+    this.currentPage.set(1);
+    this.loadStudents();
   }
 
   exportToExcel() {
@@ -225,10 +245,16 @@ export class StudentListComponent implements OnInit {
 
   addPhoneNumber() {
     this.newStudent.phoneNumbers.push('');
+    if (!this.newStudent.phoneDescriptions) this.newStudent.phoneDescriptions = [];
+    const nextDesc = this.newStudent.phoneNumbers.length === 2 ? 'الأم' : (this.newStudent.phoneNumbers.length === 3 ? 'ولي الأمر' : 'الأب');
+    this.newStudent.phoneDescriptions.push(nextDesc);
   }
 
   removePhoneNumber(index: number) {
     this.newStudent.phoneNumbers.splice(index, 1);
+    if (this.newStudent.phoneDescriptions) {
+      this.newStudent.phoneDescriptions.splice(index, 1);
+    }
   }
 
   trackByFn(index: number) {
@@ -251,10 +277,20 @@ export class StudentListComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    // Filter out empty phone numbers
-    const payload = {
+    // Filter out empty phone numbers and match their descriptions
+    const validPhones: string[] = [];
+    const validDescs: string[] = [];
+    this.newStudent.phoneNumbers.forEach((p, idx) => {
+      if (p && p.trim() !== '') {
+        validPhones.push(p.trim());
+        validDescs.push(this.newStudent.phoneDescriptions?.[idx] || 'الأب');
+      }
+    });
+
+    const payload: StudentAddDTO = {
       ...this.newStudent,
-      phoneNumbers: this.newStudent.phoneNumbers.filter(p => p.trim() !== '')
+      phoneNumbers: validPhones,
+      phoneDescriptions: validDescs
     };
 
     if (this.newStudent.ssn) {
@@ -413,6 +449,45 @@ export class StudentListComponent implements OnInit {
       error: () => {
         this.isLoading.set(false);
         this.ui.error('حدث خطأ أثناء استعادة الطالب');
+      }
+    });
+  }
+
+  // ── Assign Group ───────────────────────────────────────────────
+  openAssignModal(student: StudentDetailsDTO, event?: Event) {
+    if (event) {
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    this.studentToAssign.set(student);
+    this.targetGroupId.set(null);
+    this.showAssignModal.set(true);
+  }
+
+  closeAssignModal() {
+    this.showAssignModal.set(false);
+    this.studentToAssign.set(null);
+    this.targetGroupId.set(null);
+  }
+
+  confirmAssignGroup() {
+    const student = this.studentToAssign();
+    const groupId = this.targetGroupId();
+    if (!student || !groupId) {
+      this.ui.error('يرجى اختيار الحلقة أولاً');
+      return;
+    }
+    this.isSaving.set(true);
+    this.studentService.assignGroup(student.id, groupId).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.closeAssignModal();
+        this.ui.success(`تم تسكين الطالب "${student.fullName}" في الحلقة بنجاح`);
+        this.loadStudents();
+      },
+      error: () => {
+        this.isSaving.set(false);
+        this.ui.error('حدث خطأ أثناء تسكين الطالب في الحلقة');
       }
     });
   }
