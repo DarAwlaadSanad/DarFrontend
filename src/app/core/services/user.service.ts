@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { UserViewDTO, UserProfileDTO, UpdateProfileDTO, ChangePasswordDTO } from '../models/user.models';
+import { UserViewDTO, UserProfileDTO, UpdateProfileDTO, ChangePasswordDTO, CreateUserDTO } from '../models/user.models';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
@@ -12,6 +12,10 @@ export class UserService {
 
   getAll(): Observable<UserViewDTO[]> {
     return this.http.get<UserViewDTO[]>(this.apiUrl);
+  }
+
+  createUser(dto: CreateUserDTO): Observable<UserViewDTO> {
+    return this.http.post<UserViewDTO>(this.apiUrl, dto);
   }
 
   getTeachers(): Observable<UserViewDTO[]> {

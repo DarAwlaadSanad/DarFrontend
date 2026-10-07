@@ -54,7 +54,11 @@
   -webkit-backdrop-filter: blur(18px) saturate(160%); backdrop-filter: blur(18px) saturate(160%);
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, .5);
 }
-.lp-header .bar { transition: height .3s; }
+.lp-header .bar { transition: height .3s; width: 100%; }
+.lp-header .hidden-on-mobile { display: none !important; }
+@media (min-width: 640px) {
+  .lp-header .hidden-on-mobile { display: inline-flex !important; }
+}
 .lp-progress { position: absolute; bottom: -1px; right: 0; height: 2px; background: linear-gradient(90deg, var(--lp-gold), var(--lp-accent-strong)); }
 .lp-nav-link { position: relative; padding: .5rem .9rem; border-radius: .75rem; font-size: .875rem; font-weight: 600; color: var(--lp-text); transition: color .2s, background-color .2s; }
 .lp-nav-link:hover { color: var(--lp-heading); background: var(--lp-accent-soft); }

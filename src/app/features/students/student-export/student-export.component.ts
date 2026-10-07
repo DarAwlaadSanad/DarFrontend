@@ -9,6 +9,7 @@ import { StudentService } from '../../../core/services/student.service';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { GroupService } from '../../../core/services/group.service';
 import { UiService } from '../../../core/services/ui.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { StudentDetailsDTO, StudentPagedResultDTO, normalizeGender, isMale, isFemale, getGenderLabel } from '../../../core/models/student.models';
 import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupCardDTO } from '../../../core/models/group.models';
@@ -54,7 +55,8 @@ interface ExportColumnOption {
             </svg>
             العودة لقائمة الطلاب
           </a>
-          <button (click)="exportToExcel()" 
+          <button *ngIf="authService.hasPermission('Permissions.Reports.Export')"
+                  (click)="exportToExcel()" 
                   [disabled]="selectedCount() === 0"
                   class="btn-primary gap-2 text-xs !bg-emerald-600 hover:!bg-emerald-500 !border-emerald-500 disabled:opacity-50 shadow-md">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -493,7 +495,7 @@ interface ExportColumnOption {
           <button (click)="clearAllSelections()" class="btn-secondary py-2 px-3 text-xs text-rose-300 hover:text-white">
             إلغاء التحديد
           </button>
-          <button (click)="exportToExcel()" class="btn-primary py-2 px-5 text-xs font-bold !bg-emerald-600 hover:!bg-emerald-500 !border-emerald-500 shadow-lg flex items-center gap-2">
+          <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportToExcel()" class="btn-primary py-2 px-5 text-xs font-bold !bg-emerald-600 hover:!bg-emerald-500 !border-emerald-500 shadow-lg flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
@@ -547,6 +549,7 @@ interface ExportColumnOption {
   `
 })
 export class StudentExportComponent implements OnInit {
+  public authService = inject(AuthService);
   private studentService = inject(StudentService);
   private academicYearService = inject(AcademicYearService);
   private groupService = inject(GroupService);
@@ -690,6 +693,11 @@ export class StudentExportComponent implements OnInit {
   }
 
   ngOnInit() {
+    if (!this.authService.hasPermission('Permissions.Reports.Export')) {
+      this.ui.error('ليس لديك صلاحية تصدير البيانات');
+      this.router.navigate(['/dashboard/students']);
+      return;
+    }
     this.loadFiltersData();
     this.loadStudents();
   }

@@ -5,6 +5,7 @@ import { CenterFinanceService } from '../../../core/services/center-finance.serv
 import { MonthlyFinancialSummary } from '../../../core/models/center-finance.models';
 import { ExportService } from '../../../core/services/export.service';
 import { UiService } from '../../../core/services/ui.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-monthly-report',
@@ -27,7 +28,8 @@ export class MonthlyReportComponent implements OnInit {
     private centerFinanceService: CenterFinanceService,
     private exportService: ExportService,
     private ui: UiService,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    public authService: AuthService
   ) {}
 
   ngOnInit(): void {

@@ -5,7 +5,7 @@ import { UserService } from '../../../core/services/user.service';
 import { RoleService } from '../../../core/services/role.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { UiService } from '../../../core/services/ui.service';
-import { UserViewDTO } from '../../../core/models/user.models';
+import { UserViewDTO, CreateUserDTO } from '../../../core/models/user.models';
 import { Role } from '../../../core/models/role.models';
 import { normalizeGender, isMale, getGenderLabel } from '../../../core/models/student.models';
 
@@ -20,16 +20,27 @@ const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
     <div class="space-y-7 animate-fade-in" dir="rtl">
 
       <!-- Page Header -->
-      <div>
-        <div class="flex items-center gap-2 mb-1">
-          <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
-            <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-            </svg>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+              </svg>
+            </div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">إدارة المستخدمين</h1>
           </div>
-          <h1 class="text-2xl lg:text-3xl font-bold text-white">إدارة المستخدمين</h1>
+          <p class="text-slate-500 dark:text-dark-400 text-sm mr-10">إضافة وإدارة مستخدمي النظام وتعيين الأدوار والصلاحيات</p>
         </div>
-        <p class="text-dark-400 text-sm mr-10">تعيين الأدوار المخصصة لمستخدمي النظام</p>
+
+        <button *ngIf="canManageUsers()"
+          (click)="openCreateModal()"
+          class="btn-primary py-2.5 px-4 text-xs font-bold flex items-center gap-2 shadow-lg shadow-primary-900/30">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+          <span>إضافة مستخدم جديد</span>
+        </button>
       </div>
 
       <!-- Loading -->
@@ -259,6 +270,109 @@ const SYSTEM_ROLES = ['Admin', 'SuperAdmin', 'User'];
                 class="w-full btn-secondary py-3 text-sm font-bold">إغلاق</button>
       </div>
     </div>
+
+    <!-- ── Create New User Modal ────────────────────────────────────────── -->
+    <div *ngIf="showCreateModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fade-in overflow-y-auto">
+      <div class="glass-card w-full max-w-lg p-6 border-slate-200 dark:border-dark-700 space-y-4 my-8 animate-scale-in" dir="rtl">
+        <!-- Header -->
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-dark-800 pb-3">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-primary-500/20 text-primary-500 flex items-center justify-center font-bold text-base">👤</span>
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white">إضافة مستخدم جديد</h2>
+              <p class="text-[11px] text-slate-500 dark:text-dark-400">إنشاء حساب جديد وتعيين بيانات الدخول والأدوار</p>
+            </div>
+          </div>
+          <button (click)="closeCreateModal()" class="p-1.5 text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-lg">✕</button>
+        </div>
+
+        <form (ngSubmit)="submitCreateUser()" #createUserForm="ngForm" class="space-y-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="sm:col-span-2">
+              <label class="label text-xs">الاسم الرباعي <span class="text-red-500">*</span></label>
+              <input type="text" [(ngModel)]="newUserData.fullName" name="newFullName" required
+                class="input-field text-xs" placeholder="أدخل اسم المستخدم كاملاً...">
+            </div>
+
+            <div>
+              <label class="label text-xs">اسم المستخدم للدخول <span class="text-red-500">*</span></label>
+              <input type="text" [(ngModel)]="newUserData.userName" name="newUserName" required
+                class="input-field text-xs font-mono" placeholder="username...">
+            </div>
+
+            <div>
+              <label class="label text-xs">كلمة المرور <span class="text-red-500">*</span></label>
+              <input type="password" [(ngModel)]="newUserData.password" name="newPassword" required minlength="6"
+                class="input-field text-xs" placeholder="••••••••">
+            </div>
+
+            <div>
+              <label class="label text-xs">البريد الإلكتروني (اختياري)</label>
+              <input type="email" [(ngModel)]="newUserData.email" name="newEmail"
+                class="input-field text-xs" placeholder="name@example.com">
+            </div>
+
+            <div>
+              <label class="label text-xs">رقم الهاتف (اختياري)</label>
+              <input type="tel" [(ngModel)]="newUserData.phoneNumber" name="newPhone" maxlength="11"
+                class="input-field text-xs font-mono" placeholder="01XXXXXXXXX">
+            </div>
+
+            <div class="sm:col-span-2">
+              <label class="label text-xs">النوع</label>
+              <div class="grid grid-cols-2 gap-2">
+                <button type="button" (click)="newUserData.gender = 1"
+                  [class]="newUserData.gender === 1 ? 'border-primary-500 bg-primary-500/10 text-primary-500 font-bold' : 'border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800/40 text-slate-700 dark:text-dark-300'"
+                  class="p-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all">
+                  <span>👦</span>
+                  <span>ذكر</span>
+                </button>
+                <button type="button" (click)="newUserData.gender = 2"
+                  [class]="newUserData.gender === 2 ? 'border-pink-500 bg-pink-500/10 text-pink-500 font-bold' : 'border-slate-200 dark:border-dark-700 bg-slate-50 dark:bg-dark-800/40 text-slate-700 dark:text-dark-300'"
+                  class="p-2 rounded-xl border text-xs flex items-center justify-center gap-1.5 transition-all">
+                  <span>👧</span>
+                  <span>أنثى</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Roles selection -->
+          <div class="pt-2 border-t border-slate-200 dark:border-dark-800">
+            <label class="label text-xs mb-2">الأدوار والصلاحيات المخصصة (اختياري)</label>
+            <div *ngIf="customRoles().length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto p-1">
+              <label *ngFor="let role of customRoles()"
+                     class="flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs"
+                     [class]="selectedNewRoles().includes(role.name)
+                       ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-300 font-bold'
+                       : 'bg-slate-50 dark:bg-dark-800/40 border-slate-200 dark:border-dark-700 text-slate-700 dark:text-dark-300 hover:border-slate-300 dark:hover:border-dark-600'">
+                <input type="checkbox"
+                       [checked]="selectedNewRoles().includes(role.name)"
+                       (change)="toggleNewUserRole(role.name)"
+                       class="w-3.5 h-3.5 rounded accent-primary-500 cursor-pointer">
+                <span class="truncate">{{ role.name }}</span>
+              </label>
+            </div>
+            <p *ngIf="customRoles().length === 0" class="text-[11px] text-slate-500 dark:text-dark-500 italic">
+              إذا لم يتم اختيار أي دور، سيتم تعيين الدور الافتراضي (مدرس) تلقائياً.
+            </p>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex gap-3 pt-3 border-t border-slate-200 dark:border-dark-800">
+            <button type="submit" [disabled]="!createUserForm.valid || isCreating()"
+              class="btn-primary flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-2">
+              <svg *ngIf="isCreating()" class="w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span>حفظ وإنشاء المستخدم</span>
+            </button>
+            <button type="button" (click)="closeCreateModal()" class="btn-secondary py-2.5 px-4 text-xs">إلغاء</button>
+          </div>
+        </form>
+      </div>
+    </div>
   `,
 })
 export class UserListComponent implements OnInit {
@@ -398,4 +512,77 @@ export class UserListComponent implements OnInit {
       error: () => this.isSaving.set(false)
     });
   }
+
+  // ── Create New User Logic ─────────────────────────────────────────────────
+  showCreateModal = signal(false);
+  isCreating = signal(false);
+  selectedNewRoles = signal<string[]>([]);
+  newUserData: CreateUserDTO = {
+    fullName: '',
+    userName: '',
+    email: '',
+    password: '',
+    phoneNumber: '',
+    gender: 1,
+    roles: []
+  };
+
+  openCreateModal() {
+    this.newUserData = {
+      fullName: '',
+      userName: '',
+      email: '',
+      password: '',
+      phoneNumber: '',
+      gender: 1,
+      roles: []
+    };
+    this.selectedNewRoles.set([]);
+    this.showCreateModal.set(true);
+  }
+
+  closeCreateModal() {
+    this.showCreateModal.set(false);
+  }
+
+  toggleNewUserRole(roleName: string) {
+    const current = this.selectedNewRoles();
+    if (current.includes(roleName)) {
+      this.selectedNewRoles.set(current.filter(r => r !== roleName));
+    } else {
+      this.selectedNewRoles.set([...current, roleName]);
+    }
+  }
+
+  submitCreateUser() {
+    if (!this.newUserData.fullName || !this.newUserData.userName || !this.newUserData.password) {
+      this.uiService.error('يرجى ملء جميع الحقول المطلوبة (الاسم، اسم المستخدم، وكلمة المرور)');
+      return;
+    }
+
+    this.isCreating.set(true);
+    const dto: CreateUserDTO = {
+      fullName: this.newUserData.fullName.trim(),
+      userName: this.newUserData.userName.trim(),
+      email: this.newUserData.email ? this.newUserData.email.trim() : undefined,
+      password: this.newUserData.password,
+      phoneNumber: this.newUserData.phoneNumber ? this.newUserData.phoneNumber.trim() : undefined,
+      gender: this.newUserData.gender,
+      roles: this.selectedNewRoles()
+    };
+
+    this.userService.createUser(dto).subscribe({
+      next: (created) => {
+        this.users.update(prev => [created, ...prev]);
+        this.uiService.success('تم إنشاء حساب المستخدم بنجاح ✓');
+        this.isCreating.set(false);
+        this.closeCreateModal();
+      },
+      error: (err) => {
+        this.isCreating.set(false);
+        this.uiService.error(err.error?.message || 'فشل إنشاء المستخدم، يرجى مراجعة البيانات والتأكد من عدم تكرار اسم المستخدم');
+      }
+    });
+  }
 }
+

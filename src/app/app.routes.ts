@@ -10,9 +10,8 @@ export const routes: Routes = [
   },
   {
     path: 'register',
-    canActivate: [guestGuard],
-    loadComponent: () =>
-      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+    redirectTo: 'login',
+    pathMatch: 'full',
   },
   {
     path: 'apply',

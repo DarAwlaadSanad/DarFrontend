@@ -25,7 +25,7 @@
         </h1>
       </div>
       <div class="flex items-center gap-2 no-print">
-        <button (click)="openEditModal()" class="btn-primary py-2 px-4 flex items-center gap-2 text-sm">
+        <button *ngIf="authService.hasPermission('Permissions.Students.Manage')" (click)="openEditModal()" class="btn-primary py-2 px-4 flex items-center gap-2 text-sm">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
               d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
@@ -33,7 +33,7 @@
           <span class="hidden sm:inline">تعديل</span>
         </button>
         <!-- If active: Show Delete/Archive button -->
-        <button *ngIf="s.isActive" (click)="deleteStudent()"
+        <button *ngIf="s.isActive && authService.hasPermission('Permissions.Students.Manage')" (click)="deleteStudent()"
           title="نقل الطالب إلى قائمة المنقطعين / المحذوفين"
           class="btn-secondary text-red-400 hover:bg-red-500/10 py-2 px-4 flex items-center gap-2 text-sm">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -44,7 +44,7 @@
         </button>
 
         <!-- If inactive: Show Restore button in header -->
-        <button *ngIf="!s.isActive" (click)="restoreStudent()"
+        <button *ngIf="!s.isActive && authService.hasPermission('Permissions.Students.Manage')" (click)="restoreStudent()"
           title="استعادة وتنشيط الطالب"
           class="btn-secondary text-emerald-400 hover:bg-emerald-500/10 border-emerald-500/30 py-2 px-4 flex items-center gap-2 text-sm">
           <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -335,7 +335,7 @@
             </svg>
             أرقام التواصل
           </h3>
-          <button (click)="isAddingPhone.set(!isAddingPhone())"
+          <button *ngIf="authService.hasPermission('Permissions.Students.Manage')" (click)="isAddingPhone.set(!isAddingPhone())"
             class="text-primary-400 hover:text-primary-300 transition-colors">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -390,7 +390,7 @@
               </div>
 
               <!-- Actions -->
-              <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              <div *ngIf="authService.hasPermission('Permissions.Students.Manage')" class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                 <button (click)="startEditPhone(phone)" title="تعديل الرقم والوصف"
                   class="p-1.5 text-dark-400 hover:text-primary-400 hover:bg-primary-500/10 rounded-lg transition-colors">
                   <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -458,7 +458,7 @@
             <span class="w-2 h-8 bg-primary-500 rounded-full"></span>
             الحلقات المسجل بها
           </h2>
-          <button (click)="showAssignGroupModal.set(true)"
+          <button *ngIf="authService.hasPermission('Permissions.Students.Manage')" (click)="showAssignGroupModal.set(true)"
             class="btn-primary py-2 px-4 text-xs flex items-center gap-2">
             <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path d="M12 4v16m8-8H4" />
@@ -487,7 +487,7 @@
                   <div class="bg-dark-800/50 px-3 py-1 rounded-full border border-dark-700">
                     <span class="text-[10px] text-dark-500 uppercase tracking-wider font-bold">نشطة</span>
                   </div>
-                  <button (click)="onUnassignGroup(group.id)"
+                  <button *ngIf="authService.hasPermission('Permissions.Students.Manage')" (click)="onUnassignGroup(group.id)"
                     class="p-1.5 text-dark-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
                     title="حذف من المجموعة">
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -714,7 +714,8 @@
             </div>
 
             <!-- Mobile Add Record Button -->
-            <button (click)="isAddingMemorization.set(!isAddingMemorization())"
+            <button *ngIf="authService.hasPermission('Permissions.Memorization.Manage')"
+              (click)="isAddingMemorization.set(!isAddingMemorization())"
               title="إضافة سجل جديد"
               class="md:hidden p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300 shrink-0">
               <svg class="w-5 h-5 transition-transform" [class.rotate-45]="isAddingMemorization()" fill="none" viewBox="0 0 24 24"
@@ -757,7 +758,8 @@
             </ng-container>
 
             <!-- Desktop Add Record Button -->
-            <button (click)="isAddingMemorization.set(!isAddingMemorization())"
+            <button *ngIf="authService.hasPermission('Permissions.Memorization.Manage')"
+              (click)="isAddingMemorization.set(!isAddingMemorization())"
               title="إضافة سجل جديد"
               class="hidden md:flex group p-2 rounded-xl bg-primary-500/10 text-primary-400 hover:bg-primary-500 hover:text-white transition-all duration-300 shrink-0">
               <svg class="w-5 h-5 transition-transform" [class.rotate-45]="isAddingMemorization()" fill="none" viewBox="0 0 24 24"
@@ -994,7 +996,8 @@
                         </svg>
                       </a>
 
-                      <button (click)="onDeleteMemorization(record.id)"
+                      <button *ngIf="authService.hasPermission('Permissions.Memorization.Manage')"
+                        (click)="onDeleteMemorization(record.id)"
                         title="حذف السجل"
                         class="p-1.5 sm:p-2 rounded-lg text-dark-500 hover:text-red-400 hover:bg-red-500/10 opacity-70 hover:opacity-100 transition-all shrink-0">
                         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1136,7 +1139,7 @@
       <div class="glass-card p-5 border-dark-800">
         <div class="flex items-center justify-between mb-4">
           <h3 class="text-sm font-bold text-dark-300 flex items-center gap-2">الصور ({{ s.images.length || 0 }})</h3>
-          <div class="relative overflow-hidden inline-block cursor-pointer">
+          <div *ngIf="authService.hasPermission('Permissions.Students.Manage')" class="relative overflow-hidden inline-block cursor-pointer">
             <button class="btn-primary py-1.5 px-3 text-xs flex items-center gap-1">رفع صورة</button>
             <input type="file" multiple (change)="onUploadImage($event)"
               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
@@ -1146,7 +1149,8 @@
           <div *ngFor="let img of s.images" (click)="selectedImage.set(img.url)"
             class="aspect-square rounded-xl overflow-hidden cursor-pointer group relative bg-dark-800">
             <img [src]="img.url" class="w-full h-full object-cover">
-            <button (click)="deleteImage(img.id, $event)"
+            <button *ngIf="authService.hasPermission('Permissions.Students.Manage')"
+              (click)="deleteImage(img.id, $event)"
               class="absolute top-2 left-2 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 hover:bg-red-500 transition-all">
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path

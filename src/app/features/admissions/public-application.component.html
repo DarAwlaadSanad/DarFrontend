@@ -13,12 +13,12 @@
 
   <!-- Sticky Luxury Navbar -->
   <header class="adm-header sticky top-0 z-40 backdrop-blur-2xl transition-all duration-300">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4 w-full">
       
       <!-- Brand Logo -->
-      <a routerLink="/" class="flex items-center group cursor-pointer focus:outline-none transition-transform duration-300 hover:scale-105" aria-label="دار أولاد سند">
-        <img src="assets/logo-dark.png" alt="دار أولاد سند" class="logo-dark h-10 sm:h-12 w-auto max-w-[170px] sm:max-w-[210px] object-contain drop-shadow-md">
-        <img src="assets/logo.png" alt="دار أولاد سند" class="logo-light h-10 sm:h-12 w-auto max-w-[170px] sm:max-w-[210px] object-contain drop-shadow-md">
+      <a routerLink="/" class="flex items-center shrink-0 group cursor-pointer focus:outline-none transition-transform duration-300 hover:scale-105" aria-label="دار أولاد سند">
+        <img src="assets/logo-dark.png" alt="دار أولاد سند" class="logo-dark h-8 sm:h-12 w-auto max-w-[125px] sm:max-w-[210px] object-contain drop-shadow-md">
+        <img src="assets/logo.png" alt="دار أولاد سند" class="logo-light h-8 sm:h-12 w-auto max-w-[125px] sm:max-w-[210px] object-contain drop-shadow-md">
       </a>
 
       <!-- Center Links / Breadcrumb -->
@@ -34,27 +34,28 @@
       </nav>
 
       <!-- Right Action CTAs -->
-      <div class="flex items-center gap-2.5 sm:gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <!-- Theme Toggle -->
         <app-theme-toggle variant="ghost" />
 
         <!-- Portal Access (Authenticated or Guest) -->
         <ng-container *ngIf="isAuthenticated(); else guestAuth">
           <a [routerLink]="getDashboardUrl()"
-             class="btn-royal-primary inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold">
+             class="btn-royal-primary inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold">
             <span>{{ isStudent() ? 'بوابة الطالب' : 'لوحة التحكم' }}</span>
-            <svg class="w-4 h-4 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg class="w-4 h-4 rotate-180 hidden sm:inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </a>
         </ng-container>
         <ng-template #guestAuth>
           <a routerLink="/login"
-             class="inline-flex items-center gap-2 px-3.5 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 hover:border-amber-500/50 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-300 font-bold text-xs sm:text-sm transition-all shadow-sm">
+             class="inline-flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/40 hover:border-amber-500/50 text-slate-700 dark:text-slate-200 hover:text-amber-600 dark:hover:text-amber-300 font-bold text-xs sm:text-sm transition-all shadow-sm">
             <svg class="w-4 h-4 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
             </svg>
-            <span>دخول المنظومة</span>
+            <span class="hidden sm:inline">دخول المنظومة</span>
+            <span class="sm:hidden">دخول</span>
           </a>
         </ng-template>
 

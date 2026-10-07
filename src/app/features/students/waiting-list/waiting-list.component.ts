@@ -14,6 +14,7 @@ import { AcademicYearViewDTO } from '../../../core/models/academic-year.models';
 import { GroupService } from '../../../core/services/group.service';
 import { GroupCardDTO } from '../../../core/models/group.models';
 import { UiService } from '../../../core/services/ui.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-waiting-list',
@@ -23,6 +24,7 @@ import { UiService } from '../../../core/services/ui.service';
   styleUrls: ['./waiting-list.component.css']
 })
 export class WaitingListComponent implements OnInit {
+  public authService = inject(AuthService);
   private waitingService = inject(WaitingStudentService);
   private academicYearService = inject(AcademicYearService);
   private groupService = inject(GroupService);

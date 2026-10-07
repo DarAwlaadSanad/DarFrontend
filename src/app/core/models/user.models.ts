@@ -30,3 +30,14 @@ export interface ChangePasswordDTO {
   newPassword: string;
   confirmNewPassword: string;
 }
+
+export interface CreateUserDTO {
+  fullName: string;
+  userName: string;
+  email?: string;
+  password: string;
+  phoneNumber?: string;
+  gender?: number | null;
+  roles?: string[];
+}
+

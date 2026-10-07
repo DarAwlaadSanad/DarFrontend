@@ -2,48 +2,52 @@
   <!-- Header -->
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <div class="flex items-center gap-2 mb-1">
-        <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center">
-          <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-          </svg>
+      <div class="flex flex-wrap items-center gap-2 mb-1.5">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-lg bg-blue-500/15 flex items-center justify-center shrink-0">
+            <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-white">قائمة الطلاب</h1>
         </div>
-        <h1 class="text-2xl lg:text-3xl font-bold text-white">قائمة الطلاب</h1>
-        <span class="badge-green">{{ studentCount() }} طالب</span>
-        <span
-          class="px-2.5 py-1 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20 text-xs font-bold flex items-center gap-1">♂
-          {{ maleCount() }} ذَكَر</span>
-        <span
-          class="px-2.5 py-1 rounded-xl bg-pink-500/15 text-pink-400 border border-pink-500/20 text-xs font-bold flex items-center gap-1">♀
-          {{ femaleCount() }} أُنْثَى</span>
-        <button type="button" 
-          (click)="filterUnassigned()"
-          title="عرض الطلاب غير المسجلين في حلقات"
-          class="px-2.5 py-1 rounded-xl transition-all cursor-pointer text-xs font-bold flex items-center gap-1.5"
-          [ngClass]="selectedGroupFilter() === -1 ? 'bg-amber-500 text-dark-950 shadow-lg shadow-amber-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'">
-          <span>⚠️</span>
-          <span>{{ unassignedCount() }} بدون حلقة</span>
-        </button>
+        <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+          <span class="badge-green">{{ studentCount() }} طالب</span>
+          <span
+            class="px-2.5 py-1 rounded-xl bg-sky-500/15 text-sky-400 border border-sky-500/20 text-xs font-bold flex items-center gap-1">♂
+            {{ maleCount() }} ذَكَر</span>
+          <span
+            class="px-2.5 py-1 rounded-xl bg-pink-500/15 text-pink-400 border border-pink-500/20 text-xs font-bold flex items-center gap-1">♀
+            {{ femaleCount() }} أُنْثَى</span>
+          <button type="button" 
+            (click)="filterUnassigned()"
+            title="عرض الطلاب غير المسجلين في حلقات"
+            class="px-2.5 py-1 rounded-xl transition-all cursor-pointer text-xs font-bold flex items-center gap-1.5"
+            [ngClass]="selectedGroupFilter() === -1 ? 'bg-amber-500 text-dark-950 shadow-lg shadow-amber-500/30' : 'bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25'">
+            <span>⚠️</span>
+            <span>{{ unassignedCount() }} بدون حلقة</span>
+          </button>
+        </div>
       </div>
-      <p class="text-dark-400 text-sm mr-10">إدارة بيانات طلاب المركز وحلقاتهم</p>
+      <p class="text-dark-400 text-sm">إدارة بيانات طلاب المركز وحلقاتهم</p>
     </div>
     <div class="flex items-center gap-3">
-      <a routerLink="/dashboard/students/export" class="btn-secondary gap-2 text-emerald-400 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10">
+      <a *ngIf="authService.hasPermission('Permissions.Reports.Export')" routerLink="/dashboard/students/export" class="btn-secondary gap-2 text-emerald-400 border-emerald-500/30 hover:border-emerald-500/50 hover:bg-emerald-500/10">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
         تصدير مخصص (Excel)
       </a>
-      <button (click)="exportToExcel()" class="btn-secondary gap-2">
+      <button *ngIf="authService.hasPermission('Permissions.Reports.Export')" (click)="exportToExcel()" class="btn-secondary gap-2">
         <svg class="w-4 h-4 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
         </svg>
         تصدير سريع
       </button>
-      <button (click)="addStudent()" class="btn-primary">
+      <button *ngIf="authService.hasPermission('Permissions.Students.Manage')" (click)="addStudent()" class="btn-primary">
         <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
         </svg>
@@ -53,21 +57,21 @@
   </div>
 
   <!-- Navigation Tabs (Active vs Waiting List vs Archived) -->
-  <div class="flex items-center gap-2 border-b border-dark-800 pb-3 overflow-x-auto">
+  <div class="p-1 sm:p-1.5 bg-dark-900/80 dark:bg-dark-900/80 bg-slate-100 rounded-2xl border border-dark-800/80 dark:border-dark-800/80 border-slate-200 grid grid-cols-3 sm:inline-flex items-center gap-1 w-full sm:w-auto shadow-inner">
     <a routerLink="/dashboard/students"
-       class="px-4 py-2 rounded-xl text-xs font-bold border bg-primary-500/15 text-primary-300 border-primary-500/30 shadow-sm flex items-center gap-2 shrink-0">
-      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-      <span>الطلاب النشطون</span>
+       class="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-center bg-primary-500/20 text-primary-400 dark:text-primary-300 border border-primary-500/30 shadow-sm">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+      <span class="hidden sm:inline">الطلاب </span><span>النشطون</span>
     </a>
     <a routerLink="/dashboard/students/waiting-list"
-       class="px-4 py-2 rounded-xl text-xs font-bold border border-transparent hover:border-dark-700 transition-all flex items-center gap-2 text-dark-400 hover:text-white shrink-0">
-      <span class="w-2 h-2 rounded-full bg-amber-400"></span>
-      <span>قائمة الانتظار والتقديمات</span>
+       class="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-center text-slate-600 dark:text-dark-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-800/60 border border-transparent">
+      <span class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+      <span class="hidden sm:inline">قائمة </span><span>الانتظار</span><span class="hidden md:inline"> والتقديمات</span>
     </a>
     <a routerLink="/dashboard/students/archived"
-       class="px-4 py-2 rounded-xl text-xs font-bold border border-transparent hover:border-dark-700 transition-all flex items-center gap-2 text-dark-400 hover:text-white shrink-0">
-      <span class="w-2 h-2 rounded-full bg-dark-500"></span>
-      <span>الطلاب المنقطعون / المحذوفون</span>
+       class="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 sm:gap-2 text-center text-slate-600 dark:text-dark-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-dark-800/60 border border-transparent">
+      <span class="w-2 h-2 rounded-full bg-slate-400 dark:bg-dark-500 shrink-0"></span>
+      <span class="hidden sm:inline">الطلاب </span><span>المنقطعون</span><span class="hidden md:inline"> / المحذوفون</span>
     </a>
   </div>
 
