@@ -1,7 +1,7 @@
 import { Injectable, signal, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap, finalize, map } from 'rxjs';
-import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, StudentPagedResultDTO } from '../models/student.models';
+import { StudentDetailsDTO, StudentAddDTO, StudentUpdateDTO, StudentPagedResultDTO, StudentGroupStatusDTO, StudentTransferDTO } from '../models/student.models';
 import { GroupCardDTO, GroupDetailsDTO } from '../models/group.models';
 import { AuthResponse, StudentLoginDTO } from '../models/auth.models';
 import { AuthService } from './auth.service';
@@ -137,6 +137,14 @@ export class StudentService {
     });
   }
 
+  changeGroupStatus(dto: StudentGroupStatusDTO): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/groupStatus`, dto);
+  }
+
+  transferGroup(dto: StudentTransferDTO): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/transferGroup`, dto);
+  }
+
   validateSSN(ssn: string): Observable<{ isValid: boolean }> {
     return this.http.get<{ isValid: boolean }>(`${this.apiUrl}/validate/${ssn}`);
   }
@@ -155,7 +163,8 @@ export class StudentService {
           refreshToken: res.refreshToken,
           fullName: res.fullName,
           studentId: res.studentId,
-          roles: res.roles?.length ? res.roles : [res.role || 'Student']
+          roles: res.roles?.length ? res.roles : [res.role || 'Student'],
+          isActive: res.isActive
         };
         return authRes;
       }),

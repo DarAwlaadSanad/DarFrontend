@@ -121,3 +121,19 @@ export interface AbsenceReport {
 }
 
 export type Student = StudentDetailsDTO;
+
+export interface StudentGroupStatusDTO {
+  studentId: number;
+  groupId: number;
+  isActive: boolean;
+  reason?: string;
+  cancelUnpaidFee?: boolean;
+}
+
+export interface StudentTransferDTO {
+  studentId: number;
+  fromGroupId: number;
+  toGroupId: number;
+  reason?: string;
+  transferCurrentMonthFee?: boolean;
+}

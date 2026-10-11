@@ -315,7 +315,7 @@ export class StudentDetailComponent implements OnInit {
 
   async onUnassignGroup(groupId: number) {
     const s = this.student();
-    if (!s || !await this.ui.confirm('هل تريد حذف الطالب من هذه المجموعة؟')) return;
+    if (!s || !await this.ui.confirm('هل تريد حذف الطالب نهائياً من هذه المجموعة؟')) return;
 
     this.isSaving.set(true);
     this.studentService.unassignGroup(s.id, groupId).subscribe({
@@ -327,6 +327,35 @@ export class StudentDetailComponent implements OnInit {
       error: (err) => {
         this.isSaving.set(false);
         this.ui.error(err.error || 'حدث خطأ أثناء الحذف');
+      }
+    });
+  }
+
+  async onSeparateFromGroup(groupId: number, groupName: string) {
+    const s = this.student();
+    if (!s) return;
+    if (!await this.ui.confirm(`هل تريد فصل الطالب "${s.fullName}" عن حلقة "${groupName}" ونقله لقائمة المنقطعين عنها؟ سيتم الاحتفاظ بكامل سجلات الغياب والدرجات في أرشيف الحلقة.`)) return;
+
+    this.isSaving.set(true);
+    this.studentService.changeGroupStatus({
+      studentId: s.id,
+      groupId: groupId,
+      isActive: false,
+      reason: 'انقطاع عن الحلقة',
+      cancelUnpaidFee: true
+    }).subscribe({
+      next: (res) => {
+        const msg = res?.message && !res.message.includes('Ø')
+          ? res.message
+          : 'تم فصل الطالب عن المجموعة بنجاح';
+        this.ui.success(msg);
+        this.isSaving.set(false);
+        this.loadStudentGroups(s.id);
+        this.loadStudentFees(s.id);
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        this.ui.error(err.error?.message || err.error || 'حدث خطأ أثناء فصل الطالب');
       }
     });
   }

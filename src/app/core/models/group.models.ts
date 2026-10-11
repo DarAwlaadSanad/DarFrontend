@@ -47,6 +47,10 @@ export interface StudentInGroupDTO {
   studentName: string;
   gender?: number | null;
   isActive?: boolean;
+  joinedDate?: string;
+  leftDate?: string;
+  separationReason?: string;
+  isStudentActive?: boolean;
   records: { [key: number]: SessionRecordDTO };
   totalPresent: number;
   totalEvaluation: number;
@@ -81,6 +85,8 @@ export interface GroupCardDTO {
   isOnline: boolean;
   roomId?: number;
   roomName?: string;
+  isActive?: boolean;
+  separationReason?: string;
 }
 
 export interface GroupAddDTO {

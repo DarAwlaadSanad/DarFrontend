@@ -86,7 +86,7 @@ interface TodaySession {
             </svg>
           </div>
           <div class="min-w-0">
-            <p class="text-2xl font-black text-white group-hover:text-emerald-400 transition-colors">{{ groups().length }}</p>
+            <p class="text-2xl font-black text-white group-hover:text-emerald-400 transition-colors">{{ activeGroupsCount() }}</p>
             <p class="text-xs text-dark-400 font-medium truncate">حلقاتي القرآنية</p>
           </div>
         </div>
@@ -445,22 +445,49 @@ interface TodaySession {
 
           <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             <div *ngFor="let group of groups()"
-                 class="glass-card group hover:border-emerald-500/40 transition-all duration-500 overflow-hidden relative">
-              <div class="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-l from-emerald-500 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                 class="glass-card group hover:border-emerald-500/40 transition-all duration-500 overflow-hidden relative"
+                 [class.border-amber-500/40]="group.isActive === false">
+              <div class="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-l opacity-0 group-hover:opacity-100 transition-opacity"
+                   [ngClass]="group.isActive === false ? 'from-amber-500 to-transparent' : 'from-emerald-500 to-transparent'"></div>
               <div class="p-6">
                 <div class="flex items-start justify-between mb-5">
-                  <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 group-hover:scale-110 transition-transform duration-500">
+                  <div class="w-12 h-12 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500"
+                       [ngClass]="group.isActive === false ? 'bg-amber-500/10 border border-amber-500/20 text-amber-400' : 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400'">
                     <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
                     </svg>
                   </div>
-                  <span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider">نشطة</span>
+                  <span *ngIf="group.isActive !== false"
+                        class="bg-emerald-500/10 text-emerald-400 text-[10px] font-black px-2.5 py-1 rounded-full border border-emerald-500/20 uppercase tracking-wider">
+                    نشطة
+                  </span>
+                  <span *ngIf="group.isActive === false"
+                        class="bg-amber-500/20 text-amber-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-amber-500/30 uppercase tracking-wider flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    موقوف عن الحلقة
+                  </span>
                 </div>
                 <h3 class="text-lg font-bold text-white mb-1.5 group-hover:text-emerald-400 transition-colors">{{ group.name }}</h3>
-                <div class="flex items-center gap-2 text-dark-400 text-sm mb-5">
+                <div class="flex items-center gap-2 text-dark-400 text-sm mb-4">
                   <svg class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                   <span>{{ group.teacherName || 'بانتظار المعلم' }}</span>
                 </div>
+
+                <!-- Alert banner if student is suspended in this specific group -->
+                <div *ngIf="group.isActive === false"
+                     class="mb-4 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/25 text-amber-300 text-xs flex flex-col gap-1">
+                  <div class="flex items-center gap-1.5 font-bold">
+                    <svg class="w-3.5 h-3.5 shrink-0 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <span>تم إيقاف نشاطك في هذه الحلقة</span>
+                  </div>
+                  <span *ngIf="group.separationReason" class="text-[11px] text-amber-400/90 pr-5">
+                    السبب: {{ group.separationReason }}
+                  </span>
+                  <span class="text-[10px] text-dark-400 pr-5">يرجى مراجعة إدارة الدار أو معلم الحلقة.</span>
+                </div>
+
                 <div class="pt-4 border-t border-dark-800 flex items-center justify-between">
                   <div class="flex items-center gap-1.5">
                     <svg class="w-4 h-4 text-dark-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
@@ -616,6 +643,7 @@ export class StudentDashboardComponent implements OnInit {
   authService = inject(AuthService);
 
   groups = signal<GroupCardDTO[]>([]);
+  activeGroupsCount = computed(() => this.groups().filter(g => g.isActive !== false).length);
   examResults = signal<ExamResultDTO[]>([]);
   competitions = signal<StudentCompetitionResult[]>([]);
   todaySessions = signal<TodaySession[]>([]);
@@ -701,9 +729,11 @@ export class StudentDashboardComponent implements OnInit {
     const todayDow = new Date().getDay(); // 0=Sun ... 6=Sat
     const allSessions: TodaySession[] = [];
 
-    const requests = groups.map(g =>
-      this.scheduleService.getByGroup(g.id).pipe(catchError(() => of([] as GroupScheduleViewDTO[])))
-    );
+    const requests = groups
+      .filter(g => g.isActive !== false)
+      .map(g =>
+        this.scheduleService.getByGroup(g.id).pipe(catchError(() => of([] as GroupScheduleViewDTO[])))
+      );
 
     if (requests.length === 0) return;
 

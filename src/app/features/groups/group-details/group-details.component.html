@@ -202,16 +202,35 @@
             <ng-container *ngIf="studentTabFilter() !== 'archived'">
               <tr *ngFor="let student of activeStudents()" class="hover:bg-dark-800/40 transition-colors group">
                 <td
-                  class="px-2.5 sm:px-3 lg:px-4 py-2.5 sm:py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0">
-                      {{ student.studentName.charAt(0) }}</div>
-                    <a [routerLink]="['/dashboard/students', student.studentId]"
-                      class="text-white font-medium text-xs sm:text-sm truncate max-w-[135px] sm:max-w-[165px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
-                      [title]="student.studentName">
-                      {{ student.studentName }}
-                    </a>
+                  class="px-2.5 sm:px-3 lg:px-4 py-2 sm:py-2.5 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                      <div
+                        class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0">
+                        {{ student.studentName.charAt(0) }}</div>
+                      <a [routerLink]="['/dashboard/students', student.studentId]"
+                        class="text-white font-medium text-xs sm:text-sm truncate max-w-[110px] sm:max-w-[140px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
+                        [title]="student.studentName">
+                        {{ student.studentName }}
+                      </a>
+                    </div>
+                    <!-- Student Group Actions -->
+                    <div *ngIf="authService.hasPermission('Permissions.Students.Manage')" class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                      <button (click)="openTransferModal(student)" type="button"
+                        class="p-1 text-dark-400 hover:text-primary-400 hover:bg-primary-500/10 rounded transition-colors"
+                        title="نقل الطالب إلى حلقة أخرى">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      </button>
+                      <button (click)="openSeparateModal(student)" type="button"
+                        class="p-1 text-dark-400 hover:text-amber-400 hover:bg-amber-500/10 rounded transition-colors"
+                        title="فصل / نقل الطالب للمنقطعين عن هذه الحلقة">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                 </td>
                 <td *ngFor="let session of sortedSessions()"
@@ -262,22 +281,45 @@
               <tr *ngFor="let student of archivedStudents()"
                   class="hover:bg-amber-950/25 bg-amber-950/10 transition-colors group border-b border-dark-800/60">
                 <td
-                  class="px-2.5 sm:px-3 lg:px-4 py-2.5 sm:py-3 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
-                  <div class="flex items-center gap-2">
-                    <div
-                      class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0 border border-amber-500/40">
-                      {{ student.studentName.charAt(0) }}</div>
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <a [routerLink]="['/dashboard/students', student.studentId]"
-                          class="text-white font-medium text-xs sm:text-sm truncate max-w-[120px] sm:max-w-[150px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
-                          [title]="student.studentName">
-                          {{ student.studentName }}
-                        </a>
-                        <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-                          منقطع
-                        </span>
+                  class="px-2.5 sm:px-3 lg:px-4 py-2 sm:py-2.5 sticky right-0 bg-dark-900 group-hover:bg-dark-800/90 backdrop-blur z-10 border-l border-dark-700">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-2 min-w-0 flex-1">
+                      <div
+                        class="hidden sm:flex w-7 h-7 rounded-full bg-dark-700 items-center justify-center text-xs font-bold text-dark-300 flex-shrink-0 border border-amber-500/40">
+                        {{ student.studentName.charAt(0) }}</div>
+                      <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <a [routerLink]="['/dashboard/students', student.studentId]"
+                            class="text-white font-medium text-xs sm:text-sm truncate max-w-[110px] sm:max-w-[140px] lg:max-w-none hover:text-primary-400 hover:underline transition-colors cursor-pointer block"
+                            [title]="student.studentName">
+                            {{ student.studentName }}
+                          </a>
+                          <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap"
+                                [title]="student.separationReason ? ('سبب الانقطاع: ' + student.separationReason) : 'منقطع عن هذه الحلقة'">
+                            منقطع
+                          </span>
+                        </div>
+                        <div *ngIf="student.separationReason" class="text-[10px] text-amber-400/80 truncate max-w-[140px]" [title]="student.separationReason">
+                          {{ student.separationReason }}
+                        </div>
                       </div>
+                    </div>
+                    <!-- Actions for Archived Student: Reactivate or Transfer -->
+                    <div *ngIf="authService.hasPermission('Permissions.Students.Manage')" class="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition-opacity">
+                      <button (click)="openTransferModal(student)" type="button"
+                        class="p-1 text-dark-400 hover:text-primary-400 hover:bg-primary-500/10 rounded transition-colors"
+                        title="نقل الطالب إلى حلقة أخرى">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      </button>
+                      <button (click)="onReactivateStudent(student)" type="button"
+                        class="p-1 text-dark-400 hover:text-emerald-400 hover:bg-emerald-500/10 rounded transition-colors"
+                        title="إعادة تنشيط الطالب في هذه الحلقة">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      </button>
                     </div>
                   </div>
                 </td>
@@ -1381,6 +1423,129 @@
         <button type="button" (click)="closeAddStudentModal()" class="btn-secondary flex-1 py-3 text-sm">إلغاء</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- ── Separate Student Modal ──────────────────────────────────────────────── -->
+<div *ngIf="showSeparateModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity" (click)="closeSeparateModal()"></div>
+  <div class="relative bg-dark-900 w-full max-w-md rounded-2xl border border-dark-700 shadow-2xl p-6 overflow-hidden z-10" dir="rtl">
+    <div class="flex items-center gap-3 mb-4 text-amber-400">
+      <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">فصل / نقل الطالب للمنقطعين عن الحلقة</h3>
+        <p class="text-xs text-dark-400">لن يؤثر ذلك على مجموعات الطالب الأخرى إن وجدت</p>
+      </div>
+    </div>
+
+    <div class="p-3 bg-dark-800/80 rounded-xl border border-dark-700/60 mb-4 text-xs text-dark-300">
+      طالب: <strong class="text-white font-medium">{{ separatingStudent()?.studentName }}</strong>
+      <div class="text-[11px] text-dark-400 mt-1">سيتم الاحتفاظ بكامل سجلات الغياب والدرجات السابقة في أرشيف هذه الحلقة.</div>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-dark-300 mb-1">سبب الانقطاع أو الفصل (اختياري)</label>
+        <textarea [ngModel]="separationReason()" (ngModelChange)="separationReason.set($event)"
+          placeholder="مثال: ظروف خاصة، انتقال، تضارب مواعيد..."
+          rows="2" class="input-field text-xs w-full"></textarea>
+      </div>
+
+      <label class="flex items-start gap-2.5 cursor-pointer p-3 bg-dark-800/40 rounded-xl border border-dark-700/40 hover:bg-dark-800/70 transition-colors">
+        <input type="checkbox" [checked]="cancelUnpaidFee()" (change)="cancelUnpaidFee.set($any($event.target).checked)"
+          class="rounded bg-dark-800 border-dark-700 text-amber-500 focus:ring-0 mt-0.5">
+        <div class="text-xs">
+          <span class="text-white font-medium block">إلغاء الشهرية غير المدفوعة للشهر الحالي</span>
+          <span class="text-dark-400 text-[11px]">إذا كان على الطالب مطالبة شهرية لم يدفعها بعد لهذه الحلقة، سيتم حذفها حتى لا تظهر كمديونية.</span>
+        </div>
+      </label>
+
+      <div class="flex gap-2 pt-2">
+        <button (click)="confirmSeparate()" [disabled]="isSubmittingStatus()"
+          class="flex-1 py-2.5 px-4 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-amber-950/40 disabled:opacity-50">
+          <svg *ngIf="isSubmittingStatus()" class="w-3.5 h-3.5 animate-spin ml-1" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          تأكيد الفصل عن الحلقة
+        </button>
+        <button (click)="closeSeparateModal()" [disabled]="isSubmittingStatus()"
+          class="py-2.5 px-4 bg-dark-800 hover:bg-dark-700 text-dark-300 font-medium rounded-xl text-xs transition-colors">
+          إلغاء
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Transfer Student Modal ──────────────────────────────────────────────── -->
+<div *ngIf="showTransferModal()" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <div class="fixed inset-0 bg-black/75 backdrop-blur-sm transition-opacity" (click)="closeTransferModal()"></div>
+  <div class="relative bg-dark-900 w-full max-w-md rounded-2xl border border-dark-700 shadow-2xl p-6 overflow-hidden z-10" dir="rtl">
+    <div class="flex items-center gap-3 mb-4 text-primary-400">
+      <div class="w-10 h-10 rounded-xl bg-primary-500/10 border border-primary-500/20 flex items-center justify-center flex-shrink-0">
+        <svg class="w-5 h-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+        </svg>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">نقل الطالب إلى حلقة أخرى</h3>
+        <p class="text-xs text-dark-400">نقل الطالب مع معالجة الشهرية الحسابية تلقائياً</p>
+      </div>
+    </div>
+
+    <div class="p-3 bg-dark-800/80 rounded-xl border border-dark-700/60 mb-4 text-xs text-dark-300">
+      طالب: <strong class="text-white font-medium">{{ transferringStudent()?.studentName }}</strong>
+      <div class="text-[11px] text-dark-400 mt-1">سيتم أرشفة الطالب في هذه الحلقة ونقله كطالب نشط في الحلقة الجديدة.</div>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-dark-300 mb-1">اختر الحلقة البديلة المراد النقل إليها *</label>
+        <select [ngModel]="targetTransferGroupId()" (ngModelChange)="targetTransferGroupId.set($any($event))"
+          class="input-field text-xs w-full bg-dark-800">
+          <option [ngValue]="null" disabled>-- اختر الحلقة --</option>
+          <option *ngFor="let g of availableGroups()" [ngValue]="g.id">
+            {{ g.name }} ({{ g.teacherName || 'بدون معلم' }})
+          </option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-dark-300 mb-1">سبب النقل (اختياري)</label>
+        <input type="text" [ngModel]="transferReason()" (ngModelChange)="transferReason.set($event)"
+          placeholder="مثال: تغيير الموعد، ترقية مستوى..."
+          class="input-field text-xs w-full">
+      </div>
+
+      <label class="flex items-start gap-2.5 cursor-pointer p-3 bg-dark-800/40 rounded-xl border border-dark-700/40 hover:bg-dark-800/70 transition-colors">
+        <input type="checkbox" [checked]="transferCurrentMonthFee()" (change)="transferCurrentMonthFee.set($any($event.target).checked)"
+          class="rounded bg-dark-800 border-dark-700 text-primary-500 focus:ring-0 mt-0.5">
+        <div class="text-xs">
+          <span class="text-white font-medium block">تحويل شهرية الشهر الحالي للحلقة الجديدة</span>
+          <span class="text-dark-400 text-[11px]">يمنع ازدواجية الشهرية: ينقل سجل الشهرية والمدفوعات إلى الحلقة الجديدة بدلاً من توليد شهرية مكررة.</span>
+        </div>
+      </label>
+
+      <div class="flex gap-2 pt-2">
+        <button (click)="confirmTransfer()" [disabled]="!targetTransferGroupId() || isSubmittingTransfer()"
+          class="flex-1 py-2.5 px-4 bg-primary-600 hover:bg-primary-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-lg shadow-primary-950/40 disabled:opacity-50">
+          <svg *ngIf="isSubmittingTransfer()" class="w-3.5 h-3.5 animate-spin ml-1" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          تأكيد نقل الطالب
+        </button>
+        <button (click)="closeTransferModal()" [disabled]="isSubmittingTransfer()"
+          class="py-2.5 px-4 bg-dark-800 hover:bg-dark-700 text-dark-300 font-medium rounded-xl text-xs transition-colors">
+          إلغاء
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 

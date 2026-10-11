@@ -49,7 +49,13 @@ import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
               <div>
                 <div class="flex items-center gap-2 mb-1">
                   <h1 class="text-2xl lg:text-3xl font-black text-white">{{ data.groupName }}</h1>
-                  <span class="bg-primary-500/10 text-primary-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary-500/20">حلقة نشطة</span>
+                  <span *ngIf="myInfo()?.isActive !== false"
+                        class="bg-primary-500/10 text-primary-400 text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary-500/20">حلقة نشطة</span>
+                  <span *ngIf="myInfo()?.isActive === false"
+                        class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-amber-500/30 flex items-center gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    موقوف عن الحلقة
+                  </span>
                 </div>
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-dark-400 text-sm">
                   <span class="flex items-center gap-1.5"><svg class="w-4 h-4 text-primary-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg> المعلم: {{ data.teacherName }}</span>
@@ -64,6 +70,25 @@ import { StudentFeeViewDTO } from '../../../core/models/student-fee.models';
           </div>
           <!-- Decorations -->
           <div class="absolute -top-10 -left-10 w-40 h-40 bg-primary-500/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <!-- Group Suspension Notice for Student -->
+        <div *ngIf="myInfo()?.isActive === false"
+             class="p-5 rounded-2xl bg-amber-950/40 border border-amber-500/40 flex items-start gap-4 animate-fade-in shadow-xl">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="space-y-1">
+            <h3 class="text-base font-bold text-amber-300">تم إيقاف نشاطك في هذه الحلقة</h3>
+            <p *ngIf="myInfo()?.separationReason" class="text-xs text-amber-200/90 font-medium">
+              السبب: {{ myInfo()?.separationReason }}
+            </p>
+            <p class="text-xs text-dark-300 leading-relaxed">
+              سجلاتك السابقة وتاريخ حضورك محفوظ، ولكن نشاطك الحالي متوقف في هذه الحلقة. يمكنك مراجعة إدارة الدار أو معلم الحلقة لمزيد من التفاصيل.
+            </p>
+          </div>
         </div>
 
         <!-- Navigation Tabs -->

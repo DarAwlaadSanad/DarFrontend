@@ -20,6 +20,7 @@ export interface AuthResponse {
   profilePictureUrl?: string;
   studentId?: number;
   roles: string[];
+  isActive?: boolean;
 }
 
 export interface StudentLoginDTO {
@@ -34,6 +35,7 @@ export interface StudentLoginResponse {
   fullName: string;
   code: string;
   role: string;
+  isActive?: boolean;
 }
 
 export interface RefreshTokenRequest {

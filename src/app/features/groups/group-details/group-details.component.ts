@@ -11,7 +11,7 @@ import { EvaluationService } from '../../../core/services/evaluation.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { MemorizationService, QuranSurah } from '../../../core/services/memorization.service';
 import { OfflineSyncService } from '../../../core/services/offline-sync.service';
-import { GroupDetailsDTO, AttendanceStatus, normalizeAttendanceStatus, StudentInGroupDTO, SessionViewDTO } from '../../../core/models/group.models';
+import { GroupDetailsDTO, AttendanceStatus, normalizeAttendanceStatus, StudentInGroupDTO, SessionViewDTO, GroupCardDTO } from '../../../core/models/group.models';
 import { AttendanceRecordDTO } from '../../../core/models/attendance.models';
 import { StudentAddDTO, getGenderLabel } from '../../../core/models/student.models';
 import { GroupScheduleViewDTO, CreateGroupScheduleDTO, DayOfWeekAr } from '../../../core/models/schedule.models';
@@ -96,11 +96,11 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   studentFeeFilter = signal<'all' | 'active' | 'archived'>('all');
 
   activeStudentFees = computed(() =>
-    this.studentFees().filter(f => f.isStudentActive !== false)
+    this.studentFees().filter(f => (f.isActiveInGroup ?? f.isStudentActive) !== false)
   );
 
   archivedStudentFees = computed(() =>
-    this.studentFees().filter(f => f.isStudentActive === false)
+    this.studentFees().filter(f => (f.isActiveInGroup ?? f.isStudentActive) === false)
   );
 
   displayedStudentFees = computed(() => {
@@ -172,6 +172,21 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
   get groupToSurahsList(): QuranSurah[] {
     return this.memorizationService.getSurahsByJuz(this.memToJuzId());
   }
+
+  // ── Separation & Transfer Modals ──────────────────────────────────────────
+  showSeparateModal = signal(false);
+  separatingStudent = signal<StudentInGroupDTO | null>(null);
+  separationReason = signal('');
+  cancelUnpaidFee = signal(false);
+  isSubmittingStatus = signal(false);
+
+  showTransferModal = signal(false);
+  transferringStudent = signal<StudentInGroupDTO | null>(null);
+  targetTransferGroupId = signal<number | null>(null);
+  transferReason = signal('');
+  transferCurrentMonthFee = signal(true);
+  isSubmittingTransfer = signal(false);
+  availableGroups = signal<GroupCardDTO[]>([]);
 
   // ── Add Student ─────────────────────────────────────────────────────────────
   showAddStudentModal = signal(false);
@@ -1197,5 +1212,132 @@ export class GroupDetailsComponent implements OnInit, OnDestroy {
 
   getGenderLabel(gender?: any): string {
     return getGenderLabel(gender);
+  }
+
+  // ── Separation & Transfer Actions ──────────────────────────────────────────
+  openSeparateModal(student: StudentInGroupDTO) {
+    this.separatingStudent.set(student);
+    this.separationReason.set('');
+    this.cancelUnpaidFee.set(false);
+    this.showSeparateModal.set(true);
+  }
+
+  closeSeparateModal() {
+    this.showSeparateModal.set(false);
+    this.separatingStudent.set(null);
+  }
+
+  confirmSeparate() {
+    const student = this.separatingStudent();
+    const grp = this.details();
+    if (!student || !grp) return;
+
+    this.isSubmittingStatus.set(true);
+    this.studentService.changeGroupStatus({
+      studentId: student.studentId,
+      groupId: grp.groupId,
+      isActive: false,
+      reason: this.separationReason().trim() || undefined,
+      cancelUnpaidFee: this.cancelUnpaidFee()
+    }).subscribe({
+      next: (res) => {
+        const msg = res?.message && !res.message.includes('Ø')
+          ? res.message
+          : 'تم نقل الطالب للمنقطعين عن هذه الحلقة بنجاح';
+        this.ui.success(msg);
+        this.closeSeparateModal();
+        this.isSubmittingStatus.set(false);
+        this.loadDetails(grp.groupId, true);
+        this.loadStudentFees(grp.groupId);
+      },
+      error: (err) => {
+        this.isSubmittingStatus.set(false);
+        this.ui.error(err.error?.message || err.error || 'حدث خطأ أثناء فصل الطالب');
+      }
+    });
+  }
+
+  async onReactivateStudent(student: StudentInGroupDTO) {
+    const grp = this.details();
+    if (!grp) return;
+    if (!await this.ui.confirm(`هل أنت متأكد من إعادة تنشيط الطالب "${student.studentName}" في هذه الحلقة؟`)) return;
+
+    this.isSaving.set(true);
+    this.studentService.changeGroupStatus({
+      studentId: student.studentId,
+      groupId: grp.groupId,
+      isActive: true
+    }).subscribe({
+      next: (res) => {
+        const msg = res?.message && !res.message.includes('Ø')
+          ? res.message
+          : 'تمت إعادة تنشيط الطالب بنجاح';
+        this.ui.success(msg);
+        this.isSaving.set(false);
+        this.loadDetails(grp.groupId, true);
+        this.loadStudentFees(grp.groupId);
+      },
+      error: (err) => {
+        this.isSaving.set(false);
+        this.ui.error(err.error?.message || err.error || 'حدث خطأ أثناء إعادة التنشيط');
+      }
+    });
+  }
+
+  openTransferModal(student: StudentInGroupDTO) {
+    this.transferringStudent.set(student);
+    this.targetTransferGroupId.set(null);
+    this.transferReason.set('');
+    this.transferCurrentMonthFee.set(true);
+    const currentId = this.details()?.groupId;
+
+    this.groupService.getAll().subscribe({
+      next: (groups) => {
+        this.availableGroups.set(groups.filter(g => g.id !== currentId));
+        this.showTransferModal.set(true);
+      },
+      error: () => {
+        this.ui.error('تعذر تحميل الحلقات المتاحة للنقل');
+      }
+    });
+  }
+
+  closeTransferModal() {
+    this.showTransferModal.set(false);
+    this.transferringStudent.set(null);
+  }
+
+  confirmTransfer() {
+    const student = this.transferringStudent();
+    const targetGroupId = this.targetTransferGroupId();
+    const grp = this.details();
+    if (!student || !targetGroupId || !grp) {
+      this.ui.error('يرجى اختيار الحلقة البديلة أولاً');
+      return;
+    }
+
+    this.isSubmittingTransfer.set(true);
+    this.studentService.transferGroup({
+      studentId: student.studentId,
+      fromGroupId: grp.groupId,
+      toGroupId: Number(targetGroupId),
+      reason: this.transferReason().trim() || undefined,
+      transferCurrentMonthFee: this.transferCurrentMonthFee()
+    }).subscribe({
+      next: (res) => {
+        const msg = res?.message && !res.message.includes('Ø')
+          ? res.message
+          : 'تم نقل الطالب بنجاح';
+        this.ui.success(msg);
+        this.closeTransferModal();
+        this.isSubmittingTransfer.set(false);
+        this.loadDetails(grp.groupId, true);
+        this.loadStudentFees(grp.groupId);
+      },
+      error: (err) => {
+        this.isSubmittingTransfer.set(false);
+        this.ui.error(err.error?.message || err.error || 'حدث خطأ أثناء نقل الطالب');
+      }
+    });
   }
 }

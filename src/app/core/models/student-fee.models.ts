@@ -14,6 +14,7 @@ export interface StudentFeeViewDTO {
   exemptionReason?: string;
   isPermanentlyExempted?: boolean;
   isStudentActive?: boolean;
+  isActiveInGroup?: boolean;
 }
 
 export interface UpdateStudentFeePaymentDTO {

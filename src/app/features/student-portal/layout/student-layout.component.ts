@@ -1,7 +1,8 @@
-import { Component, signal, inject, HostListener } from '@angular/core';
+import { Component, OnInit, signal, inject, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive, RouterOutlet, Router, NavigationEnd } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
+import { StudentService } from '../../../core/services/student.service';
 import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/theme-toggle.component';
 
 @Component({
@@ -10,6 +11,40 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
   imports: [CommonModule, RouterLink, RouterLinkActive, RouterOutlet, ThemeToggleComponent],
   template: `
     <div class="h-screen w-full bg-dark-950 bg-mesh flex overflow-hidden relative" dir="rtl">
+
+      <!-- Fullscreen Permanent Suspension Blocker Overlay -->
+      <div *ngIf="isStudentSuspended()"
+           class="fixed inset-0 z-50 bg-dark-950/95 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in"
+           dir="rtl">
+        <div class="max-w-md w-full bg-dark-900 border border-red-500/30 rounded-3xl p-6 sm:p-8 text-center shadow-2xl relative overflow-hidden">
+          <div class="absolute -top-20 -right-20 w-48 h-48 bg-red-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          <div class="absolute -bottom-20 -left-20 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+          <div class="w-20 h-20 mx-auto rounded-3xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-red-400 mb-6 shadow-lg shadow-red-950/50">
+            <svg class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+
+          <h2 class="text-2xl font-black text-white mb-2 tracking-tight">تم إيقاف حسابك</h2>
+          <p class="text-red-400 font-bold text-sm mb-4">حساب الطالب معطل حالياً من قِبل إدارة الدار</p>
+
+          <div class="p-4 bg-dark-800/80 rounded-2xl border border-dark-700/60 mb-6 text-xs text-dark-300 leading-relaxed text-right">
+            عزيزي الطالب <strong class="text-white">{{ suspendedStudentName() || authService.currentUser()?.fullName }}</strong>، تم إيقاف نشاطك في المنظومة. يرجى التوجه لإدارة الدار لمراجعة حالة القيد والاشتراك وإعادة التفعيل.
+          </div>
+
+          <div class="space-y-3">
+            <button (click)="logout()"
+                    class="w-full py-3 px-6 rounded-2xl bg-red-600 hover:bg-red-500 text-white font-bold text-sm shadow-lg shadow-red-950/50 transition-all flex items-center justify-center gap-2">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              <span>تسجيل الخروج</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Mobile Overlay -->
       <div *ngIf="isSidebarOpen() && isMobile()"
            (click)="toggleSidebar()"
@@ -130,13 +165,17 @@ import { ThemeToggleComponent } from '../../../shared/components/theme-toggle/th
     </div>
   `,
 })
-export class StudentLayoutComponent {
+export class StudentLayoutComponent implements OnInit {
   public authService = inject(AuthService);
+  private studentService = inject(StudentService);
   private router = inject(Router);
 
   isSidebarOpen = signal(window.innerWidth >= 1024);
   isProfileOpen = signal(false);
   isMobile = signal(window.innerWidth < 1024);
+
+  isStudentSuspended = signal(false);
+  suspendedStudentName = signal('');
 
   navItems = [
     { label: 'الرئيسية وحلقاتي', icon: 'home', route: '/student', exact: true },
@@ -152,6 +191,27 @@ export class StudentLayoutComponent {
         this.isSidebarOpen.set(false);
       }
     });
+  }
+
+  ngOnInit() {
+    const current = this.authService.currentUser();
+    if (current && current.isActive === false) {
+      this.isStudentSuspended.set(true);
+      this.suspendedStudentName.set(current.fullName || '');
+    }
+
+    const sId = this.authService.studentId();
+    if (sId) {
+      this.studentService.getStudent(sId).subscribe({
+        next: (student) => {
+          if (student && student.isActive === false) {
+            this.isStudentSuspended.set(true);
+            this.suspendedStudentName.set(student.fullName || '');
+          }
+        },
+        error: () => {}
+      });
+    }
   }
 
   @HostListener('window:resize')
